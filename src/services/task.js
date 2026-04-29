@@ -1944,6 +1944,7 @@ class TaskService {
         if (shouldResetProgress) {
             task.currentEpisodes = 0;
             task.status = 'pending';
+            task.processingStartTime = null;  // 清除 processingStartTime
             task.lastFileUpdateTime = null;
             task.lastCheckTime = null;
             task.lastSavedFileName = null;
