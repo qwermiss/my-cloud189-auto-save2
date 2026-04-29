@@ -1253,6 +1253,14 @@ class TaskService {
                                 const realFileName = CasUtils.mergeCasFileName(casFile.name, parsed.name);
                                 result.realFileName = realFileName;
 
+                                // 过滤非媒体文件（如 txt、jpg 等）
+                                if (!this._checkFileNameSuffix(realFileName)) {
+                                    result.message = '非媒体文件，跳过';
+                                    result.skipped = true;
+                                    logTaskEvent(`[CAS] ⏭️ ${realFileName} - 非媒体文件，跳过秒传`);
+                                    return result;
+                                }
+
                                 const realBaseName = getBaseNameWithoutExt(realFileName);
                                 if (existingBaseNamesAfter.has(realBaseName) || currentFileNamesAfter.has(realFileName)) {
                                     result.message = '已存在，跳过秒传';
@@ -1423,7 +1431,9 @@ class TaskService {
 
                                     if (result.skipped) {
                                         remainingFiles = remainingFiles.filter(f => f.id !== casFile.id);
-                                        logTaskEvent(`[CAS] ⏭️ ${result.realFileName} 已存在，跳过`);
+                                        logTaskEvent(`[CAS] ⏭️ ${result.realFileName || casFile.name} 已跳过: ${result.message}`);
+                                        // 将跳过的文件加入缓存（避免下次重复处理）
+                                        await taskCacheManager.addCache(task.id, String(casFile.id));
                                     } else if (result.success && result.realFileName) {
                                         successFiles.push(result.realFileName);
                                         casResults.push({ fileName: result.realFileName, success: true });
@@ -2450,12 +2460,12 @@ class TaskService {
             logTaskEvent(`清空[${username}]家庭回收站完成`)
         }
     }
-    // 校验文件后缀
+    // 校验文件后缀（文件对象版本）
     _checkFileSuffix(file, enableOnlySaveMedia, mediaSuffixs) {
         // 获取文件后缀
         const fileExt = '.' + file.name.split('.').pop().toLowerCase();
         const isMedia = mediaSuffixs.includes(fileExt);
-        
+
         // 垃圾文件/非媒体文件黑名单 (即使不开启仅保存媒体文件，也过滤掉这些明显的无关文件)
         const junkSuffixes = ['.txt', '.html', '.htm', '.png', '.jpg', '.jpeg', '.gif', '.url', '.nfo'];
         // 字幕文件白名单 (属于有用文件)
@@ -2468,6 +2478,31 @@ class TaskService {
 
         // 如果启用了只保存媒体文件, 则检查文件后缀是否在媒体白名单或字幕白名单中
         if (enableOnlySaveMedia && !isMedia && !subSuffixes.includes(fileExt)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    // 校验文件名后缀（字符串版本，用于 CAS 文件解析后的真实文件名过滤）
+    _checkFileNameSuffix(fileName) {
+        // 获取文件后缀
+        const fileExt = '.' + fileName.split('.').pop().toLowerCase();
+
+        // 常见媒体扩展名
+        const mediaSuffixes = ['.mkv', '.mp4', '.avi', '.rmvb', '.wmv', '.m2ts', '.ts', '.flv', '.mov', '.iso', '.mpg', '.rm', '.mp3', '.flac', '.wav', '.aac'];
+        // 字幕文件白名单
+        const subSuffixes = ['.srt', '.ass', '.ssa', '.sub', '.vtt'];
+        // 垃圾文件黑名单（始终过滤）
+        const junkSuffixes = ['.txt', '.html', '.htm', '.png', '.jpg', '.jpeg', '.gif', '.url', '.nfo'];
+
+        // 如果是黑名单里的垃圾文件，直接过滤掉
+        if (junkSuffixes.includes(fileExt)) {
+            return false;
+        }
+
+        // 只保留媒体文件和字幕文件
+        if (!mediaSuffixes.includes(fileExt) && !subSuffixes.includes(fileExt)) {
             return false;
         }
 
