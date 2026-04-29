@@ -1087,7 +1087,29 @@ class TaskService {
                 // 排除已处理过的（基于 fileId 缓存）
                 const uncachedCasFiles = allCasFiles.filter(f => !cachedFileIds.has(String(f.id)));
 
-                // ====== 新增：智能接力检测 ======
+                // ====== 智能去重判断：初次执行/清缓存后 ======
+                const useSmartDedup = (uncachedCasFiles.length === allCasFiles.length && uncachedCasFiles.length > 10);
+                let smartDedupExecuted = false;
+
+                if (useSmartDedup) {
+                    logTaskEvent(`[CAS] 使用智能去重模式（初次执行/清缓存）`);
+                    const tmdbTitle = task.tmdbTitle || (this._extractCleanTitle ? this._extractCleanTitle(task.resourceName, false).name : task.resourceName) || task.resourceName;
+                    const CasSmartDedupService = require('./CasSmartDedupService');
+                    const smartDedup = new CasSmartDedupService(this);
+                    const dedupResult = await smartDedup.process(task, cloud189, uncachedCasFiles, tmdbTitle, {
+                        enableCasFamilyTransfer, casFamilyFolderIdActual, familyCloud189, account, enableDeleteCasFile
+                    });
+                    for (const f of dedupResult.successFiles) successFiles.push(f);
+                    for (const r of dedupResult.casResults) casResults.push(r);
+                    for (const id of dedupResult.failedShareFileIds) failedShareFileIds.add(id);
+                    casSuccessCount += dedupResult.casSuccessCount;
+                    logTaskEvent(`[CAS智能去重] 完成，成功 ${dedupResult.casSuccessCount} 个`);
+                    smartDedupExecuted = true;
+                }
+
+                if (!smartDedupExecuted) {
+                    // ====== 原有增量流程 ======
+                    // ====== 智能接力检测 ======
                 // 检查目标目录已有的 .cas 文件名，避免重复转存和解析
                 const existingCasFileNames = new Set(
                     folderFiles.filter(f => CasUtils.isCasFile(f.name)).map(f => f.name)
@@ -1650,6 +1672,7 @@ class TaskService {
                         }
                     }
                 }
+                } // 结束 if (!smartDedupExecuted) - 原有增量流程
                 // CAS 文件的处理结果已记录在 failedShareFileIds
                 // 统一在最后根据结果更新缓存，从而过滤掉处理失败的项
                 // 清理本次任务的家庭信息缓存（避免跨任务串扰）
