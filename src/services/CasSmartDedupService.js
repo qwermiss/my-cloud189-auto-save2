@@ -4,10 +4,10 @@
  * 流程：转存 → 重命名 → 比对 → 删除已存在/秒传缺失
  */
 
-const CasUtils = require('./utils/CasUtils');
+const CasUtils = require('../utils/CasUtils');
 const BatchTaskDto = require('./BatchTaskDto');
 const taskCacheManager = require('./TaskCacheManager');
-const Cloud189Service = require('./services/cloud189');
+const Cloud189Service = require('./cloud189');
 
 class CasSmartDedupService {
     constructor(taskService) {
