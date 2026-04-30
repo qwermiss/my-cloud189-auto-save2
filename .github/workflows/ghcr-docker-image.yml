@@ -9,7 +9,7 @@ on:
         required: false
         default: ''
   push:
-    branches: [ "main", "master", "dev" ]
+    branches: [ "main", "master", "dev", "concept" ]
 
 env:
   REGISTRY: ghcr.io
@@ -52,6 +52,9 @@ jobs:
           if [ "$BRANCH" = "dev" ]; then
             echo "version_tag=dev-$VERSION" >> $GITHUB_OUTPUT
             echo "latest_tag=dev-latest" >> $GITHUB_OUTPUT
+          elif [ "$BRANCH" = "concept" ]; then
+            echo "version_tag=concept-$VERSION" >> $GITHUB_OUTPUT
+            echo "latest_tag=concept-latest" >> $GITHUB_OUTPUT
           else
             echo "version_tag=$VERSION" >> $GITHUB_OUTPUT
             echo "latest_tag=latest" >> $GITHUB_OUTPUT

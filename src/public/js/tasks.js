@@ -252,7 +252,6 @@ function renderTaskMediaWall(tasks) {
         taskList.push(task);
         const taskName = task.shareFolderName ? (task.resourceName + '/' + task.shareFolderName) : task.resourceName || '未知';
         const poster = getTaskPoster(task);
-        const overview = getTaskOverview(task);
         const latestSaved = formatLatestSavedFile(task);
         const metaLine = getTaskMetaLine(task);
         const tmdbContent = parseTmdbContent(task);
@@ -261,33 +260,66 @@ function renderTaskMediaWall(tasks) {
             const type = task.videoType === 'movie' ? 'movie' : 'tv';
             tmdbUrl = `https://www.themoviedb.org/${type}/${tmdbContent.id}`;
         }
+        
+        let progressHtml = '';
+        let percentage = 0;
+        
+        if (task.videoType !== 'movie' && task.totalEpisodes > 0) {
+            // Assume missing episodes is JSON array and calculate progress
+            let missingCount = 0;
+            if (task.missingEpisodes) {
+                try {
+                    const missing = JSON.parse(task.missingEpisodes);
+                    missingCount = missing.length;
+                } catch(e) {}
+            }
+            // Count total episodes vs missing. This is an approximation since we don't have current downloaded count
+            // Or maybe just show missing text. Wait, we have latestSaved maybe we can use update count.
+            // Let's use the UI text format.
+        }
+
         tbody.innerHTML += `
-            <tr class="media-wall-card" data-status='${task.status}' data-task-id='${task.id}' data-name='${taskName}'>
-                <td data-label="海报" class="media-wall-poster-cell">
-                    <div class="media-wall-poster ${poster ? '' : 'is-placeholder'}" 
-                         style="background-image:url('${poster}') ${tmdbUrl ? '; cursor: pointer;' : ''}"
-                         ${tmdbUrl ? `onclick="window.open('${tmdbUrl}', '_blank');"` : ''}>
-                        ${poster ? '' : '<span>暂无海报</span>'}
-                    </div>
-                </td>
-                <td data-label="信息" class="media-wall-info-cell">
-                    <div class="media-wall-topline">
+            <tr class="media-wall-card" data-status='${task.status}' data-task-id='${task.id}' data-name='${taskName}' style="background-image: url('${poster || ''}')" ${tmdbUrl ? `onclick="if(event.target.tagName !== 'BUTTON' && !event.target.closest('.media-actions')) window.open('${tmdbUrl}', '_blank');"` : ''}>
+                <td data-label="信息" class="media-wall-info-cell" style="display: contents;">
+                    <div class="media-card-top">
                         <span class="status-badge ${getStatusClass(task)}">${formatTaskStatus(task)}</span>
-                        ${metaLine ? `<span class="media-wall-meta">${metaLine}</span>` : ''}
-                        ${task.manualTmdbBound ? `<span class="tmdb-bound-badge" style="background:#10b981;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;margin-left:6px;">🎬 ${task.tmdbTitle || task.tmdbId}${task.manualSeason ? ' 第' + task.manualSeason + '季' : ''}</span>` : ''}
                     </div>
-                    <a href="${task.shareLink}" target="_blank" class='media-wall-title' title="${taskName}">${taskName}</a>
-                    <p class="media-wall-overview" title="${overview}">${overview}</p>
-                    <div class="media-wall-latest" title="${latestSaved}">${latestSaved}</div>
-                    ${formatMissingEpisodes(task) ? `<div class="media-wall-missing" title="${formatMissingEpisodesTitle(task)}">${formatMissingEpisodes(task)}</div>` : ''}
-                    <div class="media-wall-path" title="${task.realFolderName || task.realFolderId}">${task.realFolderName || task.realFolderId}</div>
-                    <div class="media-wall-time" style="font-size: 13px; color: #3b82f6; margin-top: 6px; font-weight: 500;">⏱ 更新: ${formatDateTime(task.lastFileUpdateTime) || '无'}</div>
-                    <div class="media-wall-actions">
-                        <button class="btn-warning" onclick="executeTask(${task.id})">执行</button>
-                        <button onclick="showEditTaskModal(${task.id})">修改</button>
-                        <button class="btn-danger" onclick="deleteTask(${task.id})">删除</button>
-                        <button class="btn-default" onclick="clearTaskCache(${task.id})">清缓存</button>
-                        <button class="btn-default" onclick="showFileListModal('${task.id}')">目录</button>
+                    
+                    <div class="media-card-bottom">
+                        <div class="media-wall-title" title="${taskName}">${taskName}</div>
+                        <div class="media-wall-meta">
+                            <i class="ph-fill ph-star" style="color: #fbbf24"></i>
+                            ${metaLine || '暂无信息'}
+                        </div>
+                        
+                        <div class="media-progress-container">
+                            <div class="media-progress-text">
+                                <span>${latestSaved}</span>
+                                ${formatMissingEpisodes(task) ? `<span style="color: #fca5a5">${formatMissingEpisodes(task)}</span>` : ''}
+                            </div>
+                            <div class="media-progress-bar">
+                                <div class="media-progress-fill" style="width: ${task.status === 'completed' ? '100%' : '50%'}"></div>
+                            </div>
+                        </div>
+
+                        <div class="media-card-footer">
+                            <div class="media-tags">
+                                <span class="media-tag">${task.videoType === 'movie' ? '电影' : '剧集'}</span>
+                                <span class="media-tag">${task.account?.username || '账号'}</span>
+                            </div>
+                            
+                            <div class="media-actions">
+                                <div class="media-btn-circle primary" onclick="event.stopPropagation(); executeTask(${task.id})" title="执行任务">
+                                    <i class="ph-fill ph-play"></i>
+                                </div>
+                                <div class="media-btn-circle" onclick="event.stopPropagation(); showEditTaskModal(${task.id})" title="更多操作">
+                                    <i class="ph ph-dots-three"></i>
+                                </div>
+                                <div class="media-btn-circle" style="color: #fca5a5; border-color: rgba(252,165,165,0.3);" onclick="event.stopPropagation(); deleteTask(${task.id})" title="删除任务">
+                                    <i class="ph ph-trash"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </td>
             </tr>

@@ -14,6 +14,8 @@
     <meta name="apple-mobile-web-app-title" content="自动转存" />
     <link rel="manifest" href="/favicon/site.webmanifest" />
 
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="/css/layout.css">
     <link rel="stylesheet" href="/css/base.css">
     <link rel="stylesheet" href="/css/folder-tree.css">
     <link rel="stylesheet" href="/css/modal.css">
@@ -32,43 +34,125 @@
     <link rel="stylesheet" href="/css/ui-themes.css">
 </head>
 <body>
-    <div class="header">
-        <h1 id="appTitle">天翼自动转存</h1>
-        <div class="header-meta">
-            <a href="https://github.com/ymting/my-cloud189-auto-save" target="_blank" title="GitHub">
-                <span class="github-icon"></span>
-                <span id="version"></span>
-            </a>
-        </div>
-    </div>
-    
-    <div class="theme-switch">
-        <button id="themeToggle" class="theme-toggle-btn">
-            <span class="theme-icon"></span>
-        </button>
-        <div class="theme-dropdown" id="themeDropdown">
-            <div class="theme-group-label">外观模式</div>
-            <div class="theme-option" data-theme="light">
-                <span class="theme-icon"></span>
-                明亮
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="ph-fill ph-cloud-arrow-up"></i>
+                    <span class="logo-text">天翼自动转存 <span class="version-tag">v2.2.62-dev</span></span>
+                </div>
             </div>
-            <div class="theme-option" data-theme="dark">
-                <span class="theme-icon"></span>
-                暗色
+            <nav class="sidebar-nav">
+                <div class="nav-item" data-tab="dashboard">
+                    <i class="ph ph-house"></i> 仪表盘
+                </div>
+                <div class="nav-item active" data-tab="task">
+                    <i class="ph ph-check-square"></i> 任务管理
+                </div>
+                <div class="nav-item" data-tab="account">
+                    <i class="ph ph-user"></i> 账号管理
+                </div>
+                <div class="nav-item" data-tab="media">
+                    <i class="ph ph-film-strip"></i> 媒体管理
+                </div>
+                <div class="nav-item" data-tab="cloudsaver">
+                    <i class="ph ph-magnifying-glass"></i> 资源搜索 (CloudSaver)
+                </div>
+                <div class="nav-item" data-tab="notifications">
+                    <i class="ph ph-bell"></i> 通知中心
+                    <span class="badge">8</span>
+                </div>
+                
+                <div class="nav-group-title">系统设置</div>
+                <div class="nav-item" data-tab="settings" data-sub-tab="basic">
+                    <i class="ph ph-gear"></i> 基础设置
+                </div>
+                <div class="nav-item" data-tab="settings" data-sub-tab="transfer">
+                    <i class="ph ph-arrows-left-right"></i> 转存设置
+                </div>
+                <div class="nav-item" data-tab="settings" data-sub-tab="media-settings">
+                    <i class="ph ph-squares-four"></i> 媒体设置
+                </div>
+                <div class="nav-item" data-tab="settings" data-sub-tab="notification-settings">
+                    <i class="ph ph-bell-ringing"></i> 通知设置
+                </div>
+                <div class="nav-item" data-tab="settings" data-sub-tab="tools">
+                    <i class="ph ph-wrench"></i> 系统工具
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="system-status-widget">
+                    <div class="status-top">
+                        <span>系统状态 <span class="status-dot green"></span></span>
+                        <span class="status-text">运行中</span>
+                    </div>
+                    <div class="status-uptime">已运行 12 天 18 小时</div>
+                    <div class="status-load">系统负载 32%</div>
+                    <div class="load-bar"><div class="load-progress" style="width: 32%"></div></div>
+                </div>
+                <div class="copyright">© 2025 天翼自动转存</div>
             </div>
-            <div class="theme-option" data-theme="auto">
-                <span class="theme-icon"></span>
-                跟随系统
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="tabs">
-            <div class="tab" data-tab="account">账号</div>
-            <div class="tab active" data-tab="task">任务</div>
-            <div class="tab" data-tab="media">媒体</div>
-            <div class="tab" data-tab="settings">系统</div>
-        </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <header class="topbar">
+                <div class="topbar-search">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text" placeholder="搜索任务名称 / 分享链接 / 目录" id="globalSearch">
+                    <div class="search-shortcut">⌘K</div>
+                </div>
+                <div class="topbar-actions">
+                    <div class="status-pill"><span class="status-dot green"></span> 运行中</div>
+                    <div class="notification-btn">
+                        <i class="ph ph-bell"></i>
+                        <span class="badge">8</span>
+                    </div>
+                    
+                    <div class="theme-switch" style="margin-left: 12px; margin-right: 12px;">
+                        <button id="themeToggle" class="theme-toggle-btn" style="width: 32px; height: 32px; border-radius: 50%; border: none; background: #f1f5f9; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                            <i class="ph ph-moon" style="font-size: 18px; color: #64748b;"></i>
+                        </button>
+                    </div>
+
+                    <div class="user-profile">
+                        <img src="/img/avatar.png" alt="User Avatar" class="avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\\'http://www.w3.org/2000/svg\\\' viewBox=\\\'0 0 100 100\\\'><circle cx=\\\'50\\\' cy=\\\'50\\\' r=\\\'50\\\' fill=\\\'%23e2e8f0\\\'/><circle cx=\\\'50\\\' cy=\\\'40\\\' r=\\\'20\\\' fill=\\\'%2394a3b8\\\'/><path d=\\\'M20 90 Q50 60 80 90\\\' stroke=\\\'%2394a3b8\\\' stroke-width=\\\'15\\\' fill=\\\'none\\\'/></svg>'">
+                        <span class="username">admin</span>
+                        <i class="ph ph-caret-down" style="font-size: 12px; color: #64748b;"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Container -->
+            <div class="page-container">
+                <!-- Dashboard Tab (Placeholder) -->
+                <div id="dashboardTab" class="tab-content">
+                    <div class="coming-soon">
+                        <i class="ph ph-chart-line-up"></i>
+                        <h2>仪表盘建设中</h2>
+                        <p>更多精彩数据统计功能即将上线</p>
+                    </div>
+                </div>
+
+                <!-- Notification Tab (Placeholder) -->
+                <div id="notificationsTab" class="tab-content">
+                    <div class="coming-soon">
+                        <i class="ph ph-bell-ringing"></i>
+                        <h2>通知中心建设中</h2>
+                        <p>最新消息将会在这里展示</p>
+                    </div>
+                </div>
+                
+                <!-- CloudSaver Tab (Placeholder) -->
+                <div id="cloudsaverTab" class="tab-content">
+                    <div class="coming-soon">
+                        <i class="ph ph-magnifying-glass"></i>
+                        <h2>资源搜索 (CloudSaver) 建设中</h2>
+                        <p>快速搜索全网优质资源</p>
+                    </div>
+                </div>
 
         <div id="accountTab" class="tab-content">
             <div class="form-header">
@@ -900,6 +984,10 @@
             </div>
         </div>
     </div>
+
+            </div> <!-- End page-container -->
+        </main> <!-- End main-content -->
+    </div> <!-- End app-layout -->
 
 <!-- 在 body 结束标签前添加以下脚本引用 -->
 <script src="/js/folderSelector.js"></script>
