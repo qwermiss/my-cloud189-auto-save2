@@ -469,8 +469,20 @@ AppDataSource.initialize().then(async () => {
     app.post('/api/tasks/:id/clear-cache', async (req, res) => {
         try {
             const taskId = parseInt(req.params.id);
+            const task = await taskRepo.findOneBy({ id: taskId });
+            if (!task) {
+                return res.json({ success: false, error: '任务不存在' });
+            }
+            // 清除任务缓存
             await taskCacheManager.clearCache(taskId);
-            res.json({ success: true, data: null });
+            // 同时清除 processingStartTime、lastFileUpdateTime、currentEpisodes，恢复任务状态为 pending
+            task.processingStartTime = null;
+            task.lastFileUpdateTime = null;
+            task.currentEpisodes = 0;
+            task.status = 'pending';
+            await taskRepo.save(task);
+            logTaskEvent(`任务[${task.resourceName}]缓存已清除，状态恢复为 pending`);
+            res.json({ success: true, data: null, message: '缓存已清除，任务状态已恢复' });
         } catch (error) {
             res.json({ success: false, error: error.message });
         }
@@ -517,7 +529,18 @@ AppDataSource.initialize().then(async () => {
             const taskId = parseInt(req.params.id);
             const { tmdbId, videoType, title, manualSeason } = req.body;
             if (!tmdbId || !videoType) throw new Error('参数缺失');
-            const task = await taskRepo.findOneBy({ id: taskId });
+            const task = await taskRepo.findOne({
+                where: { id: taskId },
+                relations: { account: true },
+                select: {
+                    account: {
+                        username: true,
+                        localStrmPrefix: true,
+                        cloudStrmPrefix: true,
+                        embyPathReplace: true
+                    }
+                }
+            });
             if (!task) throw new Error('任务不存在');
             
             task.tmdbId = tmdbId;
@@ -528,7 +551,77 @@ AppDataSource.initialize().then(async () => {
                 ? parseInt(manualSeason) 
                 : null;
             task.manualTmdbBound = true;
+            
+            // 从 TMDB API 获取更多信息更新任务卡片
+            try {
+                const { TMDBService } = require('./services/tmdb');
+                const tmdbService = new TMDBService();
+                const detail = videoType === 'movie'
+                    ? await tmdbService.getMovieDetails(tmdbId)
+                    : await tmdbService.getTVDetails(tmdbId);
+                
+                if (detail) {
+                    // 更新 TMDB 标题（如果未提供）
+                    if (!title && detail.title) {
+                        task.tmdbTitle = detail.title;
+                    }
+                    // 更新总集数（剧集类型）
+                    if (videoType === 'tv' && detail.totalEpisodes) {
+                        task.totalEpisodes = detail.totalEpisodes;
+                    }
+                    // 保存完整的 TMDB 内容
+                    task.tmdbContent = JSON.stringify(detail);
+                    logTaskEvent(`[TMDB绑定] 已获取 TMDB 详情: ${detail.title || title}`);
+                }
+            } catch (e) {
+                logTaskEvent(`[TMDB绑定] 获取 TMDB 详情失败: ${e.message}`);
+            }
+            
+            // 注意：TMDB 绑定后不清除缓存，只触发重命名
+            // 清缓存会导致任务重新执行，可能误删文件
+            
             await taskRepo.save(task);
+
+            // 自动触发重命名（后台异步执行，不阻塞响应）
+            const renameTask = async () => {
+                try {
+                    const account = task.account;
+                    const cloud189 = Cloud189Service.getInstance(account);
+                    logTaskEvent(`[TMDB绑定] 自动触发重命名: ${task.resourceName}`);
+                    // TMDB 绑定后的重命名：只重命名，不删除文件（避免误删）
+                    const result = await taskService.autoRename(cloud189, task, { skipDeletion: true });
+                    
+                    let message = '';
+                    if (result && result.newFiles && result.newFiles.length > 0) {
+                        message = `✅《${task.resourceName}》TMDB绑定并重命名完成\n已处理 ${result.newFiles.length} 个文件`;
+                        if (result.renameMessages && result.renameMessages.length > 0) {
+                            const details = result.renameMessages.slice(0, 10);
+                            message += `\n${details.join('\n')}`;
+                            if (result.renameMessages.length > 10) {
+                                message += `\n└─ ... 等${result.renameMessages.length}个文件`;
+                            }
+                        }
+                        messageUtil.sendMessage(message);
+
+                        // 重命名后触发 Emby 扫库
+                        const { EmbyService } = require('./services/emby');
+                        const embyService = new EmbyService();
+                        try {
+                            logTaskEvent(`[TMDB绑定] 执行Emby通知: ${task.resourceName}`);
+                            await embyService.notify(task);
+                        } catch (e) {
+                            logTaskEvent(`[TMDB绑定] Emby扫库失败: ${e.message}`);
+                        }
+                    } else {
+                        message = `ℹ️《${task.resourceName}》TMDB绑定完成，无需重命名（无文件或已是正确格式）`;
+                        messageUtil.sendMessage(message);
+                    }
+                } catch (e) {
+                    logTaskEvent(`[TMDB绑定] 自动重命名失败: ${e.message}`);
+                    messageUtil.sendMessage(`❌《${task.resourceName}》TMDB绑定后重命名失败: ${e.message}`);
+                }
+            };
+            renameTask().catch(() => {}); // 异步执行，不阻塞
 
             res.json({ success: true, data: task });
         } catch (error) {
@@ -638,12 +731,25 @@ AppDataSource.initialize().then(async () => {
                         await send(`已选择：《${title}》\n\n📅 请指定季数：\n回复数字(如 2)或回复"自动"自动识别`);
                     } else {
                         // 电影直接绑定
-                        const task = await taskRepo.findOneBy({ id: ses.taskId });
+                        const task = await taskRepo.findOne({
+                            where: { id: ses.taskId },
+                            relations: { account: true },
+                            select: { account: { username: true, localStrmPrefix: true, cloudStrmPrefix: true, embyPathReplace: true } }
+                        });
                         if (task) {
                             task.tmdbId = tmdbId; task.videoType = 'movie'; task.tmdbTitle = title;
                             task.manualTmdbBound = true; task.manualSeason = null;
                             await taskRepo.save(task);
-                            taskService.processAllTasks(true, [ses.taskId]).catch(() => {});
+                            // 异步触发重命名（不阻塞响应）
+                            (async () => {
+                                try {
+                                    const cloud189 = Cloud189Service.getInstance(task.account);
+                                    await taskService.autoRename(cloud189, task, { skipDeletion: true });
+                                    await send(`✅ 重命名完成：${title}`);
+                                } catch (e) {
+                                    await send(`❌ 重命名失败: ${e.message}`);
+                                }
+                            })().catch(() => {});
                             await send(`✅ 绑定成功！\n🎥 电影：${title}\n🔄 已触发重命名`);
                         }
                         WeChatWorkManager.clearSession(fromUser);
@@ -654,13 +760,26 @@ AppDataSource.initialize().then(async () => {
                 if (ses.state === 'select_season') {
                     const manualSeason = content === '自动' ? null : parseInt(content);
                     if (content !== '自动' && isNaN(manualSeason)) { await send('请输入数字或"自动"'); return; }
-                    const task = await taskRepo.findOneBy({ id: ses.taskId });
+                    const task = await taskRepo.findOne({
+                        where: { id: ses.taskId },
+                        relations: { account: true },
+                        select: { account: { username: true, localStrmPrefix: true, cloudStrmPrefix: true, embyPathReplace: true } }
+                    });
                     if (task) {
                         task.tmdbId = ses.pendingTmdbId; task.videoType = 'tv';
                         task.tmdbTitle = ses.pendingTitle; task.manualSeason = manualSeason;
                         task.manualTmdbBound = true;
                         await taskRepo.save(task);
-                        taskService.processAllTasks(true, [ses.taskId]).catch(() => {});
+                        // 异步触发重命名（不阻塞响应）
+                        (async () => {
+                            try {
+                                const cloud189 = Cloud189Service.getInstance(task.account);
+                                await taskService.autoRename(cloud189, task, { skipDeletion: true });
+                                await send(`✅ 重命名完成：${ses.pendingTitle}${manualSeason != null ? ' 第'+manualSeason+'季' : ''}`);
+                            } catch (e) {
+                                await send(`❌ 重命名失败: ${e.message}`);
+                            }
+                        })().catch(() => {});
                         await send(`✅ 绑定成功！\n🎥 ${ses.pendingTitle}${manualSeason != null ? ' 第'+manualSeason+'季' : ' (自动识别季)'}\n🔄 已触发重命名，完成后发送通知`);
                     }
                     WeChatWorkManager.clearSession(fromUser);
@@ -700,8 +819,9 @@ AppDataSource.initialize().then(async () => {
                 const fiveMinutes = 5 * 60 * 1000;
                 // 使用 processingStartTime 进行超时检测（比 lastCheckTime 更准确）
                 // processingStartTime 在任务开始时就更新，lastCheckTime 只在正常完成后才更新
-                if (processingStartTime && (now.getTime() - processingStartTime.getTime() > fiveMinutes)) {
-                    logTaskEvent(`任务[${task.resourceName}] processing 状态超时(>5分钟)，自动恢复为 pending`);
+                // 如果 processingStartTime 为 NULL（旧数据或异常退出），强制恢复
+                if (!processingStartTime || (now.getTime() - processingStartTime.getTime() > fiveMinutes)) {
+                    logTaskEvent(`任务[${task.resourceName}] processing 状态超时或数据异常，自动恢复为 pending`);
                     task.status = 'pending';
                     task.processingStartTime = null;
                     await taskRepo.save(task);
@@ -713,7 +833,7 @@ AppDataSource.initialize().then(async () => {
             logTaskEvent(`================================`);
             const taskName = task.shareFolderName?(task.resourceName + '/' + task.shareFolderName): task.resourceName || '未知'
             logTaskEvent(`任务[${taskName}]开始执行`);
-            const result = await taskService.processTask(task);
+            const result = await taskService.processTask(task, { manualTrigger: true });
             if (result) {
                 messageUtil.sendMessage(result)
             }

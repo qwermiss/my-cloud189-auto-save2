@@ -70,8 +70,9 @@ class SchedulerService {
                     const processingStartTime = latestTask.processingStartTime ? new Date(latestTask.processingStartTime) : null;
                     const now = new Date();
                     const fiveMinutes = 5 * 60 * 1000;
-                    if (processingStartTime && (now.getTime() - processingStartTime.getTime() > fiveMinutes)) {
-                        logTaskEvent(`任务[${taskName}] processing 状态超时(>5分钟)，自动恢复为 pending`);
+                    // 如果 processingStartTime 为 NULL（旧数据或异常退出），强制恢复
+                    if (!processingStartTime || (now.getTime() - processingStartTime.getTime() > fiveMinutes)) {
+                        logTaskEvent(`任务[${taskName}] processing 状态超时或数据异常，自动恢复为 pending`);
                         latestTask.status = 'pending';
                         latestTask.processingStartTime = null;
                         await taskService.taskRepo.save(latestTask);

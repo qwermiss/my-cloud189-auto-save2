@@ -844,7 +844,9 @@ class TaskService {
     }
 
     // 执行任务
-    async processTask(task) {
+    // options: { manualTrigger: boolean } - 是否手动触发
+    async processTask(task, options = {}) {
+        const { manualTrigger = false } = options;
         // 检查任务状态，防止并发重复执行
         // 同时检查 processing 状态超时（5分钟），防止异常退出后任务卡住
         if (task.status === 'processing') {
@@ -852,8 +854,9 @@ class TaskService {
             const now = new Date();
             const fiveMinutes = 5 * 60 * 1000;
             // 使用 processingStartTime 进行超时检测
-            if (processingStartTime && (now.getTime() - processingStartTime.getTime() > fiveMinutes)) {
-                logTaskEvent(`任务[${task.resourceName}/${task.shareFolderName || ''}] processing 状态超时(>5分钟)，自动恢复为 pending`);
+            // 如果 processingStartTime 为 NULL（旧数据或异常退出），强制恢复
+            if (!processingStartTime || (now.getTime() - processingStartTime.getTime() > fiveMinutes)) {
+                logTaskEvent(`任务[${task.resourceName}/${task.shareFolderName || ''}] processing 状态超时或数据异常，自动恢复为 pending`);
                 task.status = 'pending';
                 task.processingStartTime = null;
                 await this.taskRepo.save(task);
@@ -1018,16 +1021,17 @@ class TaskService {
                     acc.existingFiles.add(file.md5);
                     acc.existingFileNames.add(file.name);
                     acc.existingFileList.push(file);
-                    if ((task.totalEpisodes == null || task.totalEpisodes <= 0) || this._checkFileSuffix(file, true, mediaSuffixs)) {
+                    // 始终过滤垃圾文件，只计算媒体文件和字幕文件
+                    if (this._checkFileSuffix(file, true, mediaSuffixs)) {
                         acc.existingMediaCount++;
                     }
                 }
                 return acc;
-            }, { 
-                existingFiles: new Set(), 
-                existingFileNames: new Set(), 
+            }, {
+                existingFiles: new Set(),
+                existingFileNames: new Set(),
                 existingFileList: [],
-                existingMediaCount: 0 
+                existingMediaCount: 0
             });
             let aiFiltered = false;
             if (AIService.isEnabled() && task.matchPattern && task.matchOperator && task.matchValue) {
@@ -1079,13 +1083,45 @@ class TaskService {
             // ============== 第2步: CAS 秒传处理 ==============
             let casResults = [];
             const failedShareFileIds = new Set();
+            let successFiles = [];  // 成功的文件名（需在智能去重之前定义）
+            let casSuccessCount = 0;  // CAS成功计数（需在智能去重之前定义）
+            let smartDedupExecuted = false;  // 智能去重执行标记（需在更外层定义）
             if (enableCasRapidUpload) {
                 // 从分享文件中筛选 .cas 文件
                 const allCasFiles = shareFiles.filter(f => !f.isFolder && CasUtils.isCasFile(f.name));
                 // 排除已处理过的（基于 fileId 缓存）
                 const uncachedCasFiles = allCasFiles.filter(f => !cachedFileIds.has(String(f.id)));
 
-                // ====== 新增：智能接力检测 ======
+                // ====== 智能去重判断：初次执行/清缓存后 ======
+                // 条件：所有CAS文件都未缓存（说明是初次执行或清缓存后），且至少有1个CAS文件
+                const useSmartDedup = (uncachedCasFiles.length === allCasFiles.length && uncachedCasFiles.length > 0);
+
+                if (useSmartDedup) {
+                    logTaskEvent(`[CAS] 使用智能去重v2模式（内存比对优先）`);
+                    const tmdbTitle = task.tmdbTitle || (this._extractCleanTitle ? this._extractCleanTitle(task.resourceName, false).name : task.resourceName) || task.resourceName;
+                    const CasSmartDedupService = require('./CasSmartDedupService');
+                    const smartDedup = new CasSmartDedupService(this);
+                    // 初始化家庭中转变量（与原有流程一致）
+                    let familyCloud189 = cloud189;
+                    if (enableCasFamilyTransfer && task.casFamilyAccountId && task.casFamilyAccountId !== task.accountId) {
+                        const familyAccount = await this.accountRepo.findOneBy({ id: task.casFamilyAccountId });
+                        if (familyAccount) {
+                            familyCloud189 = Cloud189Service.getInstance(familyAccount);
+                        }
+                    }
+                    const dedupResult = await smartDedup.processV2(task, cloud189, allCasFiles, folderFiles, tmdbTitle, {
+                        enableCasFamilyTransfer, casFamilyFolderIdActual, familyCloud189, account, enableDeleteCasFile
+                    });
+                    for (const f of dedupResult.successFiles) successFiles.push(f);
+                    for (const r of dedupResult.casResults) casResults.push(r);
+                    for (const id of dedupResult.failedShareFileIds) failedShareFileIds.add(id);
+                    casSuccessCount = dedupResult.casSuccessCount;
+                    smartDedupExecuted = true;
+                }
+
+                if (!smartDedupExecuted) {
+                    // ====== 原有增量流程 ======
+                    // ====== 智能接力检测 ======
                 // 检查目标目录已有的 .cas 文件名，避免重复转存和解析
                 const existingCasFileNames = new Set(
                     folderFiles.filter(f => CasUtils.isCasFile(f.name)).map(f => f.name)
@@ -1184,7 +1220,7 @@ class TaskService {
                             const FILE_DELAY = 500;  // 文件间延迟
 
                             const savedCasFileIds = [];  // 记录已转存的 .cas 文件 fileId，用于后续删除
-                            const successFiles = [];  // 成功的文件名
+                            // successFiles 已在外层定义
                             const permanentlyFailedFiles = [];  // 永久失败的文件 [{id, name, reason, retryCount}]
                             const fileRetryCount = new Map();  // 每个文件的重试次数
 
@@ -1252,6 +1288,14 @@ class TaskService {
 
                                 const realFileName = CasUtils.mergeCasFileName(casFile.name, parsed.name);
                                 result.realFileName = realFileName;
+
+                                // 过滤非媒体文件（如 txt、jpg 等）
+                                if (!this._checkFileNameSuffix(realFileName)) {
+                                    result.message = '非媒体文件，跳过';
+                                    result.skipped = true;
+                                    logTaskEvent(`[CAS] ⏭️ ${realFileName} - 非媒体文件，跳过秒传`);
+                                    return result;
+                                }
 
                                 const realBaseName = getBaseNameWithoutExt(realFileName);
                                 if (existingBaseNamesAfter.has(realBaseName) || currentFileNamesAfter.has(realFileName)) {
@@ -1423,7 +1467,9 @@ class TaskService {
 
                                     if (result.skipped) {
                                         remainingFiles = remainingFiles.filter(f => f.id !== casFile.id);
-                                        logTaskEvent(`[CAS] ⏭️ ${result.realFileName} 已存在，跳过`);
+                                        logTaskEvent(`[CAS] ⏭️ ${result.realFileName || casFile.name} 已跳过: ${result.message}`);
+                                        // 将跳过的文件加入缓存（避免下次重复处理）
+                                        await taskCacheManager.addCache(task.id, String(casFile.id));
                                     } else if (result.success && result.realFileName) {
                                         successFiles.push(result.realFileName);
                                         casResults.push({ fileName: result.realFileName, success: true });
@@ -1638,6 +1684,7 @@ class TaskService {
                         }
                     }
                 }
+                } // 结束 if (!smartDedupExecuted) - 原有增量流程
                 // CAS 文件的处理结果已记录在 failedShareFileIds
                 // 统一在最后根据结果更新缓存，从而过滤掉处理失败的项
                 // 清理本次任务的家庭信息缓存（避免跨任务串扰）
@@ -1645,27 +1692,51 @@ class TaskService {
                 this._casFamilyRootFolderId = null;
             }
 
-            const casSuccessCount = casResults.filter(r => r.success).length;
+            // casSuccessCount 已在智能去重流程中正确计算（包含跳过+秒传）
+            // 这里只累加非智能去重流程的 casResults 成功数（避免重复计数）
+            if (!smartDedupExecuted) {
+                casSuccessCount += casResults.filter(r => r.success).length;
+            }
 
 
             // 处理新文件并保存到数据库和云盘
-            if (newFiles.length > 0 || casSuccessCount > 0) {
+            // 智能去重流程：只有实际秒传成功或有新文件才发通知
+            const actualNewCount = smartDedupExecuted 
+                ? casResults.filter(r => r.success).length 
+                : (fileCount + casSuccessCount);
+            
+            if (newFiles.length > 0 || actualNewCount > 0) {
                 const resourceName = task.resourceName;
                 const folderPath = task.realFolderName || task.realFolderId || '';
                 const totalEps = task.totalEpisodes > 0 ? task.totalEpisodes : '?';
-                const progressEps = existingMediaCount + fileCount + casSuccessCount;
+                
+                // 智能去重流程：progressEps = 已有视频数（刷新后）
+                // 常规流程：progressEps = 已有 + 新增
+                let progressEps;
+                if (smartDedupExecuted) {
+                    // 智能去重后刷新目标目录获取真实视频数
+                    try {
+                        const refreshedFiles = await this.getAllFolderFiles(cloud189, task);
+                        const refreshedVideoCount = refreshedFiles.filter(f => !f.isFolder && !CasUtils.isCasFile(f.name) && this._checkFileSuffix(f, mediaSuffixs, ConfigService.getConfigValue('task.enableOnlySaveMedia'))).length;
+                        progressEps = refreshedVideoCount;
+                    } catch (e) {
+                        progressEps = existingMediaCount + actualNewCount;
+                    }
+                } else {
+                    progressEps = existingMediaCount + fileCount + casSuccessCount;
+                }
 
                 // 构建具有表头的结构化通知消息
                 const lines = [
                     `【天翼云转存】`,
-                    `✅《${resourceName}》新增 ${fileCount + casSuccessCount} 集`,
+                    `✅《${resourceName}》新增 ${actualNewCount} 集`,
                     `📁 ${folderPath}`,
                     ...fileNameList,
                 ];
-                // 添加 CAS 秒传结果到通知
-                if (casSuccessCount > 0) {
-                    lines.push(`⚡ CAS秒传成功 ${casSuccessCount} 个:`);
-                    const successfulCas = casResults.filter(r => r.success);
+                // 添加 CAS 秒传结果到通知（只有实际秒传成功才显示）
+                const successfulCas = casResults.filter(r => r.success);
+                if (successfulCas.length > 0) {
+                    lines.push(`⚡ CAS秒传成功 ${successfulCas.length} 个:`);
                     // 当文件数量超过 6 个时，只显示前 3 个和后 3 个，中间省略
                     if (successfulCas.length > 6) {
                         const first3 = successfulCas.slice(0, 3);
@@ -1703,6 +1774,20 @@ class TaskService {
                 })
             } else {
                 // 无新增文件的情况
+                // 手动触发时，即使无新增也发送通知
+                if (manualTrigger) {
+                    const resourceName = task.resourceName;
+                    const folderPath = task.realFolderName || task.realFolderId || '';
+                    const lines = [
+                        `【天翼云转存】`,
+                        `ℹ️《${resourceName}》无新增剧集`,
+                        `📁 ${folderPath}`,
+                    ];
+                    if (task.totalEpisodes > 0 || existingMediaCount > 0) {
+                        lines.push(`🚀 当前进度：${existingMediaCount}${task.totalEpisodes > 0 ? '/' + task.totalEpisodes : ''} 集`);
+                    }
+                    saveResults.push(lines.join('\n'));
+                }
                 // 1. 如果有历史记录，检查是否过期
                 if (task.lastFileUpdateTime) {
                     const now = new Date();
@@ -1909,6 +1994,7 @@ class TaskService {
         if (shouldResetProgress) {
             task.currentEpisodes = 0;
             task.status = 'pending';
+            task.processingStartTime = null;  // 清除 processingStartTime
             task.lastFileUpdateTime = null;
             task.lastCheckTime = null;
             task.lastSavedFileName = null;
@@ -1926,7 +2012,9 @@ class TaskService {
     }
 
     // 自动重命名
-    async autoRename(cloud189, task) {
+    // options: { skipDeletion: boolean } - 跳过去重删除（TMDB绑定后使用）
+    async autoRename(cloud189, task, options = {}) {
+        const { skipDeletion = false } = options;
         if ((!task.sourceRegex || !task.targetRegex) && !AIService.isEnabled()) return [];
         let message = []
         let newFiles = [];
@@ -1974,14 +2062,14 @@ class TaskService {
                     'file',
                     task
                 );
-                await this._processRename(cloud189, task, files, resourceInfo, message, newFiles, baseNameMap, getBaseName, isMediaFile);
+                await this._processRename(cloud189, task, files, resourceInfo, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion);
             } catch (error) {
                 logTaskEvent('AI 重命名失败，使用正则表达式重命名: ' + error.message);
-                await this._processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile);
+                await this._processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion);
             }
         } else {
             logTaskEvent(` ${task.resourceName} 开始使用正则表达式重命名`);
-            await this._processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile);
+            await this._processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion);
         }
 
         // 处理消息和保存结果
@@ -2039,7 +2127,7 @@ class TaskService {
         return this._sanitizeFileName(newName);
     }
     // 处理重命名过程
-    async _processRename(cloud189, task, files, resourceInfo, message, newFiles, baseNameMap, getBaseName, isMediaFile) {
+    async _processRename(cloud189, task, files, resourceInfo, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion = false) {
         const newNames = resourceInfo.episode;
         // 处理aiFilename, 文件命名通过配置文件的占位符获取
         // 获取用户配置的文件名模板，如果没有配置则使用默认模板
@@ -2055,9 +2143,9 @@ class TaskService {
                 }
                 const newName = this._generateFileName(file, aiFile, resourceInfo, template, task);
                 
-                // 去重检查
+                // 去重检查（skipDeletion 时跳过）
                 let isDuplicate = false;
-                if (isMediaFile && baseNameMap && isMediaFile(newName)) {
+                if (!skipDeletion && isMediaFile && baseNameMap && isMediaFile(newName)) {
                     const newBaseName = getBaseName(newName).toLowerCase();
                     for (const [id, info] of baseNameMap.entries()) {
                         if (id !== file.id && info.baseName === newBaseName) {
@@ -2099,15 +2187,15 @@ class TaskService {
             .trim();
     }
     // 处理正则表达式重命名
-    async _processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile) {
+    async _processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion = false) {
         if (!task.sourceRegex || !task.targetRegex) return [];
         for (const file of files) {
             try {
                 const destFileName = file.name.replace(new RegExp(task.sourceRegex), task.targetRegex);
                 
-                // 去重检查
+                // 去重检查（skipDeletion 时跳过）
                 let isDuplicate = false;
-                if (isMediaFile && baseNameMap && isMediaFile(destFileName)) {
+                if (!skipDeletion && isMediaFile && baseNameMap && isMediaFile(destFileName)) {
                     const newBaseName = getBaseName(destFileName).toLowerCase();
                     for (const [id, info] of baseNameMap.entries()) {
                         if (id !== file.id && info.baseName === newBaseName) {
@@ -2450,12 +2538,12 @@ class TaskService {
             logTaskEvent(`清空[${username}]家庭回收站完成`)
         }
     }
-    // 校验文件后缀
+    // 校验文件后缀（文件对象版本）
     _checkFileSuffix(file, enableOnlySaveMedia, mediaSuffixs) {
         // 获取文件后缀
         const fileExt = '.' + file.name.split('.').pop().toLowerCase();
         const isMedia = mediaSuffixs.includes(fileExt);
-        
+
         // 垃圾文件/非媒体文件黑名单 (即使不开启仅保存媒体文件，也过滤掉这些明显的无关文件)
         const junkSuffixes = ['.txt', '.html', '.htm', '.png', '.jpg', '.jpeg', '.gif', '.url', '.nfo'];
         // 字幕文件白名单 (属于有用文件)
@@ -2473,7 +2561,75 @@ class TaskService {
 
         return true;
     }
-    // 根据realRootFolderId获取根目录
+
+    // 校验文件名后缀（字符串版本，用于 CAS 文件解析后的真实文件名过滤）
+    _checkFileNameSuffix(fileName) {
+        // 获取文件后缀
+        const fileExt = '.' + fileName.split('.').pop().toLowerCase();
+
+        // 常见媒体扩展名
+        const mediaSuffixes = ['.mkv', '.mp4', '.avi', '.rmvb', '.wmv', '.m2ts', '.ts', '.flv', '.mov', '.iso', '.mpg', '.rm', '.mp3', '.flac', '.wav', '.aac'];
+        // 字幕文件白名单
+        const subSuffixes = ['.srt', '.ass', '.ssa', '.sub', '.vtt'];
+        // 垃圾文件黑名单（始终过滤）
+        const junkSuffixes = ['.txt', '.html', '.htm', '.png', '.jpg', '.jpeg', '.gif', '.url', '.nfo'];
+
+        // 如果是黑名单里的垃圾文件，直接过滤掉
+        if (junkSuffixes.includes(fileExt)) {
+            return false;
+        }
+
+        // 只保留媒体文件和字幕文件
+        if (!mediaSuffixes.includes(fileExt) && !subSuffixes.includes(fileExt)) {
+            return false;
+        }
+
+        return true;
+    }
+    
+    // 从文件名提取季数和集数
+    _extractSeasonEpisode(fileName) {
+        if (!fileName) return { season: 1, episode: null };
+        fileName = fileName.replace(/\.cas$/i, '');
+        const seasonRegex = /(?:S|Season)\s*(\d+)|第\s*(\d+)\s*季/i;
+        const seasonMatch = fileName.match(seasonRegex);
+        const episodeRegex = /(?:S\d+[-_ ]*E(\d+))|(?:(?:E[P]?|Episode)[-_ ]*(\d+))|(?:第\s*(\d+)\s*[集话])/i;
+        const episodeMatch = fileName.match(episodeRegex);
+        if (!episodeMatch) {
+            const isolatedNumberRegex = /(^|[^\d])(?!1080|720|2160|4K|265|264|10[-_]?bit|HEVC|AAC|HDR|SDR|WEB[-_]?DL|BluRay|x264|x265)(\d{1,4})([^\d]|$)/i;
+            const numberMatch = fileName.match(isolatedNumberRegex);
+            if (numberMatch) {
+                const num = parseInt(numberMatch[2]);
+                if (num >= 1 && num <= 999) {
+                    return { season: seasonMatch ? parseInt(seasonMatch[1] || seasonMatch[2]) : 1, episode: num };
+                }
+            }
+        }
+        return {
+            season: seasonMatch ? parseInt(seasonMatch[1] || seasonMatch[2]) : 1,
+            episode: episodeMatch ? parseInt(episodeMatch[1] || episodeMatch[2] || episodeMatch[3]) : null
+        };
+    }
+
+    // 获取文件扩展名
+    _getFileExtension(fileName) {
+        if (!fileName) return '';
+        fileName = fileName.replace(/\.cas$/i, '');
+        const lastDot = fileName.lastIndexOf('.');
+        if (lastDot === -1 || lastDot === fileName.length - 1) return '';
+        return fileName.substring(lastDot + 1);
+    }
+
+    // 生成 CAS 重命名后的目标文件名
+    _generateCasTargetName(casFileName, tmdbTitle, season, episode) {
+        const ext = this._getFileExtension(casFileName);
+        const seasonStr = String(season).padStart(2, '0');
+        const episodeStr = String(episode).padStart(2, '0');
+        const extPart = ext ? '.' + ext : '.mkv';
+        return tmdbTitle + ' - S' + seasonStr + 'E' + episodeStr + extPart + '.cas';
+    }
+
+// 根据realRootFolderId获取根目录
     async getRootFolder(task) {
         if (task.realRootFolderId) {
             // 判断realRootFolderId下是否还有其他目录, 通过任务查询 查询realRootFolderId是否有多个任务, 如果存在多个 则使用realFolderId
