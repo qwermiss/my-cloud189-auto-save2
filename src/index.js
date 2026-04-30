@@ -565,7 +565,8 @@ AppDataSource.initialize().then(async () => {
                     const account = task.account;
                     const cloud189 = Cloud189Service.getInstance(account);
                     logTaskEvent(`[TMDB绑定] 自动触发重命名: ${task.resourceName}`);
-                    const result = await taskService.autoRename(cloud189, task);
+                    // TMDB 绑定后的重命名：只重命名，不删除文件（避免误删）
+                    const result = await taskService.autoRename(cloud189, task, { skipDeletion: true });
                     
                     let message = '';
                     if (result && result.newFiles && result.newFiles.length > 0) {

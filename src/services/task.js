@@ -2011,7 +2011,9 @@ class TaskService {
     }
 
     // 自动重命名
-    async autoRename(cloud189, task) {
+    // options: { skipDeletion: boolean } - 跳过去重删除（TMDB绑定后使用）
+    async autoRename(cloud189, task, options = {}) {
+        const { skipDeletion = false } = options;
         if ((!task.sourceRegex || !task.targetRegex) && !AIService.isEnabled()) return [];
         let message = []
         let newFiles = [];
@@ -2059,14 +2061,14 @@ class TaskService {
                     'file',
                     task
                 );
-                await this._processRename(cloud189, task, files, resourceInfo, message, newFiles, baseNameMap, getBaseName, isMediaFile);
+                await this._processRename(cloud189, task, files, resourceInfo, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion);
             } catch (error) {
                 logTaskEvent('AI 重命名失败，使用正则表达式重命名: ' + error.message);
-                await this._processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile);
+                await this._processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion);
             }
         } else {
             logTaskEvent(` ${task.resourceName} 开始使用正则表达式重命名`);
-            await this._processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile);
+            await this._processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion);
         }
 
         // 处理消息和保存结果
@@ -2124,7 +2126,7 @@ class TaskService {
         return this._sanitizeFileName(newName);
     }
     // 处理重命名过程
-    async _processRename(cloud189, task, files, resourceInfo, message, newFiles, baseNameMap, getBaseName, isMediaFile) {
+    async _processRename(cloud189, task, files, resourceInfo, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion = false) {
         const newNames = resourceInfo.episode;
         // 处理aiFilename, 文件命名通过配置文件的占位符获取
         // 获取用户配置的文件名模板，如果没有配置则使用默认模板
@@ -2140,9 +2142,9 @@ class TaskService {
                 }
                 const newName = this._generateFileName(file, aiFile, resourceInfo, template, task);
                 
-                // 去重检查
+                // 去重检查（skipDeletion 时跳过）
                 let isDuplicate = false;
-                if (isMediaFile && baseNameMap && isMediaFile(newName)) {
+                if (!skipDeletion && isMediaFile && baseNameMap && isMediaFile(newName)) {
                     const newBaseName = getBaseName(newName).toLowerCase();
                     for (const [id, info] of baseNameMap.entries()) {
                         if (id !== file.id && info.baseName === newBaseName) {
@@ -2184,15 +2186,15 @@ class TaskService {
             .trim();
     }
     // 处理正则表达式重命名
-    async _processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile) {
+    async _processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion = false) {
         if (!task.sourceRegex || !task.targetRegex) return [];
         for (const file of files) {
             try {
                 const destFileName = file.name.replace(new RegExp(task.sourceRegex), task.targetRegex);
                 
-                // 去重检查
+                // 去重检查（skipDeletion 时跳过）
                 let isDuplicate = false;
-                if (isMediaFile && baseNameMap && isMediaFile(destFileName)) {
+                if (!skipDeletion && isMediaFile && baseNameMap && isMediaFile(destFileName)) {
                     const newBaseName = getBaseName(destFileName).toLowerCase();
                     for (const [id, info] of baseNameMap.entries()) {
                         if (id !== file.id && info.baseName === newBaseName) {
