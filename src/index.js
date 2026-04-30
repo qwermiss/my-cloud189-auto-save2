@@ -469,15 +469,17 @@ AppDataSource.initialize().then(async () => {
     app.post('/api/tasks/:id/clear-cache', async (req, res) => {
         try {
             const taskId = parseInt(req.params.id);
+            const task = await taskRepo.findOneBy({ id: taskId });
+            if (!task) {
+                return res.json({ success: false, error: '任务不存在' });
+            }
             // 清除任务缓存
             await taskCacheManager.clearCache(taskId);
             // 同时清除 processingStartTime，恢复任务状态为 pending
-            const task = await taskRepo.findOneBy({ id: taskId });
-            if (task) {
-                task.processingStartTime = null;
-                task.status = 'pending';
-                await taskRepo.save(task);
-            }
+            task.processingStartTime = null;
+            task.status = 'pending';
+            await taskRepo.save(task);
+            logTaskEvent(`任务[${task.resourceName}]缓存已清除，状态恢复为 pending`);
             res.json({ success: true, data: null, message: '缓存已清除，任务状态已恢复' });
         } catch (error) {
             res.json({ success: false, error: error.message });
