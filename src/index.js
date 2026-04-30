@@ -581,10 +581,10 @@ AppDataSource.initialize().then(async () => {
 
                         // 重命名后触发 Emby 扫库
                         const { EmbyService } = require('./services/emby');
-                        const embyService = new EmbyService(messageUtil);
+                        const embyService = new EmbyService();
                         try {
                             logTaskEvent(`[TMDB绑定] 执行Emby通知: ${task.resourceName}`);
-                            await embyService.notifyEmby(task);
+                            await embyService.notify(task);
                         } catch (e) {
                             logTaskEvent(`[TMDB绑定] Emby扫库失败: ${e.message}`);
                         }
