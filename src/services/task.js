@@ -1093,7 +1093,8 @@ class TaskService {
                 const uncachedCasFiles = allCasFiles.filter(f => !cachedFileIds.has(String(f.id)));
 
                 // ====== 智能去重判断：初次执行/清缓存后 ======
-                const useSmartDedup = (uncachedCasFiles.length === allCasFiles.length && uncachedCasFiles.length > 10);
+                // 条件：所有CAS文件都未缓存（说明是初次执行或清缓存后），且至少有1个CAS文件
+                const useSmartDedup = (uncachedCasFiles.length === allCasFiles.length && uncachedCasFiles.length > 0);
 
                 if (useSmartDedup) {
                     logTaskEvent(`[CAS] 使用智能去重v2模式（内存比对优先）`);
