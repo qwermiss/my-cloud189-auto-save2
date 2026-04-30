@@ -552,10 +552,8 @@ AppDataSource.initialize().then(async () => {
                 : null;
             task.manualTmdbBound = true;
             
-            // TMDB 绑定改变，清除缓存以便重新处理文件
-            const taskCacheManager = require('./services/TaskCacheManager');
-            await taskCacheManager.clearCache(taskId);
-            logTaskEvent(`[TMDB绑定] 已清除任务 ${taskId} 的缓存`);
+            // 注意：TMDB 绑定后不清除缓存，只触发重命名
+            // 清缓存会导致任务重新执行，可能误删文件
             
             await taskRepo.save(task);
 
