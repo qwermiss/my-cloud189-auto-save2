@@ -1081,6 +1081,7 @@ class TaskService {
             // ============== 第2步: CAS 秒传处理 ==============
             let casResults = [];
             const failedShareFileIds = new Set();
+            let successFiles = [];  // 成功的文件名（需在智能去重之前定义）
             if (enableCasRapidUpload) {
                 // 从分享文件中筛选 .cas 文件
                 const allCasFiles = shareFiles.filter(f => !f.isFolder && CasUtils.isCasFile(f.name));
@@ -1216,7 +1217,7 @@ class TaskService {
                             const FILE_DELAY = 500;  // 文件间延迟
 
                             const savedCasFileIds = [];  // 记录已转存的 .cas 文件 fileId，用于后续删除
-                            const successFiles = [];  // 成功的文件名
+                            // successFiles 已在外层定义
                             const permanentlyFailedFiles = [];  // 永久失败的文件 [{id, name, reason, retryCount}]
                             const fileRetryCount = new Map();  // 每个文件的重试次数
 
