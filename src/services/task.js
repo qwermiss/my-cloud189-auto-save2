@@ -1093,7 +1093,7 @@ class TaskService {
                 let smartDedupExecuted = false;
 
                 if (useSmartDedup) {
-                    logTaskEvent(`[CAS] 使用智能去重模式（初次执行/清缓存）`);
+                    logTaskEvent(`[CAS] 使用智能去重v2模式（内存比对优先）`);
                     const tmdbTitle = task.tmdbTitle || (this._extractCleanTitle ? this._extractCleanTitle(task.resourceName, false).name : task.resourceName) || task.resourceName;
                     const CasSmartDedupService = require('./CasSmartDedupService');
                     const smartDedup = new CasSmartDedupService(this);
@@ -1105,14 +1105,14 @@ class TaskService {
                             familyCloud189 = Cloud189Service.getInstance(familyAccount);
                         }
                     }
-                    const dedupResult = await smartDedup.process(task, cloud189, uncachedCasFiles, tmdbTitle, {
+                    const dedupResult = await smartDedup.processV2(task, cloud189, allCasFiles, folderFiles, tmdbTitle, {
                         enableCasFamilyTransfer, casFamilyFolderIdActual, familyCloud189, account, enableDeleteCasFile
                     });
                     for (const f of dedupResult.successFiles) successFiles.push(f);
                     for (const r of dedupResult.casResults) casResults.push(r);
                     for (const id of dedupResult.failedShareFileIds) failedShareFileIds.add(id);
                     casSuccessCount += dedupResult.casSuccessCount;
-                    logTaskEvent(`[CAS智能去重] 完成，成功 ${dedupResult.casSuccessCount} 个`);
+                    logTaskEvent(`[CAS智能去重v2] 完成，成功 ${dedupResult.casSuccessCount} 个`);
                     smartDedupExecuted = true;
                 }
 

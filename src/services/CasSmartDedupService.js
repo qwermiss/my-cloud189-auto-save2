@@ -16,7 +16,182 @@ class CasSmartDedupService {
     }
 
     /**
-     * CAS 智能去重主流程
+     * CAS 智能去重 v2 主流程 - 内存集数比对优先
+     * 核心优化：先在内存中比对集数，只转存真正缺失的CAS文件
+     * @param {Object} task - 任务对象
+     * @param {Object} cloud189 - 云盘服务实例
+     * @param {Array} allCasFiles - 分享目录所有 CAS 文件列表
+     * @param {Array} folderFiles - 目标目录已有文件列表
+     * @param {string} tmdbTitle - TMDB 标题
+     * @param {Object} options - 配置选项
+     * @returns {Object} 处理结果
+     */
+    async processV2(task, cloud189, allCasFiles, folderFiles, tmdbTitle, options = {}) {
+        const {
+            enableCasFamilyTransfer = false,
+            casFamilyFolderIdActual = '',
+            familyCloud189 = null,
+            account = null,
+            enableDeleteCasFile = true
+        } = options;
+
+        const successFiles = [];
+        const casResults = [];
+        const failedShareFileIds = new Set();
+        let casSuccessCount = 0;
+
+        logTaskEvent('[CAS智能去重v2] 开始处理 ' + allCasFiles.length + ' 个 CAS 文件');
+        logTaskEvent('[CAS智能去重v2] TMDB 标题: ' + tmdbTitle);
+
+        // 步骤1: 内存集数比对（零API调用）
+        const { toSkip, toProcess } = this._compareByEpisodeInMemory(allCasFiles, folderFiles, tmdbTitle);
+
+        logTaskEvent('[CAS智能去重v2] 内存比对完成：跳过 ' + toSkip.length + ' 个已存在，需处理 ' + toProcess.length + ' 个缺失');
+
+        // 步骤2: 跳过的CAS加入缓存（零API调用）
+        if (toSkip.length > 0) {
+            logTaskEvent('[CAS智能去重v2] 将 ' + toSkip.length + ' 个已存在的 CAS 加入缓存...');
+            for (const casFile of toSkip) {
+                await taskCacheManager.addCache(task.id, String(casFile.id));
+            }
+            casSuccessCount += toSkip.length;
+        }
+
+        // 步骤3: 处理缺失的CAS（只转存+秒传真正缺失的）
+        if (toProcess.length > 0) {
+            logTaskEvent('[CAS智能去重v2] 开始处理 ' + toProcess.length + ' 个缺失文件...');
+
+            // 批量转存缺失的CAS
+            const transferResult = await this._batchTransfer(task, cloud189, toProcess);
+            if (!transferResult.success) {
+                for (const f of toProcess) {
+                    failedShareFileIds.add(String(f.id));
+                }
+                return { successFiles, casResults, failedShareFileIds, casSuccessCount };
+            }
+
+            // 刷新目录获取转存后的CAS文件
+            let savedCasFiles = [];
+            try {
+                const folderFilesAfter = await this.taskService.getAllFolderFiles(cloud189, task);
+                savedCasFiles = folderFilesAfter.filter(f => CasUtils.isCasFile(f.name));
+                logTaskEvent('[CAS智能去重v2] 目标目录现有 ' + savedCasFiles.length + ' 个 CAS 文件');
+            } catch (e) {
+                logTaskEvent('[CAS智能去重v2] 刷新目录失败: ' + e.message);
+                return { successFiles, casResults, failedShareFileIds, casSuccessCount };
+            }
+
+            // 秒传缺失文件
+            const uploadResult = await this._uploadMissingFiles(
+                task, cloud189, savedCasFiles,
+                enableCasFamilyTransfer, casFamilyFolderIdActual, familyCloud189, account
+            );
+
+            successFiles.push(...uploadResult.successFiles);
+            casResults.push(...uploadResult.casResults);
+            for (const id of uploadResult.failedShareFileIds) {
+                failedShareFileIds.add(id);
+            }
+            casSuccessCount += uploadResult.casSuccessCount;
+        }
+
+        // 步骤4: 最终清理（v2只有缺失的CAS被转存，清理量极小）
+        if (enableDeleteCasFile) {
+            await this._cleanupAllCas(cloud189, task);
+        }
+
+        logTaskEvent('[CAS智能去重v2] 完成，成功 ' + casSuccessCount + ' 个');
+        return { successFiles, casResults, failedShareFileIds, casSuccessCount };
+    }
+
+    /**
+     * 内存集数比对 - v2核心方法
+     * 从CAS文件名提取集数，与目标目录已有视频集数比对
+     * @param {Array} casFiles - CAS文件列表
+     * @param {Array} folderFiles - 目标目录文件列表
+     * @param {string} tmdbTitle - TMDB标题（用于重命名后的文件名匹配）
+     * @returns {Object} { toSkip, toProcess }
+     */
+    _compareByEpisodeInMemory(casFiles, folderFiles, tmdbTitle) {
+        const toSkip = [];
+        const toProcess = [];
+
+        const mediaExtensions = ['.mkv', '.mp4', '.avi', '.rmvb', '.wmv', '.m2ts', '.ts', '.flv', '.mov', '.iso', '.mpg', '.rm'];
+
+        // 构建目标目录已有视频的集数映射: season_episode -> [file]
+        const existingEpisodeMap = new Map();
+        // 同时构建去后缀文件名集合（用于回退匹配）
+        const existingBaseNames = new Set();
+
+        const getBaseNameWithoutExt = (name) => {
+            for (const ext of mediaExtensions) {
+                if (name.toLowerCase().endsWith(ext)) return name.slice(0, -ext.length);
+            }
+            return name;
+        };
+
+        for (const file of folderFiles) {
+            if (CasUtils.isCasFile(file.name)) continue;
+            // 提取集数
+            const { season, episode } = this.taskService._extractSeasonEpisode(file.name);
+            if (episode !== null) {
+                const key = season + '_' + episode;
+                if (!existingEpisodeMap.has(key)) {
+                    existingEpisodeMap.set(key, []);
+                }
+                existingEpisodeMap.get(key).push(file);
+            }
+            // 同时构建去后缀集合
+            existingBaseNames.add(getBaseNameWithoutExt(file.name));
+        }
+
+        logTaskEvent('[CAS智能去重v2] 目标目录已有 ' + existingEpisodeMap.size + ' 个不同集数的视频');
+
+        // 比对每个CAS文件
+        for (const casFile of casFiles) {
+            // 从CAS文件名提取集数
+            const { season, episode } = this.taskService._extractSeasonEpisode(casFile.name);
+
+            if (episode !== null) {
+                // 有集数，与目标目录集数比对
+                const key = season + '_' + episode;
+                if (existingEpisodeMap.has(key)) {
+                    // 集数匹配，跳过
+                    toSkip.push(casFile);
+                    continue;
+                }
+
+                // 集数不匹配，但也可能是重命名后的文件名匹配
+                // 生成重命名后的目标文件名，检查去后缀集合
+                const generatedName = this.taskService._generateCasTargetName(casFile.name, tmdbTitle, season, episode);
+                const generatedVideoName = generatedName.replace(/\.cas$/i, '');
+                const generatedBaseName = getBaseNameWithoutExt(generatedVideoName);
+                if (existingBaseNames.has(generatedBaseName)) {
+                    toSkip.push(casFile);
+                    continue;
+                }
+
+                // 确实缺失，需处理
+                toProcess.push(casFile);
+            } else {
+                // 无法提取集数，回退到文件名比对
+                // 去掉.cas后缀，得到推断的视频名
+                const videoName = casFile.name.replace(/\.cas$/i, '');
+                const baseName = getBaseNameWithoutExt(videoName);
+                if (existingBaseNames.has(baseName)) {
+                    toSkip.push(casFile);
+                } else {
+                    // 无法匹配，纳入处理流程
+                    toProcess.push(casFile);
+                }
+            }
+        }
+
+        return { toSkip, toProcess };
+    }
+
+    /**
+     * CAS 智能去重 v1 主流程
      * @param {Object} task - 任务对象
      * @param {Object} cloud189 - 云盘服务实例
      * @param {Array} newCasFiles - 需处理的 CAS 文件列表
