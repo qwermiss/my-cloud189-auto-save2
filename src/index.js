@@ -554,7 +554,7 @@ AppDataSource.initialize().then(async () => {
             
             // 从 TMDB API 获取更多信息更新任务卡片
             try {
-                const TMDBService = require('./services/tmdb');
+                const { TMDBService } = require('./services/tmdb');
                 const tmdbService = new TMDBService();
                 const detail = videoType === 'movie'
                     ? await tmdbService.getMovieDetails(tmdbId)
