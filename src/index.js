@@ -731,12 +731,25 @@ AppDataSource.initialize().then(async () => {
                         await send(`已选择：《${title}》\n\n📅 请指定季数：\n回复数字(如 2)或回复"自动"自动识别`);
                     } else {
                         // 电影直接绑定
-                        const task = await taskRepo.findOneBy({ id: ses.taskId });
+                        const task = await taskRepo.findOne({
+                            where: { id: ses.taskId },
+                            relations: { account: true },
+                            select: { account: { username: true, localStrmPrefix: true, cloudStrmPrefix: true, embyPathReplace: true } }
+                        });
                         if (task) {
                             task.tmdbId = tmdbId; task.videoType = 'movie'; task.tmdbTitle = title;
                             task.manualTmdbBound = true; task.manualSeason = null;
                             await taskRepo.save(task);
-                            taskService.processAllTasks(true, [ses.taskId]).catch(() => {});
+                            // 异步触发重命名（不阻塞响应）
+                            (async () => {
+                                try {
+                                    const cloud189 = Cloud189Service.getInstance(task.account);
+                                    await taskService.autoRename(cloud189, task, { skipDeletion: true });
+                                    await send(`✅ 重命名完成：${title}`);
+                                } catch (e) {
+                                    await send(`❌ 重命名失败: ${e.message}`);
+                                }
+                            })().catch(() => {});
                             await send(`✅ 绑定成功！\n🎥 电影：${title}\n🔄 已触发重命名`);
                         }
                         WeChatWorkManager.clearSession(fromUser);
@@ -747,13 +760,26 @@ AppDataSource.initialize().then(async () => {
                 if (ses.state === 'select_season') {
                     const manualSeason = content === '自动' ? null : parseInt(content);
                     if (content !== '自动' && isNaN(manualSeason)) { await send('请输入数字或"自动"'); return; }
-                    const task = await taskRepo.findOneBy({ id: ses.taskId });
+                    const task = await taskRepo.findOne({
+                        where: { id: ses.taskId },
+                        relations: { account: true },
+                        select: { account: { username: true, localStrmPrefix: true, cloudStrmPrefix: true, embyPathReplace: true } }
+                    });
                     if (task) {
                         task.tmdbId = ses.pendingTmdbId; task.videoType = 'tv';
                         task.tmdbTitle = ses.pendingTitle; task.manualSeason = manualSeason;
                         task.manualTmdbBound = true;
                         await taskRepo.save(task);
-                        taskService.processAllTasks(true, [ses.taskId]).catch(() => {});
+                        // 异步触发重命名（不阻塞响应）
+                        (async () => {
+                            try {
+                                const cloud189 = Cloud189Service.getInstance(task.account);
+                                await taskService.autoRename(cloud189, task, { skipDeletion: true });
+                                await send(`✅ 重命名完成：${ses.pendingTitle}${manualSeason != null ? ' 第'+manualSeason+'季' : ''}`);
+                            } catch (e) {
+                                await send(`❌ 重命名失败: ${e.message}`);
+                            }
+                        })().catch(() => {});
                         await send(`✅ 绑定成功！\n🎥 ${ses.pendingTitle}${manualSeason != null ? ' 第'+manualSeason+'季' : ' (自动识别季)'}\n🔄 已触发重命名，完成后发送通知`);
                     }
                     WeChatWorkManager.clearSession(fromUser);
