@@ -844,7 +844,9 @@ class TaskService {
     }
 
     // 执行任务
-    async processTask(task) {
+    // options: { manualTrigger: boolean } - 是否手动触发
+    async processTask(task, options = {}) {
+        const { manualTrigger = false } = options;
         // 检查任务状态，防止并发重复执行
         // 同时检查 processing 状态超时（5分钟），防止异常退出后任务卡住
         if (task.status === 'processing') {
@@ -1771,6 +1773,20 @@ class TaskService {
                 })
             } else {
                 // 无新增文件的情况
+                // 手动触发时，即使无新增也发送通知
+                if (manualTrigger) {
+                    const resourceName = task.resourceName;
+                    const folderPath = task.realFolderName || task.realFolderId || '';
+                    const lines = [
+                        `【天翼云转存】`,
+                        `ℹ️《${resourceName}》无新增剧集`,
+                        `📁 ${folderPath}`,
+                    ];
+                    if (task.totalEpisodes > 0 || existingMediaCount > 0) {
+                        lines.push(`🚀 当前进度：${existingMediaCount}${task.totalEpisodes > 0 ? '/' + task.totalEpisodes : ''} 集`);
+                    }
+                    saveResults.push(lines.join('\n'));
+                }
                 // 1. 如果有历史记录，检查是否过期
                 if (task.lastFileUpdateTime) {
                     const now = new Date();
