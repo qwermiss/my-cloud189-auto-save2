@@ -5,7 +5,7 @@
  */
 
 const CasUtils = require('../utils/CasUtils');
-const BatchTaskDto = require('../dto/BatchTaskDto');
+const { BatchTaskDto } = require('../dto/BatchTaskDto');
 const taskCacheManager = require('./TaskCacheManager');
 const Cloud189Service = require('./cloud189');
 const { logTaskEvent } = require('../utils/logUtils');
