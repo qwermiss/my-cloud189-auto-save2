@@ -1082,6 +1082,7 @@ class TaskService {
             let casResults = [];
             const failedShareFileIds = new Set();
             let successFiles = [];  // 成功的文件名（需在智能去重之前定义）
+            let casSuccessCount = 0;  // CAS成功计数（需在智能去重之前定义）
             if (enableCasRapidUpload) {
                 // 从分享文件中筛选 .cas 文件
                 const allCasFiles = shareFiles.filter(f => !f.isFolder && CasUtils.isCasFile(f.name));
@@ -1689,7 +1690,8 @@ class TaskService {
                 this._casFamilyRootFolderId = null;
             }
 
-            const casSuccessCount = casResults.filter(r => r.success).length;
+            // casSuccessCount 已在外层定义，这里累加原有流程的成功数
+            casSuccessCount += casResults.filter(r => r.success).length;
 
 
             // 处理新文件并保存到数据库和云盘
