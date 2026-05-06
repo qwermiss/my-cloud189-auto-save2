@@ -76,11 +76,21 @@ body::before, body::after {
     transform: translateX(0);
 }
 
+.sidebar.pinned {
+    transform: translateX(0);
+    position: relative;
+}
+
+.sidebar.pinned ~ .main-content {
+    margin-left: 0;
+}
+
 .sidebar-header {
     height: var(--topbar-height);
     display: flex;
     align-items: center;
-    padding: 0 24px;
+    justify-content: space-between;
+    padding: 0 16px 0 24px;
     border-bottom: 1px solid transparent;
 }
 
@@ -112,6 +122,40 @@ body::before, body::after {
     border-radius: 4px;
     border: 1px solid var(--border-color);
     font-weight: 500;
+}
+
+.sidebar-pin {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0.5;
+}
+
+.sidebar-pin:hover {
+    background: var(--bg-main);
+    opacity: 1;
+}
+
+.sidebar-pin i {
+    font-size: 16px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+}
+
+.sidebar.pinned .sidebar-pin {
+    opacity: 1;
+}
+
+.sidebar.pinned .sidebar-pin i {
+    transform: rotate(45deg);
+    color: var(--primary-color);
 }
 
 .sidebar-nav {

@@ -123,21 +123,51 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 侧边栏切换逻辑
     const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarPin = document.getElementById('sidebarPin');
     const sidebar = document.querySelector('.sidebar');
     
     if (sidebarToggle && sidebar) {
+        // 切换按钮：展开/收起侧边栏
         sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
+            if (sidebar.classList.contains('pinned')) {
+                // 如果已固定，取消固定并收起
+                sidebar.classList.remove('pinned', 'open');
+            } else {
+                // 否则切换展开状态
+                sidebar.classList.toggle('open');
+            }
         });
         
-        // 点击侧边栏外部关闭
+        // 点击侧边栏外部关闭（仅在展开且未固定时）
         document.addEventListener('click', (e) => {
             if (sidebar.classList.contains('open') && 
+                !sidebar.classList.contains('pinned') &&
                 !sidebar.contains(e.target) && 
                 !sidebarToggle.contains(e.target)) {
                 sidebar.classList.remove('open');
             }
         });
+    }
+    
+    if (sidebarPin && sidebar) {
+        // 固定按钮：切换固定状态
+        sidebarPin.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isPinned = sidebar.classList.toggle('pinned');
+            
+            if (isPinned) {
+                // 固定时确保侧边栏展开
+                sidebar.classList.add('open');
+                localStorage.setItem('sidebarPinned', 'true');
+            } else {
+                localStorage.removeItem('sidebarPinned');
+            }
+        });
+        
+        // 恢复固定状态
+        if (localStorage.getItem('sidebarPinned') === 'true') {
+            sidebar.classList.add('pinned', 'open');
+        }
     }
     
     // 加载版本号和仪表盘
