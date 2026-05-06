@@ -28,7 +28,7 @@ async function loadDashboardStats() {
             total: tasks.length,
             processing: tasks.filter(task => task.status === 'processing').length,
             completed: tasks.filter(task => task.status === 'completed').length,
-            missing: tasks.filter(task => task.missingEpisodes).length
+            failed: tasks.filter(task => task.status === 'failed' || task.status === 'error').length
         };
         Object.entries(stats).forEach(([key, value]) => {
             const element = document.querySelector(`[data-stat="${key}"]`);
@@ -36,6 +36,22 @@ async function loadDashboardStats() {
                 element.textContent = value;
             }
         });
+
+        const dashRecentTasks = document.getElementById('dashRecentTasks');
+        if (dashRecentTasks && tasks.length > 0) {
+            const recent = tasks.sort((a, b) => b.id - a.id).slice(0, 5);
+            dashRecentTasks.innerHTML = recent.map(task => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-radius: 6px; background: var(--bg-main);">
+                    <div style="display: flex; flex-direction: column; gap: 4px; overflow: hidden;">
+                        <span style="font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${task.taskName}</span>
+                        <span style="font-size: 11px; color: var(--text-muted);">${new Date(task.createdAt || Date.now()).toLocaleString()}</span>
+                    </div>
+                    <span class="status-badge ${getStatusClass ? getStatusClass(task) : ''}" style="font-size: 11px; padding: 4px 8px;">${formatTaskStatus ? formatTaskStatus(task) : task.status}</span>
+                </div>
+            `).join('');
+        } else if (dashRecentTasks) {
+            dashRecentTasks.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">暂无任务</div>';
+        }
     } catch (error) {
         console.error('Failed to load dashboard stats:', error);
     }
@@ -81,8 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
            }
         });
     }
-    // 加载版本号
+    // 加载版本号和仪表盘
     loadVersion();
+    loadDashboardStats();
     // 初始化所有功能
     initTabs();
     initAccountForm();

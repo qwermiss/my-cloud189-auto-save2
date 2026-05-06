@@ -59,10 +59,10 @@
                 <div class="nav-item" data-tab="cloudsaver">
                     <i class="ph ph-magnifying-glass"></i> 资源搜索 (CloudSaver)
                 </div>
-                <div class="nav-item" data-tab="notifications">
+                <!-- <div class="nav-item" data-tab="notifications">
                     <i class="ph ph-bell"></i> 通知中心
                     <span class="badge">8</span>
-                </div>
+                </div> -->
                 
                 <div class="nav-group-title">系统设置</div>
                 <div class="nav-item" data-tab="settings" data-sub-tab="basic">
@@ -127,23 +127,66 @@
 
             <!-- Page Container -->
             <div class="page-container">
-                <!-- Dashboard Tab (Placeholder) -->
+                <!-- Dashboard Tab -->
                 <div id="dashboardTab" class="tab-content">
-                    <div class="coming-soon">
-                        <i class="ph ph-chart-line-up"></i>
-                        <h2>仪表盘建设中</h2>
-                        <p>更多精彩数据统计功能即将上线</p>
+                    <div class="page-header">
+                        <div class="page-title">
+                            <h2>系统仪表盘</h2>
+                            <p>实时监控任务运行状态和系统资源</p>
+                        </div>
+                    </div>
+                    <div class="hero-stats" style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                        <div class="hero-stat-card">
+                            <div class="hero-stat-label">总任务数</div>
+                            <strong style="color: var(--accent-strong);" data-stat="total">-</strong>
+                        </div>
+                        <div class="hero-stat-card">
+                            <div class="hero-stat-label">执行中 / 追剧中</div>
+                            <strong style="color: #c2410c;" data-stat="processing">-</strong>
+                        </div>
+                        <div class="hero-stat-card">
+                            <div class="hero-stat-label">已完结</div>
+                            <strong style="color: #15803d;" data-stat="completed">-</strong>
+                        </div>
+                        <div class="hero-stat-card">
+                            <div class="hero-stat-label">异常与失败</div>
+                            <strong style="color: #dc2626;" data-stat="failed">-</strong>
+                        </div>
+                    </div>
+                    <div class="dashboard-panels" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+                        <div class="panel-card" style="background: var(--bg-card); border: 1px solid var(--panel-border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
+                            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 16px;">近期活跃任务</h3>
+                            <div id="dashRecentTasks" style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="color: var(--text-muted); font-size: 13px;">加载中...</div>
+                            </div>
+                        </div>
+                        <div class="panel-card" style="background: var(--bg-card); border: 1px solid var(--panel-border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
+                            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 16px;">系统估算信息</h3>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+                                    <span>本地缓存占用</span>
+                                    <strong><span id="dashLocalCache">2.4</span> MB</strong>
+                                </div>
+                                <div class="load-bar" style="height: 6px; margin-bottom: 16px; background-color: var(--border-color);"><div class="load-progress" style="width: 15%; background: var(--accent);"></div></div>
+                                
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+                                    <span>日志文件大小</span>
+                                    <strong><span id="dashLogSize">0.8</span> MB</strong>
+                                </div>
+                                <div class="load-bar" style="height: 6px; background-color: var(--border-color);"><div class="load-progress" style="width: 5%; background: #10b981;"></div></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Notification Tab (Placeholder) -->
-                <div id="notificationsTab" class="tab-content">
+                <!-- <div id="notificationsTab" class="tab-content">
                     <div class="coming-soon">
                         <i class="ph ph-bell-ringing"></i>
                         <h2>通知中心建设中</h2>
                         <p>最新消息将会在这里展示</p>
                     </div>
-                </div>
+                </div> -->
                 
                 <!-- CloudSaver Tab (Placeholder) -->
                 <div id="cloudsaverTab" class="tab-content">
@@ -440,7 +483,7 @@
             </div>
         </div>
 
-        <div id="settingsTab" class="tab-content">
+        <div id="settingsTab" class="tab-content" style="padding-bottom: 80px;">
             <form id="settingsForm">
                 <!-- 卡片1: 系统安全 -->
                 <div class="settings-card" data-setting-group="basic">

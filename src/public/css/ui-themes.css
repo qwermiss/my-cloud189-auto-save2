@@ -63,7 +63,7 @@ body {
     max-width: none;
     min-height: 100vh;
     margin: 0;
-    padding: var(--page-padding);
+    padding: 0;
     font-family: var(--font-body);
     background: var(--body-gradient);
     background-attachment: fixed;
@@ -326,19 +326,19 @@ body::after {
 }
 
 .form-header {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .task-operations {
-    gap: 16px;
-    padding: 18px;
+    gap: 12px;
+    padding: 8px 12px;
     border: 1px solid var(--panel-border);
     background: var(--surface-muted);
 }
 
 .button-group,
 .search-bar {
-    gap: 12px;
+    gap: 8px;
 }
 
 button,
@@ -347,7 +347,8 @@ button,
 .btn-warning,
 .btn-danger {
     border-radius: 999px;
-    padding: 10px 18px;
+    padding: 6px 14px;
+    font-size: 13px;
     font-weight: 600;
     transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
 }
@@ -358,7 +359,7 @@ button:hover,
 .btn-warning:hover,
 .btn-danger:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
 }
 
 .btn-primary,
@@ -378,12 +379,12 @@ button:not(.btn-default):not(.theme-toggle-btn) {
 input,
 select,
 textarea {
-    border-radius: 14px;
+    border-radius: 8px;
 }
 
 .search-input {
     flex: 1;
-    padding: 6px;
+    padding: 4px;
     border: 1px solid var(--panel-border);
     background: rgba(255, 255, 255, 0.66);
 }
@@ -393,7 +394,8 @@ textarea {
 input,
 select,
 textarea {
-    min-height: 42px;
+    min-height: 32px;
+    font-size: 13px;
     border: 1px solid var(--panel-border);
     background: rgba(255, 255, 255, 0.82);
 }
@@ -675,6 +677,33 @@ tbody th:last-child {
 .media-card-top {
     display: flex;
     justify-content: flex-start;
+    z-index: 15;
+    position: relative;
+}
+
+.media-card-hover-overview {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    color: #f8fafc;
+    padding: 20px;
+    padding-top: 60px;
+    padding-bottom: 140px;
+    font-size: 13px;
+    line-height: 1.6;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(4px);
+    z-index: 10;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 10;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+}
+
+[data-ui-style="media"] #taskTable tr.media-wall-card:hover .media-card-hover-overview {
+    opacity: 1;
 }
 
 .media-card-bottom {
@@ -683,25 +712,29 @@ tbody th:last-child {
     gap: 8px;
     color: #fff;
     margin-top: auto;
+    z-index: 15;
+    position: relative;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
 }
 
 .media-wall-title {
     font-size: 18px;
     font-weight: 700;
-    color: #fff;
+    color: #f8fafc;
     margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .media-wall-meta {
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.95);
     display: flex;
     align-items: center;
     gap: 6px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 
 .media-progress-container {
@@ -711,10 +744,11 @@ tbody th:last-child {
 .media-progress-text {
     font-size: 12px;
     font-weight: 600;
-    color: #fff;
+    color: #f8fafc;
     margin-bottom: 4px;
     display: flex;
     justify-content: space-between;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 
 .media-progress-bar {

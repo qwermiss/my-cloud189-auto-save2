@@ -285,6 +285,10 @@ function renderTaskMediaWall(tasks) {
                         <span class="status-badge ${getStatusClass(task)}">${formatTaskStatus(task)}</span>
                     </div>
                     
+                    <div class="media-card-hover-overview">
+                        ${getTaskOverview(task)}
+                    </div>
+                    
                     <div class="media-card-bottom">
                         <div class="media-wall-title" title="${taskName}">${taskName}</div>
                         <div class="media-wall-meta">
