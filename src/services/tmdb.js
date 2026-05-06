@@ -10,22 +10,47 @@ class TMDBService {
 
     async _request(endpoint, params = {}) {
         const proxy = ProxyUtil.getProxyAgent('tmdb');
-        try {
-            // DNS解析开始
-            const response = await got(`${this.baseURL}${endpoint}`, {
-                searchParams:{
-                    api_key: this.apiKey,
-                    language: this.language,
-                    ...params
-                },
-                agent: proxy
-            }).json();
-            return response;
-        } catch (error) {
-            console.error(`TMDB请求失败 [${endpoint}]:`, {
-                message: error.message
-            });
-            throw error;
+        const maxRetries = 3;
+        const timeout = 10000;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const response = await got(`${this.baseURL}${endpoint}`, {
+                    searchParams:{
+                        api_key: this.apiKey,
+                        language: this.language,
+                        ...params
+                    },
+                    agent: proxy,
+                    timeout: {
+                        request: timeout
+                    },
+                    retry: {
+                        limit: 0
+                    }
+                }).json();
+                return response;
+            } catch (error) {
+                const isProxyIssue = !proxy.https && (
+                    error.message.includes('ETIMEDOUT') ||
+                    error.message.includes('ECONNREFUSED')
+                );
+                
+                if (isProxyIssue && attempt === 1) {
+                    console.error(`TMDB请求失败 [${endpoint}]: 未配置代理或代理不可用，无法访问TMDB API`);
+                    console.error(`建议：在配置文件中设置代理 (proxy.services.tmdb: true)`);
+                } else {
+                    console.error(`TMDB请求失败 [${endpoint}] (尝试 ${attempt}/${maxRetries}):`, {
+                        message: error.message
+                    });
+                }
+                
+                if (attempt === maxRetries) {
+                    throw new Error(`TMDB请求失败: ${isProxyIssue ? '请配置代理后重试' : error.message}`);
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            }
         }
     }
     
