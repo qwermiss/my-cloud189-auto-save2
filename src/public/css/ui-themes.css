@@ -43,15 +43,15 @@
     --warning-soft: rgba(249, 115, 22, 0.18);
     --danger-soft: rgba(244, 63, 94, 0.14);
     --surface-muted: rgba(14, 165, 233, 0.12);
-    --tab-active-surface: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-    --body-gradient: radial-gradient(circle at left top, rgba(56, 189, 248, 0.22), transparent 28%), radial-gradient(circle at right top, rgba(167, 139, 250, 0.16), transparent 26%), linear-gradient(180deg, #f4f8fc 0%, #f0f9ff 48%, #e0f2fe 100%);
+    --tab-active-surface: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.12));
+    --body-gradient: var(--bg-color);
     --font-display: "Trebuchet MS", "Segoe UI Variable", "PingFang SC", sans-serif;
     --font-body: "Segoe UI Variable", "PingFang SC", "Microsoft YaHei UI", sans-serif;
 }
 
 [data-theme="dark"][data-ui-style="media"] {
-    --tab-active-surface: linear-gradient(135deg, rgba(2, 132, 199, 0.72), rgba(3, 105, 161, 0.82));
-    --body-gradient: radial-gradient(circle at left top, rgba(14, 165, 233, 0.22), transparent 28%), radial-gradient(circle at right top, rgba(139, 92, 246, 0.16), transparent 24%), linear-gradient(180deg, #0b1120 0%, #0f172a 50%, #1e293b 100%);
+    --tab-active-surface: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.2));
+    --body-gradient: var(--bg-color);
 }
 
 html {
