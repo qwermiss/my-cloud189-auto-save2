@@ -172,6 +172,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // 版本号点击打开GitHub
+    const versionBadge = document.querySelector('.sidebar-version .version-badge');
+    if (versionBadge) {
+        versionBadge.style.cursor = 'pointer';
+        versionBadge.addEventListener('click', () => {
+            window.open('https://github.com/ymting/my-cloud189-auto-save', '_blank');
+        });
+    }
+    
     // 初始化通知图标
     const notificationBtn = document.querySelector('.notification-btn');
     if (notificationBtn) {

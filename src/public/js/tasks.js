@@ -117,6 +117,21 @@ function formatMissingEpisodesTitle(task) {
     }
 }
 
+function getProgressTooltip(task) {
+    if (!task.missingEpisodes) {
+        return '进度正常 ✓';
+    }
+    try {
+        const missingEpisodes = JSON.parse(task.missingEpisodes);
+        if (!missingEpisodes.length) {
+            return '进度正常 ✓';
+        }
+        return `缺失剧集：${missingEpisodes.join(', ')}`;
+    } catch (error) {
+        return '进度正常 ✓';
+    }
+}
+
 function parseTmdbContent(task) {
     if (!task.tmdbContent) {
         return null;
@@ -296,7 +311,7 @@ function renderTaskMediaWall(tasks) {
                             ${metaLine || '暂无信息'}
                         </div>
                         
-                        <div class="media-progress-container" onclick="event.stopPropagation(); showFileListModal('${task.id}');" style="cursor: pointer;">
+                        <div class="media-progress-container" onclick="event.stopPropagation(); showFileListModal('${task.id}');" style="cursor: pointer;" title="${getProgressTooltip(task)}">
                             <div class="media-progress-text">
                                 <span>${latestSaved}</span>
                                 ${formatMissingEpisodes(task) ? `<span style="color: #fca5a5">${formatMissingEpisodes(task)}</span>` : ''}
