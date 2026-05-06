@@ -3,7 +3,7 @@ const ConfigService = require('./ConfigService');
 const ProxyUtil = require('../utils/ProxyUtil');
 class TMDBService {
     constructor() {
-        this.apiKey = ConfigService.getConfigValue('tmdb.tmdbApiKey');
+        this.apiKey = ConfigService.getConfigValue('tmdb.tmdbApiKey') || ConfigService.getConfigValue('tmdb.apiKey');
         this.baseURL = 'https://api.themoviedb.org/3';
         this.language = 'zh-CN';
     }
@@ -15,9 +15,8 @@ class TMDBService {
         
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                const response = await got(`${this.baseURL}${endpoint}`, {
-                    searchParams:{
-                        api_key: this.apiKey,
+                const options = {
+                    searchParams: {
                         language: this.language,
                         ...params
                     },
@@ -28,7 +27,18 @@ class TMDBService {
                     retry: {
                         limit: 0
                     }
-                }).json();
+                };
+
+                // 支持 v4 的 Bearer Token (通常是很长的 JWT)
+                if (this.apiKey && this.apiKey.length > 50) {
+                    options.headers = {
+                        Authorization: `Bearer ${this.apiKey}`
+                    };
+                } else {
+                    options.searchParams.api_key = this.apiKey;
+                }
+
+                const response = await got(`${this.baseURL}${endpoint}`, options).json();
                 return response;
             } catch (error) {
                 const isProxyIssue = !proxy.https && (
@@ -36,17 +46,25 @@ class TMDBService {
                     error.message.includes('ECONNREFUSED')
                 );
                 
+                let errorMessage = error.message;
+                if (error.response && error.response.statusCode === 401) {
+                    errorMessage = 'TMDB API Key 无效或未正确配置 (401 Unauthorized)';
+                }
+
                 if (isProxyIssue && attempt === 1) {
                     console.error(`TMDB请求失败 [${endpoint}]: 未配置代理或代理不可用，无法访问TMDB API`);
                     console.error(`建议：在配置文件中设置代理 (proxy.services.tmdb: true)`);
                 } else {
                     console.error(`TMDB请求失败 [${endpoint}] (尝试 ${attempt}/${maxRetries}):`, {
-                        message: error.message
+                        message: errorMessage
                     });
                 }
                 
                 if (attempt === maxRetries) {
-                    throw new Error(`TMDB请求失败: ${isProxyIssue ? '请配置代理后重试' : error.message}`);
+                    if (error.response && error.response.statusCode === 401) {
+                        throw new Error(`TMDB请求失败: ${errorMessage}，请检查系统设置中的 TMDB API Key`);
+                    }
+                    throw new Error(`TMDB请求失败: ${isProxyIssue ? '请配置代理后重试' : errorMessage}`);
                 }
                 
                 await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
