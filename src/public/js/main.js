@@ -63,15 +63,17 @@ async function loadDashboardStats() {
                 return 'status-' + (task.status || 'unknown');
             };
             
-            dashRecentTasks.innerHTML = recent.map(task => `
+            dashRecentTasks.innerHTML = recent.map(task => {
+                const taskName = task.shareFolderName ? (task.resourceName + '/' + task.shareFolderName) : task.resourceName || '未命名任务';
+                return `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-radius: 6px; background: var(--bg-main);">
                     <div style="display: flex; flex-direction: column; gap: 4px; overflow: hidden;">
-                        <span style="font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${task.taskName || '未命名任务'}</span>
+                        <span style="font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${taskName}</span>
                         <span style="font-size: 11px; color: var(--text-muted);">${new Date(task.createdAt || Date.now()).toLocaleString()}</span>
                     </div>
                     <span class="status-badge ${getStatusStyle(task)}" style="font-size: 11px; padding: 4px 8px;">${formatStatus(task)}</span>
                 </div>
-            `).join('');
+            `}).join('');
         } else if (dashRecentTasks) {
             dashRecentTasks.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">暂无任务</div>';
         }

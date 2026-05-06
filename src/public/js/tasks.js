@@ -291,13 +291,13 @@ function renderTaskMediaWall(tasks) {
                     
                     <div class="media-card-bottom">
                         <div class="media-wall-title" title="${taskName}" onclick="event.stopPropagation(); window.open('${task.shareLink}', '_blank');" style="cursor: pointer;">${taskName}</div>
-                        <div class="media-wall-meta" onclick="event.stopPropagation(); showFileListModal('${task.id}');" style="cursor: pointer;">
+                        <div class="media-wall-meta">
                             <i class="ph-fill ph-star" style="color: #fbbf24"></i>
                             ${metaLine || '暂无信息'}
                             <span class="version-badge">v3.0.0</span>
                         </div>
                         
-                        <div class="media-progress-container">
+                        <div class="media-progress-container" onclick="event.stopPropagation(); showFileListModal('${task.id}');" style="cursor: pointer;">
                             <div class="media-progress-text">
                                 <span>${latestSaved}</span>
                                 ${formatMissingEpisodes(task) ? `<span style="color: #fca5a5">${formatMissingEpisodes(task)}</span>` : ''}
@@ -317,11 +317,8 @@ function renderTaskMediaWall(tasks) {
                                 <div class="media-btn-circle primary" onclick="event.stopPropagation(); executeTask(${task.id})" title="执行任务">
                                     <i class="ph-fill ph-play"></i>
                                 </div>
-                                <div class="media-btn-circle" onclick="event.stopPropagation(); showEditTaskModal(${task.id})" title="修改任务">
-                                    <i class="ph ph-pencil-simple"></i>
-                                </div>
-                                <div class="media-btn-circle" onclick="event.stopPropagation(); clearTaskCache(${task.id})" title="清缓存">
-                                    <i class="ph ph-broom"></i>
+                                <div class="media-btn-circle more-actions-btn" onclick="event.stopPropagation(); toggleMoreActions(this, ${task.id})" title="更多操作">
+                                    <i class="ph ph-dots-three"></i>
                                 </div>
                                 <div class="media-btn-circle" style="color: #fca5a5; border-color: rgba(252,165,165,0.3);" onclick="event.stopPropagation(); deleteTask(${task.id})" title="删除任务">
                                     <i class="ph ph-trash"></i>
@@ -1340,6 +1337,45 @@ function getStatusClass(task) {
         return 'status-pending'; // 等待中用蓝色
     }
     return 'status-' + task.status;
+}
+
+// 更多操作菜单
+function toggleMoreActions(btn, taskId) {
+    const existing = document.querySelector('.more-actions-menu');
+    if (existing) {
+        existing.remove();
+        return;
+    }
+    
+    const menu = document.createElement('div');
+    menu.className = 'more-actions-menu';
+    menu.innerHTML = `
+        <div class="more-actions-item" onclick="event.stopPropagation(); showEditTaskModal(${taskId}); this.parentElement.remove();">
+            <i class="ph ph-pencil-simple"></i>
+            <span>修改任务</span>
+        </div>
+        <div class="more-actions-item" onclick="event.stopPropagation(); clearTaskCache(${taskId}); this.parentElement.remove();">
+            <i class="ph ph-broom"></i>
+            <span>清缓存</span>
+        </div>
+    `;
+    
+    const rect = btn.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.left = `${rect.left}px`;
+    menu.style.top = `${rect.bottom + 8}px`;
+    menu.style.zIndex = '2000';
+    
+    document.body.appendChild(menu);
+    
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+    }, 0);
 }
 
 // 监听enableCron的变化

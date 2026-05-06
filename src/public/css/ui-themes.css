@@ -753,6 +753,47 @@ tbody th:last-child {
     margin-top: 4px;
 }
 
+.more-actions-menu {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    padding: 8px;
+    min-width: 160px;
+    backdrop-filter: blur(10px);
+}
+
+.more-actions-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-main);
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.more-actions-item:hover {
+    background: var(--bg-main);
+    color: var(--primary-color);
+}
+
+.more-actions-item i {
+    font-size: 18px;
+}
+
+[data-theme="dark"] .more-actions-menu {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+[data-theme="dark"] .more-actions-item:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: #818cf8;
+}
+
 .media-progress-text {
     font-size: 12px;
     font-weight: 600;

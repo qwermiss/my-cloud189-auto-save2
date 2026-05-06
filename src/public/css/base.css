@@ -59,59 +59,85 @@ textarea:focus {
 }
 
 button {
-    background-color: #1890ff;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     color: white;
     border: none;
     padding: 8px 16px;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: fit-content;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+button:active {
+    transform: translateY(0);
 }
 
 
 .btn-warning {
-    background-color: #fa8c16;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
 .btn-danger {
-    background-color: #f5222d;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
 .btn-default {
     background: #fff;
-    border: 1px solid #d9d9d9;
-    color: rgba(0, 0, 0, 0.85);
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-default:hover {
+    background: #f9fafb;
+    border-color: #6366f1;
+    color: #6366f1;
 }
 
 .btn-primary {
-    background: #1890ff;
-    border: 1px solid #1890ff;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
     color: #fff;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
 .btn-default, .btn-primary {
     padding: 8px 16px;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
     margin-left: 8px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     display: inline-block;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
 
 .btn-default:hover {
-    border-color: #40a9ff;
-    color: #40a9ff;
+    transform: translateY(-1px);
 }
 
 .btn-primary:hover {
-    background: #40a9ff;
-    border-color: #40a9ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
+
 .btn-small {
     padding: 5px 8px; /* 较小的内边距 */
     font-size: 0.85em; /* 较小的字体大小 */
