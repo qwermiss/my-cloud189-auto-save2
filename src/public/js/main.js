@@ -177,7 +177,49 @@ document.addEventListener('DOMContentLoaded', () => {
     if (notificationBtn) {
         notificationBtn.style.cursor = 'pointer';
         notificationBtn.addEventListener('click', () => {
-            message.info('通知中心功能开发中，敬请期待');
+            // 创建通知弹窗
+            const existing = document.querySelector('.notification-dropdown');
+            if (existing) {
+                existing.remove();
+                return;
+            }
+            
+            const dropdown = document.createElement('div');
+            dropdown.className = 'notification-dropdown';
+            dropdown.innerHTML = `
+                <div class="notification-header">
+                    <h3>系统通知</h3>
+                    <span class="notification-close">&times;</span>
+                </div>
+                <div class="notification-body">
+                    <div class="notification-empty">
+                        <i class="ph ph-bell-slash"></i>
+                        <p>暂无新通知</p>
+                        <small>任务执行、系统消息将在这里显示</small>
+                    </div>
+                </div>
+            `;
+            
+            const rect = notificationBtn.getBoundingClientRect();
+            dropdown.style.position = 'fixed';
+            dropdown.style.right = `${window.innerWidth - rect.right}px`;
+            dropdown.style.top = `${rect.bottom + 8}px`;
+            dropdown.style.zIndex = '2000';
+            
+            document.body.appendChild(dropdown);
+            
+            dropdown.querySelector('.notification-close').addEventListener('click', () => {
+                dropdown.remove();
+            });
+            
+            setTimeout(() => {
+                document.addEventListener('click', function closeDropdown(e) {
+                    if (!dropdown.contains(e.target) && !notificationBtn.contains(e.target)) {
+                        dropdown.remove();
+                        document.removeEventListener('click', closeDropdown);
+                    }
+                });
+            }, 0);
         });
     }
     

@@ -30,17 +30,17 @@
 }
 
 .folder-tree-item:hover {
-    background-color: #f5f5f5;
+    background-color: var(--hover-bg);
 }
 
 .folder-tree-item.selected {
-    background-color: #e6f7ff;
+    background-color: rgba(99, 102, 241, 0.1);
 }
 
 .folder-icon {
     display: inline-block;
     margin-right: 8px;
-    color: #1890ff;
+    color: var(--primary-color);
     vertical-align: middle;
 }
 

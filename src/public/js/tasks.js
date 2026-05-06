@@ -280,7 +280,7 @@ function renderTaskMediaWall(tasks) {
 
         tbody.innerHTML += `
             <tr class="media-wall-card" data-status='${task.status}' data-task-id='${task.id}' data-name='${taskName}' style="background-image: url('${poster || ''}')" ${tmdbUrl ? `onclick="if(event.target.tagName !== 'BUTTON' && !event.target.closest('.media-actions')) window.open('${tmdbUrl}', '_blank');"` : ''}>
-                <td data-label="信息" class="media-wall-info-cell" style="display: contents;">
+                <td class="media-wall-info-cell" style="display: contents;">
                     <div class="media-card-top">
                         <span class="status-badge ${getStatusClass(task)}">${formatTaskStatus(task)}</span>
                     </div>
@@ -294,7 +294,6 @@ function renderTaskMediaWall(tasks) {
                         <div class="media-wall-meta">
                             <i class="ph-fill ph-star" style="color: #fbbf24"></i>
                             ${metaLine || '暂无信息'}
-                            <span class="version-badge">v3.0.0</span>
                         </div>
                         
                         <div class="media-progress-container" onclick="event.stopPropagation(); showFileListModal('${task.id}');" style="cursor: pointer;">
