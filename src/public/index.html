@@ -443,7 +443,7 @@
         <div id="settingsTab" class="tab-content">
             <form id="settingsForm">
                 <!-- 卡片1: 系统安全 -->
-                <div class="settings-card">
+                <div class="settings-card" data-setting-group="basic">
                     <div class="settings-card-header">
                         <span class="card-icon">🔐</span>
                         <span>系统安全</span>
@@ -475,7 +475,7 @@
                 </div>
 
                 <!-- 卡片2: 任务设置 -->
-                <div class="settings-card">
+                <div class="settings-card" data-setting-group="transfer">
                     <div class="settings-card-header">
                         <span class="card-icon">⚙️</span>
                         <span>任务设置</span>
@@ -540,7 +540,7 @@
                 </div>
 
                 <!-- 卡片3: CAS 秒传设置 -->
-                <div class="settings-card">
+                <div class="settings-card" data-setting-group="transfer">
                     <div class="settings-card-header">
                         <span class="card-icon">⚡</span>
                         <span>CAS 秒传设置</span>
@@ -583,7 +583,7 @@
                 </div>
 
                 <!-- 卡片4: 消息推送 -->
-                <div class="settings-card">
+                <div class="settings-card" data-setting-group="notification-settings">
                     <div class="settings-card-header">
                         <span class="card-icon">📢</span>
                         <span>消息推送</span>
@@ -691,7 +691,7 @@
                 </div>
 
                 <!-- 卡片5: 网络代理 -->
-                <div class="settings-card">
+                <div class="settings-card" data-setting-group="tools">
                     <div class="settings-card-header">
                         <span class="card-icon">🌐</span>
                         <span>网络代理</span>
@@ -727,17 +727,8 @@
                     </div>
                 </div>
 
-                <!-- 保存按钮 -->
-                <div class="settings-actions">
-                    <button type="submit" class="btn-primary">保存设置</button>
-                </div>
-            </form>
-        </div>
-
-        <div id="mediaTab" class="tab-content">
-            <form id="mediaForm">
-                <!-- 卡片1: AI 重命名 -->
-                <div class="settings-card">
+                <!-- 卡片6: AI 重命名 -->
+                <div class="settings-card" data-setting-group="media-settings">
                     <div class="settings-card-header">
                         <span class="card-icon">🤖</span>
                         <span>AI 重命名</span>
@@ -801,8 +792,8 @@
                     </div>
                 </div>
 
-                <!-- 卡片2: 播放器集成 -->
-                <div class="settings-card">
+                <!-- 卡片7: 播放器集成 -->
+                <div class="settings-card" data-setting-group="media-settings">
                     <div class="settings-card-header">
                         <span class="card-icon">📺</span>
                         <span>播放器集成</span>
@@ -848,8 +839,8 @@
                     </div>
                 </div>
 
-                <!-- 卡片3: 资源搜索 -->
-                <div class="settings-card">
+                <!-- 卡片8: 资源搜索 -->
+                <div class="settings-card" data-setting-group="media-settings">
                     <div class="settings-card-header">
                         <span class="card-icon">🔍</span>
                         <span>资源搜索</span>
@@ -884,8 +875,8 @@
                     </div>
                 </div>
 
-                <!-- 卡片4: TMDB 刮削 -->
-                <div class="settings-card">
+                <!-- 卡片9: TMDB 刮削 -->
+                <div class="settings-card" data-setting-group="media-settings">
                     <div class="settings-card-header">
                         <span class="card-icon">🎬</span>
                         <span>TMDB 刮削 (实验特性)</span>
@@ -927,6 +918,14 @@
                     <button type="submit" class="btn-primary">保存设置</button>
                 </div>
             </form>
+        </div>
+
+        <div id="mediaTab" class="tab-content">
+            <div class="coming-soon">
+                <i class="ph ph-film-strip"></i>
+                <h2>媒体管理建设中</h2>
+                <p>全新的媒体墙即将上线，敬请期待</p>
+            </div>
         </div>
     </div>
 

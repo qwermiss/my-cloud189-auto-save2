@@ -1124,6 +1124,15 @@ AppDataSource.initialize().then(async () => {
 
     app.post('/api/settings', async (req, res) => {
         const settings = req.body;
+
+        // 如果cloudSaver的配置变更 就清空cstoken.json
+        if (settings.cloudSaver?.baseUrl != ConfigService.getConfigValue('cloudSaver.baseUrl')
+        || settings.cloudSaver?.username != ConfigService.getConfigValue('cloudSaver.username')
+        || settings.cloudSaver?.password != ConfigService.getConfigValue('cloudSaver.password')
+        ) {
+            clearCloudSaverToken();
+        }
+
         SchedulerService.handleScheduleTasks(settings,taskService);
         ConfigService.setConfig(settings)
         await botManager.handleBotStatus(
@@ -1134,21 +1143,6 @@ AppDataSource.initialize().then(async () => {
         // 修改配置, 重新实例化消息推送
         messageUtil.updateConfig()
         Cloud189Service.setProxy()
-        res.json({success: true, data: null})
-    })
-
-
-    // 保存媒体配置
-    app.post('/api/settings/media', async (req, res) => {
-        const settings = req.body;
-        // 如果cloudSaver的配置变更 就清空cstoken.json
-        if (settings.cloudSaver?.baseUrl != ConfigService.getConfigValue('cloudSaver.baseUrl')
-        || settings.cloudSaver?.username != ConfigService.getConfigValue('cloudSaver.username')
-        || settings.cloudSaver?.password != ConfigService.getConfigValue('cloudSaver.password')
-    ) {
-            clearCloudSaverToken();
-        }
-        ConfigService.setConfig(settings)
         res.json({success: true, data: null})
     })
 

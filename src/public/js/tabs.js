@@ -18,15 +18,20 @@ function initTabs() {
 
             // Handle sub-tab scrolling in Settings
             if (item.dataset.subTab && tabId === 'settingsTab') {
-                const subTabs = {
-                    'basic': 0,
-                    'transfer': 2, // Settings card index
-                    'media-settings': 5,
-                    'notification-settings': 4,
-                    'tools': 3
-                };
-                // Simply scroll to top for now, we can refine this later if needed
+                const subTabId = item.dataset.subTab;
+                document.querySelectorAll('#settingsTab .settings-card').forEach(card => {
+                    if (card.dataset.settingGroup === subTabId) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
                 document.querySelector('.page-container').scrollTop = 0; 
+            } else if (tabId === 'settingsTab' && !item.dataset.subTab) {
+                // If somehow settingsTab is clicked without sub-tab, show basic by default
+                document.querySelectorAll('#settingsTab .settings-card').forEach(card => {
+                    card.style.display = card.dataset.settingGroup === 'basic' ? 'block' : 'none';
+                });
             }
         });
     });

@@ -194,6 +194,38 @@ async function saveSettings() {
             webhook: document.getElementById('pushplusWebhook').value,
             to: document.getElementById('pushplusTo').value
         },
+        strm: {
+            enable: document.getElementById('enableStrm').checked,
+        },
+        emby: {
+            enable: document.getElementById('enableEmby').checked,
+            serverUrl: document.getElementById('embyServer').value,
+            apiKey: document.getElementById('embyApiKey').value,
+        },
+        cloudSaver: {
+            baseUrl: document.getElementById('cloudSaverUrl').value,
+            username: document.getElementById('cloudSaverUsername').value,
+            password: document.getElementById('cloudSaverPassword').value,
+        },
+        tmdb: {
+            enableScraper: document.getElementById('enableScraper').checked,
+            tmdbApiKey: document.getElementById('tmdbApiKey').value
+        },
+        openai: {
+            enable: document.getElementById('enableOpenAI').checked,
+            baseUrl: document.getElementById('openaiBaseUrl').value,
+            apiKey: document.getElementById('openaiApiKey').value,
+            model: document.getElementById('openaiModel').value,
+            rename: {
+                template: document.getElementById('openaiTemplate').value,
+                movieTemplate: document.getElementById('openaiMovieTemplate').value,
+            }
+        },
+        alist: {
+            enable: document.getElementById('enableAlist').checked,
+            baseUrl: document.getElementById('alistServer').value,
+            apiKey: document.getElementById('alistApiKey').value
+        },
         customPush: customPushConfigs
     };
     // taskRetryInterval不能少于60秒
