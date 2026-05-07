@@ -347,14 +347,14 @@ function renderTaskMediaWall(tasks) {
     
     // 添加虚拟占位卡片（用于添加新任务）
     tbody.innerHTML += `
-        <tr class="media-wall-card add-task-placeholder" onclick="openAddTaskModal()" style="cursor: pointer; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(99, 102, 241, 0.02)); border: 2px dashed rgba(99, 102, 241, 0.3); min-height: 380px;">
+        <tr class="media-wall-card add-task-placeholder" onclick="openAddTaskModal()" style="cursor: pointer; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border: 2px dashed rgba(99, 102, 241, 0.4); min-height: 380px;">
             <td class="media-wall-info-cell" style="display: contents;">
                 <td style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px;">
-                    <div class="add-task-icon" style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(79, 70, 229, 0.1)); border: 2px solid rgba(99, 102, 241, 0.3); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; transition: all 0.3s ease;">
-                        <i class="ph ph-plus" style="font-size: 40px; color: #6366f1;"></i>
+                    <div class="add-task-icon" style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(79, 70, 229, 0.2)); border: 2px solid rgba(99, 102, 241, 0.5); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; transition: all 0.3s ease; box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);">
+                        <i class="ph ph-plus" style="font-size: 40px; color: #fff;"></i>
                     </div>
-                    <div style="font-size: 16px; font-weight: 600; color: #6366f1; margin-bottom: 8px;">添加新任务</div>
-                    <div style="font-size: 13px; color: var(--text-muted);">点击创建新的转存任务</div>
+                    <div style="font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 8px;">添加新任务</div>
+                    <div style="font-size: 13px; color: #94a3b8;">点击创建新的转存任务</div>
                 </td>
             </td>
         </tr>
