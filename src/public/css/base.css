@@ -22,15 +22,17 @@ body {
 label {
     display: block;
     margin-bottom: 5px;
-    color: #666;
+    color: var(--text-color);
 }
 
-input, select {
+input, select, textarea {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--input-border);
     border-radius: 4px;
     box-sizing: border-box;
+    background-color: var(--input-bg);
+    color: var(--text-color);
 }
 
 input[type="checkbox"], input[type="radio"] {
@@ -96,16 +98,16 @@ button:active {
 }
 
 .btn-default {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    color: #374151;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    box-shadow: 0 1px 3px var(--shadow-color);
 }
 
 .btn-default:hover {
-    background: #f9fafb;
-    border-color: #6366f1;
-    color: #6366f1;
+    background: var(--hover-bg);
+    border-color: var(--theme-color);
+    color: var(--theme-color);
 }
 
 .btn-primary {
