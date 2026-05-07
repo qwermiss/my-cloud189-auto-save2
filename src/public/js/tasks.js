@@ -300,7 +300,7 @@ function renderTaskMediaWall(tasks) {
                         <span class="status-badge ${getStatusClass(task)}">${formatTaskStatus(task)}</span>
                     </div>
                     
-                    <div class="media-card-hover-overview">
+                    <div class="media-card-hover-overview" onclick="event.stopPropagation();">
                         ${getTaskOverview(task)}
                     </div>
                     
