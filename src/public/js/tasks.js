@@ -294,7 +294,7 @@ function renderTaskMediaWall(tasks) {
         }
 
         tbody.innerHTML += `
-            <tr class="media-wall-card" data-status='${task.status}' data-task-id='${task.id}' data-name='${taskName}' style="background-image: url('${poster || ''}')" ${tmdbUrl ? `onclick="if(event.target.tagName !== 'BUTTON' && !event.target.closest('.media-actions')) window.open('${tmdbUrl}', '_blank');"` : ''}>
+            <tr class="media-wall-card" data-status='${task.status}' data-task-id='${task.id}' data-name='${taskName}' style="background-image: url('${poster || ''}')">
                 <td class="media-wall-info-cell" style="display: contents;">
                     <div class="media-card-top">
                         <span class="status-badge ${getStatusClass(task)}">${formatTaskStatus(task)}</span>
@@ -306,9 +306,10 @@ function renderTaskMediaWall(tasks) {
                     
                     <div class="media-card-bottom">
                         <div class="media-wall-title" title="${taskName}" onclick="event.stopPropagation(); window.open('${task.shareLink}', '_blank');" style="cursor: pointer;">${taskName}</div>
-                        <div class="media-wall-meta">
+                        <div class="media-wall-meta" ${tmdbUrl ? `onclick="event.stopPropagation(); window.open('${tmdbUrl}', '_blank');" style="cursor: pointer;" title="查看TMDB详情"` : ''}>
                             <i class="ph-fill ph-star" style="color: #fbbf24"></i>
                             ${metaLine || '暂无信息'}
+                            ${tmdbUrl ? '<span style="margin-left: 8px; padding: 2px 6px; background: rgba(99, 102, 241, 0.2); border-radius: 4px; font-size: 11px; font-weight: 600;">TMDB</span>' : ''}
                         </div>
                         
                         <div class="media-progress-container" onclick="event.stopPropagation(); showFileListModal('${task.id}');" style="cursor: pointer;" title="${getProgressTooltip(task)}">
