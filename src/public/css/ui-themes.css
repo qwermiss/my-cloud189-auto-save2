@@ -399,7 +399,7 @@ textarea {
     flex: 1;
     padding: 4px;
     border: 1px solid var(--panel-border);
-    background: rgba(255, 255, 255, 0.66);
+    background: var(--input-bg);
 }
 
 .filter-dropdown select,
@@ -410,7 +410,7 @@ textarea {
     min-height: 32px;
     font-size: 13px;
     border: 1px solid var(--panel-border);
-    background: rgba(255, 255, 255, 0.82);
+    background: var(--input-bg);
 }
 
 .table-container {
