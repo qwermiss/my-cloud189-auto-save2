@@ -36,14 +36,16 @@ function initLogs() {
         };
     }
 
-    showLogsBtn.onclick = () => {
-        logsModal.style.display = 'block';
-        if (!eventSource) {
-            connectSSE();
-        }
-        // 显示弹窗时滚动到最新消息
-        logsContainer.scrollTop = logsContainer.scrollHeight;
-    };
+    // 日志按钮已合并到通知菜单，这里不再需要单独绑定
+    if (showLogsBtn) {
+        showLogsBtn.onclick = () => {
+            logsModal.style.display = 'block';
+            if (!eventSource) {
+                connectSSE();
+            }
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        };
+    }
 
     closeBtn.onclick = () => {
         logsModal.style.display = 'none';

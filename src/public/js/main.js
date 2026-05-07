@@ -3,13 +3,15 @@ async function loadVersion() {
         const response = await fetch('/api/version');
         const data = await response.json();
         const versionStr = data.version || 'unknown';
+        const versionEl = document.getElementById('version');
+        if (!versionEl) return;
         // dev 版本添加特殊标识
         if (versionStr.includes('-dev')) {
-            document.getElementById('version').innerText = `v${versionStr}`;
-            document.getElementById('version').style.color = '#ff9800';  // 开发版用橙色
-            document.getElementById('version').title = '开发测试版本';
+            versionEl.innerText = `v${versionStr}`;
+            versionEl.style.color = '#ff9800';  // 开发版用橙色
+            versionEl.title = '开发测试版本';
         } else {
-            document.getElementById('version').innerText = `v${versionStr}`;
+            versionEl.innerText = `v${versionStr}`;
         }
     } catch (error) {
         console.error('Failed to load version:', error);
