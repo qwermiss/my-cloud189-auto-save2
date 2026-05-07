@@ -201,10 +201,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="notification-close">&times;</span>
                 </div>
                 <div class="notification-body">
-                    <div class="notification-empty">
-                        <i class="ph ph-bell-slash"></i>
-                        <p>暂无新通知</p>
-                        <small>任务执行、系统消息将在这里显示</small>
+                    <div class="notification-stats">
+                        <div class="stat-item">
+                            <div class="stat-header">
+                                <span>本地缓存占用</span>
+                                <strong><span id="notifLocalCache">2.4</span> MB</strong>
+                            </div>
+                            <div class="load-bar"><div class="load-progress" style="width: 15%; background: var(--accent);"></div></div>
+                        </div>
+                        <div class="stat-item" style="margin-top: 16px;">
+                            <div class="stat-header">
+                                <span>日志文件大小</span>
+                                <strong><span id="notifLogSize">0.8</span> MB</strong>
+                            </div>
+                            <div class="load-bar"><div class="load-progress" style="width: 5%; background: #10b981;"></div></div>
+                        </div>
                     </div>
                 </div>
             `;

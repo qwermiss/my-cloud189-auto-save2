@@ -114,8 +114,8 @@
                     </div>
                     
                     <div class="theme-switch" style="margin-left: 12px;">
-                        <button id="themeToggle" class="theme-toggle-btn" style="width: 32px; height: 32px; border-radius: 50%; border: none; background: #f1f5f9; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                            <i class="ph ph-moon" style="font-size: 18px; color: #64748b;"></i>
+                        <button id="themeToggle" class="theme-toggle-btn" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(99, 102, 241, 0.2); transition: all 0.2s ease;">
+                            <i class="ph ph-moon" style="font-size: 20px; color: var(--text-main);"></i>
                         </button>
                     </div>
                 </div>
@@ -149,28 +149,10 @@
                             <strong style="color: #dc2626;" data-stat="failed">-</strong>
                         </div>
                     </div>
-                    <div class="dashboard-panels" style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-                        <div class="panel-card" style="background: var(--bg-card); border: 1px solid var(--panel-border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
-                            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 16px;">近期活跃任务</h3>
-                            <div id="dashRecentTasks" style="display: flex; flex-direction: column; gap: 12px;">
-                                <div style="color: var(--text-muted); font-size: 13px;">加载中...</div>
-                            </div>
-                        </div>
-                        <div class="panel-card" style="background: var(--bg-card); border: 1px solid var(--panel-border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
-                            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 16px;">系统估算信息</h3>
-                            <div>
-                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
-                                    <span>本地缓存占用</span>
-                                    <strong><span id="dashLocalCache">2.4</span> MB</strong>
-                                </div>
-                                <div class="load-bar" style="height: 6px; margin-bottom: 16px; background-color: var(--border-color);"><div class="load-progress" style="width: 15%; background: var(--accent);"></div></div>
-                                
-                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
-                                    <span>日志文件大小</span>
-                                    <strong><span id="dashLogSize">0.8</span> MB</strong>
-                                </div>
-                                <div class="load-bar" style="height: 6px; background-color: var(--border-color);"><div class="load-progress" style="width: 5%; background: #10b981;"></div></div>
-                            </div>
+                    <div class="panel-card" style="background: var(--bg-card); border: 1px solid var(--panel-border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
+                        <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 16px;">近期活跃任务</h3>
+                        <div id="dashRecentTasks" style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="color: var(--text-muted); font-size: 13px;">加载中...</div>
                         </div>
                     </div>
                 </div>

@@ -180,6 +180,43 @@ body::before, body::after {
     opacity: 0.7;
 }
 
+.notification-stats {
+    padding: 8px 0;
+}
+
+.notification-stats .stat-item {
+    padding: 0 4px;
+}
+
+.notification-stats .stat-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: var(--text-main);
+}
+
+.notification-stats .stat-header span {
+    color: var(--text-muted);
+}
+
+.notification-stats .stat-header strong {
+    color: var(--text-main);
+}
+
+.notification-stats .load-bar {
+    height: 6px;
+    background-color: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.notification-stats .load-progress {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
 [data-theme="dark"] .notification-dropdown {
     background: rgba(30, 41, 59, 0.95);
     border-color: rgba(71, 85, 105, 0.3);
@@ -458,22 +495,54 @@ body::before, body::after {
     display: flex;
     align-items: center;
     gap: 6px;
-    background-color: rgba(16, 185, 129, 0.1);
-    color: #059669;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: #10b981;
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
 }
 
 .notification-btn {
     position: relative;
     cursor: pointer;
-    color: var(--text-muted);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+}
+
+.notification-btn:hover {
+    background: rgba(30, 41, 59, 0.8);
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
 }
 
 .notification-btn i {
-    font-size: 24px;
+    font-size: 20px;
+    color: var(--text-main);
+}
+
+.theme-toggle-btn {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    background: rgba(30, 41, 59, 0.8) !important;
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.4) !important;
+    transform: translateY(-1px);
 }
 
 .notification-btn .badge {
