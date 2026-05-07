@@ -39,7 +39,7 @@ async function loadDashboardStats() {
 
         const dashRecentTasks = document.getElementById('dashRecentTasks');
         if (dashRecentTasks && tasks.length > 0) {
-            const recent = tasks.sort((a, b) => b.id - a.id).slice(0, 5);
+            const recent = tasks.sort((a, b) => b.id - a.id); // 移除slice限制，显示所有任务
             
             const formatStatus = (task) => {
                 if (task.status === 'completed') return '已完结';
