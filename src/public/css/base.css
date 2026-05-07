@@ -109,16 +109,16 @@ button:active {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    background: #4B4BFA;
     border: none;
     color: #fff;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
 }
 
 [data-theme="dark"] .btn-primary {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(79, 70, 229, 0.95) 100%);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.4), 0 0 20px rgba(99, 102, 241, 0.15);
+    background: #4B4BFA;
+    border: 1px solid rgba(75, 75, 250, 0.3);
+    box-shadow: 0 2px 12px rgba(75, 75, 250, 0.4), 0 0 20px rgba(75, 75, 250, 0.15);
 }
 
 .btn-default, .btn-primary {
@@ -141,12 +141,24 @@ button:active {
 
 .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
 }
 
 [data-theme="dark"] .btn-primary:hover {
-    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5), 0 0 28px rgba(99, 102, 241, 0.25);
-    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 4px 16px rgba(75, 75, 250, 0.5), 0 0 28px rgba(75, 75, 250, 0.25);
+    border-color: rgba(75, 75, 250, 0.5);
+}
+
+/* 统一按钮圆角样式（符合影视风格） */
+button:not(.theme-toggle-btn):not(.sidebar-toggle):not(.sidebar-pin) {
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+button:not(.theme-toggle-btn):not(.sidebar-toggle):not(.sidebar-pin):hover {
+    transform: translateY(-1px);
 }
 
 .btn-small {
