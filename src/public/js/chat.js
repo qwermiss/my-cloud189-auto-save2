@@ -56,6 +56,36 @@ function addMessage(content, isUser = false) {
 
 // 等待DOM加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
+    // 建立SSE连接（专门用于AI聊天）
+    let chatEventSource = null;
+    
+    function connectChatSSE() {
+        if (chatEventSource) {
+            chatEventSource.close();
+        }
+        
+        chatEventSource = new EventSource('/api/logs/events');
+        
+        chatEventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'aimessage') {
+                    addMessage(data.message, false);
+                }
+            } catch (e) {
+                console.error('解析SSE消息失败:', e);
+            }
+        };
+        
+        chatEventSource.onerror = () => {
+            chatEventSource.close();
+            setTimeout(connectChatSSE, 3000);
+        };
+    }
+    
+    // 页面加载时建立连接
+    connectChatSSE();
+    
     // 处理用户输入
     const messageInput = document.getElementById('messageInput');
     if (messageInput) {
@@ -87,15 +117,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
-    // 改用事件监听
-    document.addEventListener('sseMessage', function(e) {
-        const data = e.detail;
-        if (data.type === 'aimessage') {
-            // 处理AI消息
-            addMessage(data.message, false);
-        }
-    });
 });
 
 // 点击其他地方关闭聊天窗口

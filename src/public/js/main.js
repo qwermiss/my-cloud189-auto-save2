@@ -217,6 +217,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="load-bar"><div class="load-progress" style="width: 5%; background: #10b981;"></div></div>
                         </div>
                     </div>
+                    <div class="notification-divider" style="border-top: 1px solid var(--border-color); margin: 16px 0;"></div>
+                    <div class="notification-actions">
+                        <button onclick="document.getElementById('logsModal').style.display='flex'; document.querySelector('.notification-dropdown').remove();" style="width: 100%; padding: 8px 12px; background: #4B4BFA; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s ease;">
+                            <i class="ph ph-file-text" style="margin-right: 6px;"></i>查看系统日志
+                        </button>
+                    </div>
                 </div>
             `;
             

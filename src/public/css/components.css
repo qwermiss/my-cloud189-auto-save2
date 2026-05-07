@@ -213,17 +213,20 @@
 }
 
 .settings-help-toggle {
-    background: none;
+    background: #4B4BFA;
     border: none;
-    color: var(--text-secondary, #666);
-    text-decoration: underline;
+    color: #fff;
     cursor: pointer;
-    padding: 0;
+    padding: 4px 12px;
     font-size: 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.2s ease;
 }
 
 .settings-help-toggle:hover {
-    color: var(--primary-color, #1890ff);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
 }
 
 .settings-help-text {

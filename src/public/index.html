@@ -91,7 +91,7 @@
                     <div class="status-load">系统负载 32%</div>
                     <div class="load-bar"><div class="load-progress" style="width: 32%"></div></div>
                 </div>
-                <div class="copyright">© 2025 天翼自动转存</div>
+                <div class="copyright" onclick="window.open('https://github.com/ymting/my-cloud189-auto-save', '_blank')" style="cursor: pointer;">© 2026 天翼自动转存</div>
             </div>
         </aside>
 
@@ -114,8 +114,8 @@
                     </div>
                     
                     <div class="theme-switch" style="margin-left: 12px;">
-                        <button id="themeToggle" class="theme-toggle-btn" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(99, 102, 241, 0.2); background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(99, 102, 241, 0.2); transition: all 0.2s ease;">
-                            <i class="ph ph-moon" style="font-size: 20px; color: var(--text-main);"></i>
+                        <button id="themeToggle" class="theme-toggle-btn">
+                            <i class="ph ph-moon"></i>
                         </button>
                     </div>
                 </div>
@@ -1196,9 +1196,6 @@
         </div>
         <div class="floating-btn" onclick="openCustomPushManagementModal()" title="自定义推送">
             <img src="/icons/push.svg" alt="自定义推送">
-        </div>
-        <div class="floating-btn" id="showLogsBtn" title="查看日志">
-            <img src="/icons/logs.svg" alt="查看日志">
         </div>
     </div>
     <div class="floating-btn" onclick="toggleFloatingBtns()" title="更多">

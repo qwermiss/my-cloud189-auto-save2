@@ -429,27 +429,25 @@ body::before, body::after {
 .sidebar-toggle {
     width: 40px;
     height: 40px;
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(10px);
-    border-radius: var(--radius-sm);
+    border: none;
+    background: #4B4BFA;
+    border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
 }
 
 .sidebar-toggle:hover {
-    background: rgba(30, 41, 59, 0.8);
-    box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
     transform: translateY(-1px);
 }
 
 .sidebar-toggle i {
     font-size: 20px;
-    color: var(--text-main);
+    color: #fff;
 }
 
 .topbar-search {
@@ -518,35 +516,45 @@ body::before, body::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: #4B4BFA;
+    border: none;
     border-radius: 50%;
     transition: all 0.2s ease;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
 }
 
 .notification-btn:hover {
-    background: rgba(30, 41, 59, 0.8);
-    box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
     transform: translateY(-1px);
 }
 
 .notification-btn i {
     font-size: 20px;
-    color: var(--text-main);
+    color: #fff;
 }
 
 .theme-toggle-btn {
-    position: relative;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: #4B4BFA;
+    border-radius: 50%;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
 }
 
 .theme-toggle-btn:hover {
-    background: rgba(30, 41, 59, 0.8) !important;
-    box-shadow: 0 0 16px rgba(99, 102, 241, 0.4) !important;
+    box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
     transform: translateY(-1px);
+}
+
+.theme-toggle-btn i {
+    font-size: 20px;
+    color: #fff;
 }
 
 .notification-btn .badge {
