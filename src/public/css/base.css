@@ -115,6 +115,12 @@ button:active {
     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
+[data-theme="dark"] .btn-primary {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(79, 70, 229, 0.95) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.4), 0 0 20px rgba(99, 102, 241, 0.15);
+}
+
 .btn-default, .btn-primary {
     padding: 8px 16px;
     border-radius: 8px;
@@ -136,6 +142,11 @@ button:active {
 .btn-primary:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+[data-theme="dark"] .btn-primary:hover {
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5), 0 0 28px rgba(99, 102, 241, 0.25);
+    border-color: rgba(99, 102, 241, 0.5);
 }
 
 .btn-small {
