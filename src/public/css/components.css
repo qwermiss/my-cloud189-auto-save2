@@ -258,12 +258,17 @@
     display: flex;
     gap: 8px;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    grid-column: 1 / -1;
 }
 
 .settings-inline-inputs input {
     flex: 1;
-    min-width: 120px;
+    min-width: 0;
+}
+
+.settings-inline-inputs button {
+    flex-shrink: 0;
 }
 
 /* 帮助文本容器 */

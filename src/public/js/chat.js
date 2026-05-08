@@ -64,20 +64,27 @@ document.addEventListener('DOMContentLoaded', function() {
             chatEventSource.close();
         }
         
+        console.log('[AI聊天] 建立SSE连接...');
         chatEventSource = new EventSource('/api/logs/events');
+        
+        chatEventSource.onopen = () => {
+            console.log('[AI聊天] SSE连接已建立');
+        };
         
         chatEventSource.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
+                console.log('[AI聊天] 收到SSE消息:', data);
                 if (data.type === 'aimessage') {
                     addMessage(data.message, false);
                 }
             } catch (e) {
-                console.error('解析SSE消息失败:', e);
+                console.error('[AI聊天] 解析SSE消息失败:', e);
             }
         };
         
-        chatEventSource.onerror = () => {
+        chatEventSource.onerror = (error) => {
+            console.error('[AI聊天] SSE连接错误:', error);
             chatEventSource.close();
             setTimeout(connectChatSSE, 3000);
         };
@@ -98,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 addMessage(message, true);
                 
                 // 发送消息到后端
+                console.log('[AI聊天] 发送消息:', message);
                 try {
                     const response = await fetch('/api/chat', {
                         method: 'POST',
@@ -108,10 +116,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     
                     if (!response.ok) {
-                        throw new Error('请求失败');
+                        throw new Error('请求失败: ' + response.status);
                     }
+                    
+                    const result = await response.json();
+                    console.log('[AI聊天] 发送结果:', result);
                 } catch (error) {
-                    console.error('发送消息失败:', error);
+                    console.error('[AI聊天] 发送消息失败:', error);
                     addMessage('发送消息失败，请重试', false);
                 }
             }

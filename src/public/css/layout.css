@@ -427,17 +427,20 @@ body::before, body::after {
 }
 
 .sidebar-toggle {
-    width: 40px;
-    height: 40px;
+    padding: 8px 16px;
     border: none;
     background: #4B4BFA;
-    border-radius: 50%;
+    border-radius: 8px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
 }
 
 .sidebar-toggle:hover {
@@ -446,7 +449,7 @@ body::before, body::after {
 }
 
 .sidebar-toggle i {
-    font-size: 20px;
+    font-size: 18px;
     color: #fff;
 }
 

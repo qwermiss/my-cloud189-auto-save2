@@ -79,6 +79,7 @@
             <header class="topbar">
                 <button class="sidebar-toggle" id="sidebarToggle" title="展开/收起侧边栏">
                     <i class="ph ph-list"></i>
+                    <span>菜单</span>
                 </button>
                 <div class="topbar-search">
                     <i class="ph ph-magnifying-glass"></i>
@@ -596,16 +597,12 @@
                                 </div>
                                 <div class="settings-item-content">
                                     <input type="text" id="wecomWebhook" placeholder="机器人webhook">
-                                    <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border-light);">
-                                        <div style="font-weight:500;margin-bottom:8px;color:var(--primary-color);">企业微信自建应用 (双向交互)</div>
-                                        <div class="settings-row">
-                                            <input type="text" id="wecomCorpId" placeholder="企业ID">
-                                            <input type="text" id="wecomAppId" placeholder="应用AgentId">
-                                        </div>
-                                        <div class="settings-row">
-                                            <input type="text" id="wecomAppSecret" placeholder="应用Secret">
-                                            <input type="text" id="wecomCallbackToken" placeholder="Token">
-                                        </div>
+                                    <div style="grid-column: 1 / -1; margin-top:12px; padding-top:12px; border-top:1px dashed var(--border-color);">
+                                        <div style="font-weight:600; margin-bottom:12px; color:var(--text-color); font-size: 14px;">企业微信自建应用 (双向交互)</div>
+                                        <input type="text" id="wecomCorpId" placeholder="企业ID">
+                                        <input type="text" id="wecomAppId" placeholder="应用AgentId">
+                                        <input type="text" id="wecomAppSecret" placeholder="应用Secret">
+                                        <input type="text" id="wecomCallbackToken" placeholder="Token">
                                         <input type="text" id="wecomCallbackAesKey" placeholder="EncodingAESKey">
                                         <label><input type="checkbox" id="wecomCallbackEnabled">启用自建应用回调</label>
                                     </div>
