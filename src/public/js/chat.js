@@ -121,9 +121,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     const result = await response.json();
                     console.log('[AI聊天] 发送结果:', result);
+                    
+                    // 检查是否配置错误
+                    if (result.error && result.error.includes('AI服务未配置')) {
+                        addMessage('⚠️ AI服务未启用，请前往「系统设置 → TMDB设置」启用AI重命名功能', false);
+                    }
                 } catch (error) {
                     console.error('[AI聊天] 发送消息失败:', error);
-                    addMessage('发送消息失败，请重试', false);
+                    addMessage('❌ 发送消息失败：' + error.message, false);
                 }
             }
         });

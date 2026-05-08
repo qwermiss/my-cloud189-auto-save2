@@ -166,6 +166,14 @@
     align-items: start;
 }
 
+/* settings-item-content的子div继承grid */
+.settings-item-content > div:not(.settings-row):not(.settings-inline-inputs):not(.settings-checkbox-group) {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px 12px;
+    align-items: start;
+}
+
 /* 让特定元素占满整行 */
 .settings-item-content > small.form-text,
 .settings-item-content > .settings-checkbox-group,
@@ -173,8 +181,18 @@
     grid-column: 1 / -1;
 }
 
+/* 子div中的标题占满整行 */
+.settings-item-content > div > div:first-child:not(input):not(select):not(textarea):not(label) {
+    grid-column: 1 / -1;
+}
+
 /* checkbox项占满整行 */
 .settings-item-content > label:has(input[type="checkbox"]) {
+    grid-column: 1 / -1;
+}
+
+/* 子div中的checkbox也占满整行 */
+.settings-item-content > div > label:has(input[type="checkbox"]) {
     grid-column: 1 / -1;
 }
 
@@ -186,7 +204,10 @@
 /* 单独的输入框自动填充 */
 .settings-item-content > input,
 .settings-item-content > select,
-.settings-item-content > textarea {
+.settings-item-content > textarea,
+.settings-item-content > div > input,
+.settings-item-content > div > select,
+.settings-item-content > div > textarea {
     width: 100%;
     max-width: none;
 }
@@ -211,7 +232,8 @@
     .settings-item-content {
         grid-template-columns: repeat(3, 1fr);
     }
-    .settings-item-content > .settings-row {
+    .settings-item-content > .settings-row,
+    .settings-item-content > div:not(.settings-row):not(.settings-inline-inputs):not(.settings-checkbox-group) {
         grid-template-columns: repeat(3, 1fr);
     }
 }
@@ -221,7 +243,8 @@
     .settings-item-content {
         grid-template-columns: repeat(2, 1fr);
     }
-    .settings-item-content > .settings-row {
+    .settings-item-content > .settings-row,
+    .settings-item-content > div:not(.settings-row):not(.settings-inline-inputs):not(.settings-checkbox-group) {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -231,7 +254,8 @@
     .settings-item-content {
         grid-template-columns: 1fr;
     }
-    .settings-item-content > .settings-row {
+    .settings-item-content > .settings-row,
+    .settings-item-content > div:not(.settings-row):not(.settings-inline-inputs):not(.settings-checkbox-group) {
         grid-template-columns: 1fr;
     }
 }
@@ -260,15 +284,18 @@
     align-items: center;
     flex-wrap: nowrap;
     grid-column: 1 / -1;
+    width: 100%;
 }
 
 .settings-inline-inputs input {
     flex: 1;
     min-width: 0;
+    width: auto;
 }
 
 .settings-inline-inputs button {
     flex-shrink: 0;
+    white-space: nowrap;
 }
 
 /* 帮助文本容器 */
