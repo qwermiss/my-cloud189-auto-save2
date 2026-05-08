@@ -10,6 +10,9 @@ const path = require('path');
 const { default: cloudSaverSDK } = require('../sdk/cloudsaver/sdk');
 const ProxyUtil = require('../utils/ProxyUtil');
 const cloud189Utils = require('../utils/Cloud189Utils');
+const { AIIntentService, AI_FUNCTIONS } = require('./AIIntentService');
+const AIOperationHandler = require('./AIOperationHandler');
+const AIService = require('./ai');
 
 class TelegramBotService {
     constructor(token, chatId) {
@@ -48,6 +51,10 @@ class TelegramBotService {
         this.tmdbBindTaskId = null;  // 待绑定的任务ID
         this.tmdbBindType = 'tv';    // 搜索类型 tv/movie
         this.tmdbSearchResultsCache = []; // 搜索结果缓存
+        
+        // AI助手集成
+        this.aiIntentService = new AIIntentService();
+        this.aiOperationHandler = new AIOperationHandler();
         this.tmdbTitleCache = new Map(); // TMDB ID → Title 缓存（避免callback_data过长）
     }
 
@@ -203,6 +210,9 @@ class TelegramBotService {
                     }
                 }
                 this.cloudSaverSearch(chatId, msg)
+            } else {
+                // AI助手处理普通消息
+                await this._handleAIChat(chatId, msg.text?.trim());
             }
         });
 
@@ -418,43 +428,50 @@ class TelegramBotService {
 
         // 修改回调处理
         this.bot.on('callback_query', async (callbackQuery) => {
-            const data = JSON.parse(callbackQuery.data);
+            const data = callbackQuery.data;
             const chatId = callbackQuery.message.chat.id;
             const messageId = callbackQuery.message.message_id;
 
+            // 处理AI回调
+            if (typeof data === 'string' && data.startsWith('ai_')) {
+                await this._handleAICallback(callbackQuery);
+                return;
+            }
+
             try {
-                switch (data.t) {
+                const parsedData = JSON.parse(data);
+                switch (parsedData.t) {
                     case 'f': // 文件夹选择
-                        await this.createTask(chatId, data, messageId);
+                        await this.createTask(chatId, parsedData, messageId);
                         break;
                     case 'of': // 覆盖文件夹
-                        if (!data.o) {
+                        if (!parsedData.o) {
                             await this.bot.editMessageText("已取消任务创建",{
                                 chat_id: chatId,
                                 message_id: messageId
                             });
                             return;
                         }
-                        await this.createTask(chatId, data, messageId);
+                        await this.createTask(chatId, parsedData, messageId);
                         break;
                     case 'sa': // 设置当前账号
-                        await this.setCurrentAccount(chatId, data, messageId);
+                        await this.setCurrentAccount(chatId, parsedData, messageId);
                         break;
                     case 'tp': // 任务分页
-                        await this.showTasks(chatId, data.p, messageId);
+                        await this.showTasks(chatId, parsedData.p, messageId);
                         break;
                     case 'dt': // 删除任务
-                        if (!data.c) {
+                        if (!parsedData.c) {
                             await this.bot.editMessageText("已取消删除",{
                                 chat_id: chatId,
                                 message_id: messageId
                             });
                             return;
                         }
-                        await this.deleteTask(chatId, data, messageId);
+                        await this.deleteTask(chatId, parsedData, messageId);
                         break;
                     case 'fd': // 进入下一级目录
-                        await this.showFolderTree(chatId, data, messageId);
+                        await this.showFolderTree(chatId, parsedData, messageId);
                         break;
                     case 'fc': // 取消操作
                         await this.bot.deleteMessage(chatId, messageId);
@@ -1305,6 +1322,384 @@ class TelegramBotService {
                 await this.bot.sendMessage(chatId, '长时间未搜索，已自动退出搜索模式');
             }
         }, 3 * 60 * 1000);  // 3分钟
+    }
+
+    // AI助手聊天处理
+    async _handleAIChat(chatId, message) {
+        if (!message || message.trim() === '') return;
+
+        try {
+            // 发送"正在输入"状态
+            await this.bot.sendChatAction(chatId, 'typing');
+
+            // 检测分享链接
+            const shareLink = this.aiIntentService.detectShareLink(message);
+            
+            if (shareLink) {
+                // 分享链接智能创建
+                await this._handleSmartCreate(chatId, shareLink);
+                return;
+            }
+
+            // 使用AI Function Calling识别意图
+            let functionCallResult = null;
+            let textResponse = '';
+
+            await AIService.streamChatWithFunctions(
+                message,
+                AI_FUNCTIONS,
+                (chunk) => {
+                    if (chunk !== '[END]') {
+                        textResponse += chunk;
+                    }
+                },
+                (functionCall) => {
+                    functionCallResult = functionCall;
+                }
+            );
+
+            // 如果识别到Function Call
+            if (functionCallResult) {
+                await this._executeAIFunction(chatId, functionCallResult);
+                return;
+            }
+
+            // 否则返回AI文本回复
+            if (textResponse) {
+                await this.bot.sendMessage(chatId, textResponse);
+            }
+
+        } catch (error) {
+            console.error('AI聊天处理失败:', error);
+            await this.bot.sendMessage(chatId, `❌ AI处理失败: ${error.message}`);
+        }
+    }
+
+    // 智能创建任务
+    async _handleSmartCreate(chatId, shareLink) {
+        try {
+            const previewMsg = await this.bot.sendMessage(chatId, 
+                '🔍 正在识别分享链接...');
+            
+            // 解析分享链接
+            const parseResult = await this.aiOperationHandler.executeOperation(
+                'smart_create',
+                { shareLink }
+            );
+
+            if (parseResult.success && parseResult.result.type === 'task_preview') {
+                const preview = parseResult.result.preview;
+                
+                await this.bot.editMessageText(
+                    `📦 检测到分享链接\n\n` +
+                    `资源名称: ${preview.resourceName}\n` +
+                    `类型: ${preview.videoType || '未知'}\n` +
+                    `推荐路径: ${preview.suggestedPath}\n\n` +
+                    `是否创建任务？`,
+                    {
+                        chat_id: chatId,
+                        message_id: previewMsg.message_id,
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: '✅ 确认创建', callback_data: `ai_create_${shareLink}` },
+                                    { text: '❌ 取消', callback_data: 'ai_cancel' }
+                                ]
+                            ]
+                        }
+                    }
+                );
+            }
+
+        } catch (error) {
+            console.error('智能创建失败:', error);
+            await this.bot.sendMessage(chatId, `❌ 识别失败: ${error.message}`);
+        }
+    }
+
+    // 执行AI Function
+    async _executeAIFunction(chatId, functionCall) {
+        const { name, arguments: args } = functionCall;
+
+        try {
+            await this.bot.sendChatAction(chatId, 'typing');
+
+            // 检查是否需要确认
+            if (this.aiIntentService.requiresConfirmation(name)) {
+                const securityLevel = this.aiIntentService.getSecurityLevel(name);
+                
+                await this.bot.sendMessage(chatId,
+                    `⚠️ 操作确认\n\n` +
+                    `即将执行: ${name}\n` +
+                    `参数: ${JSON.stringify(args, null, 2)}\n\n` +
+                    `${securityLevel.confirmMessage}`,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: '✅ 确认执行', callback_data: `ai_exec_${name}_${JSON.stringify(args)}` },
+                                    { text: '❌ 取消', callback_data: 'ai_cancel' }
+                                ]
+                            ]
+                        }
+                    }
+                );
+                return;
+            }
+
+            // 直接执行
+            const result = await this.aiOperationHandler.executeOperation(name, args);
+            
+            // 格式化并发送结果
+            await this._sendOperationResult(chatId, result);
+
+        } catch (error) {
+            console.error('执行Function失败:', error);
+            await this.bot.sendMessage(chatId, `❌ 执行失败: ${error.message}`);
+        }
+    }
+
+    // 发送操作结果
+    async _sendOperationResult(chatId, result) {
+        if (!result.success) {
+            await this.bot.sendMessage(chatId, `❌ ${result.error || '操作失败'}`);
+            return;
+        }
+
+        const operation = result.operation;
+        const data = result.result;
+
+        switch (operation) {
+            case 'list_tasks':
+                await this._sendTaskList(chatId, data);
+                break;
+            
+            case 'get_task_detail':
+                await this._sendTaskDetail(chatId, data);
+                break;
+            
+            case 'get_system_status':
+                await this._sendSystemStatus(chatId, data);
+                break;
+            
+            case 'diagnose_task':
+                await this._sendDiagnosis(chatId, data);
+                break;
+            
+            case 'get_recommendations':
+                await this._sendRecommendations(chatId, data);
+                break;
+            
+            default:
+                const message = this.aiIntentService.formatSuccessMessage(operation, data);
+                await this.bot.sendMessage(chatId, `✅ ${message}`);
+        }
+    }
+
+    // 处理AI回调
+    async _handleAICallback(callbackQuery) {
+        const data = callbackQuery.data;
+        const chatId = callbackQuery.message.chat.id;
+        const messageId = callbackQuery.message.message_id;
+
+        try {
+            if (data === 'ai_cancel') {
+                await this.bot.editMessageText('已取消操作', {
+                    chat_id: chatId,
+                    message_id: messageId
+                });
+                return;
+            }
+
+            if (data.startsWith('ai_create_')) {
+                const shareLink = data.replace('ai_create_', '');
+                await this.bot.editMessageText('⏳ 正在创建任务...', {
+                    chat_id: chatId,
+                    message_id: messageId
+                });
+                
+                const result = await this.aiOperationHandler.executeOperation('create_task', {
+                    shareLink,
+                    targetFolder: '/media/',
+                    accountId: 1
+                });
+                
+                if (result.success) {
+                    await this.bot.editMessageText(
+                        `✅ 任务创建成功！\n任务ID: ${result.result.taskId}`,
+                        { chat_id: chatId, message_id: messageId }
+                    );
+                } else {
+                    await this.bot.editMessageText(
+                        `❌ 创建失败: ${result.error}`,
+                        { chat_id: chatId, message_id: messageId }
+                    );
+                }
+                return;
+            }
+
+            if (data.startsWith('ai_exec_')) {
+                const parts = data.replace('ai_exec_', '').split('_');
+                const operationName = parts[0];
+                const args = JSON.parse(parts.slice(1).join('_'));
+                
+                await this.bot.editMessageText('⏳ 正在执行...', {
+                    chat_id: chatId,
+                    message_id: messageId
+                });
+                
+                const result = await this.aiOperationHandler.executeOperation(operationName, args);
+                await this._sendOperationResult(chatId, result);
+                return;
+            }
+
+            if (data.startsWith('ai_autofix_')) {
+                const taskId = parseInt(data.replace('ai_autofix_', ''));
+                
+                await this.bot.editMessageText('⏳ 正在自动修复...', {
+                    chat_id: chatId,
+                    message_id: messageId
+                });
+                
+                const result = await this.aiOperationHandler.executeOperation('auto_fix', { taskId });
+                
+                if (result.success) {
+                    await this.bot.editMessageText(
+                        `✅ ${result.result.message}`,
+                        { chat_id: chatId, message_id: messageId }
+                    );
+                } else {
+                    await this.bot.editMessageText(
+                        `❌ 自动修复失败: ${result.error}`,
+                        { chat_id: chatId, message_id: messageId }
+                    );
+                }
+                return;
+            }
+
+        } catch (error) {
+            console.error('处理AI回调失败:', error);
+            await this.bot.editMessageText(`❌ 操作失败: ${error.message}`, {
+                chat_id: chatId,
+                message_id: messageId
+            });
+        }
+    }
+
+    // 发送任务列表
+    async _sendTaskList(chatId, data) {
+        const tasks = data.tasks || [];
+        
+        if (tasks.length === 0) {
+            await this.bot.sendMessage(chatId, '没有找到任务');
+            return;
+        }
+
+        let message = `📋 任务列表 (共${data.total}个)\n\n`;
+        
+        tasks.slice(0, 10).forEach(task => {
+            const statusEmoji = {
+                'pending': '⏳',
+                'active': '🔄',
+                'completed': '✅',
+                'failed': '❌',
+                'paused': '⏸️'
+            }[task.status] || '❓';
+            
+            message += `${statusEmoji} #${task.id} ${task.resourceName || '未命名'}\n`;
+            message += `   状态: ${task.status}\n\n`;
+        });
+
+        if (tasks.length > 10) {
+            message += `... 还有 ${tasks.length - 10} 个任务`;
+        }
+
+        await this.bot.sendMessage(chatId, message);
+    }
+
+    // 发送任务详情
+    async _sendTaskDetail(chatId, task) {
+        const message = 
+            `📋 任务详情\n\n` +
+            `ID: #${task.id}\n` +
+            `名称: ${task.resourceName || '未命名'}\n` +
+            `状态: ${task.status}\n` +
+            `分享链接: ${task.shareLink}\n` +
+            `目标路径: ${task.targetFolderId}\n` +
+            `创建时间: ${task.createdAt}\n` +
+            (task.errorMessage ? `错误信息: ${task.errorMessage}` : '');
+
+        await this.bot.sendMessage(chatId, message);
+    }
+
+    // 发送系统状态
+    async _sendSystemStatus(chatId, data) {
+        const tasks = data.tasks;
+        const resources = data.resources;
+        
+        const message = 
+            `💻 系统状态\n\n` +
+            `📊 任务统计:\n` +
+            `  总数: ${tasks.total}\n` +
+            `  活跃: ${tasks.active}\n` +
+            `  完成: ${tasks.completed}\n` +
+            `  失败: ${tasks.failed}\n` +
+            `  等待: ${tasks.pending}\n\n` +
+            `💾 资源占用:\n` +
+            `  内存: ${(resources.memory.heapUsed / 1024 / 1024).toFixed(2)} MB\n` +
+            `  运行时间: ${Math.floor(resources.uptime / 60)} 分钟\n\n` +
+            `🤖 AI状态: ${data.ai.enabled ? '✅ 已启用' : '❌ 未启用'}`;
+
+        await this.bot.sendMessage(chatId, message);
+    }
+
+    // 发送诊断结果
+    async _sendDiagnosis(chatId, data) {
+        const diagnosis = data.diagnosis;
+        
+        let message = 
+            `🔍 任务诊断\n\n` +
+            `任务ID: #${data.taskId}\n` +
+            `失败原因: ${diagnosis.reason}\n` +
+            `严重程度: ${diagnosis.severity}\n` +
+            `详细说明: ${diagnosis.details}\n\n` +
+            `解决方案:\n`;
+
+        data.solutions.forEach((solution, index) => {
+            message += `${index + 1}. ${solution.description}`;
+            if (solution.autoFix) message += ' [可自动修复]';
+            message += '\n';
+        });
+
+        const buttons = [];
+        if (data.autoFixAvailable) {
+            buttons.push([
+                { text: '🔧 自动修复', callback_data: `ai_autofix_${data.taskId}` }
+            ]);
+        }
+
+        await this.bot.sendMessage(chatId, message, {
+            reply_markup: buttons.length > 0 ? { inline_keyboard: buttons } : undefined
+        });
+    }
+
+    // 发送推荐建议
+    async _sendRecommendations(chatId, data) {
+        const recommendations = data.recommendations || [];
+        
+        if (recommendations.length === 0) {
+            await this.bot.sendMessage(chatId, '暂无建议');
+            return;
+        }
+
+        let message = '💡 操作建议\n\n';
+        
+        recommendations.slice(0, 5).forEach((rec, index) => {
+            message += `${rec.icon} ${rec.title}\n`;
+            message += `   ${rec.description}\n\n`;
+        });
+
+        await this.bot.sendMessage(chatId, message);
     }
 }
 

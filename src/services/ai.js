@@ -547,6 +547,171 @@ class AIService {
 
         return true;
     }
+
+    async chatWithFunctions(messages, functions, config = {}) {
+        try {
+            const openaiConfig = ConfigService.getConfigValue('openai')
+            if (!this.isEnabled(openaiConfig)) {
+                throw new Error('AI服务未配置或未启用');
+            }
+            const apiKey = openaiConfig?.apiKey;
+            const baseURL = openaiConfig?.baseUrl || 'https://api.openai.com/v1';
+            const model = openaiConfig?.model || 'gpt-3.5-turbo';
+
+            const requestBody = {
+                model,
+                messages,
+                stream: false,
+                ...this.defaultConfig,
+                ...config
+            };
+
+            if (functions && functions.length > 0) {
+                requestBody.tools = functions.map(fn => ({
+                    type: 'function',
+                    function: fn
+                }));
+                requestBody.tool_choice = 'auto';
+            }
+
+            const response = await got.post(`${baseURL}/chat/completions`, {
+                json: requestBody,
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                responseType: 'json'
+            });
+
+            const choice = response.body.choices[0];
+            
+            if (choice.finish_reason === 'tool_calls' && choice.message.tool_calls) {
+                const toolCall = choice.message.tool_calls[0];
+                return {
+                    success: true,
+                    type: 'function_call',
+                    functionCall: {
+                        name: toolCall.function.name,
+                        arguments: JSON.parse(toolCall.function.arguments)
+                    }
+                };
+            }
+
+            return {
+                success: true,
+                type: 'text',
+                data: choice.message.content
+            };
+        } catch (error) {
+            let errorDetails = error.message;
+            if (error.response) {
+                errorDetails += `\n状态码: ${error.response.statusCode}`;
+                errorDetails += `\n响应: ${JSON.stringify(error.response.body)}`;
+            }
+
+            console.error('AI Function Calling 调用失败:', errorDetails);
+            return {
+                success: false,
+                error: errorDetails
+            };
+        }
+    }
+
+    async streamChatWithFunctions(message, functions, onChunk, onFunctionCall) {
+        try {
+            const openaiConfig = ConfigService.getConfigValue('openai')
+            if (!this.isEnabled(openaiConfig)) {
+                throw new Error('AI服务未配置或未启用');
+            }
+            const apiKey = openaiConfig?.apiKey;
+            const baseURL = openaiConfig?.baseUrl || 'https://api.openai.com/v1';
+            const model = openaiConfig?.model || 'gpt-3.5-turbo';
+
+            const requestBody = {
+                model,
+                messages: [
+                    {
+                        role: 'system',
+                        content: '你是一个智能助手，可以帮助用户管理云盘转存任务。当用户发送分享链接时，使用smart_create函数。当用户询问任务时，使用list_tasks或get_task_detail函数。当用户要求执行操作时，使用相应的函数。'
+                    },
+                    {
+                        role: 'user',
+                        content: message
+                    }
+                ],
+                stream: true,
+                ...this.defaultConfig
+            };
+
+            if (functions && functions.length > 0) {
+                requestBody.tools = functions.map(fn => ({
+                    type: 'function',
+                    function: fn
+                }));
+                requestBody.tool_choice = 'auto';
+            }
+
+            const response = await got.post(`${baseURL}/chat/completions`, {
+                json: requestBody,
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                responseType: 'text',
+                isStream: true
+            });
+
+            let functionCallData = null;
+
+            for await (const chunk of response) {
+                try {
+                    const lines = chunk.toString().split('\n').filter(line => line.trim() !== '');
+                    for (const line of lines) {
+                        if (line.includes('[DONE]')) continue;
+                        if (line.startsWith('data: ')) {
+                            const data = JSON.parse(line.slice(5));
+                            const delta = data.choices[0].delta;
+                            
+                            if (delta?.content) {
+                                onChunk(delta.content);
+                            }
+                            
+                            if (delta?.tool_calls) {
+                                const toolCall = delta.tool_calls[0];
+                                if (toolCall?.function) {
+                                    if (!functionCallData) {
+                                        functionCallData = {
+                                            name: toolCall.function.name,
+                                            arguments: ''
+                                        };
+                                    }
+                                    if (toolCall.function.arguments) {
+                                        functionCallData.arguments += toolCall.function.arguments;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('处理响应块时出错:', error);
+                }
+            }
+
+            if (functionCallData && onFunctionCall) {
+                try {
+                    functionCallData.arguments = JSON.parse(functionCallData.arguments);
+                    onFunctionCall(functionCallData);
+                } catch (error) {
+                    console.error('解析function call参数失败:', error);
+                }
+            }
+
+            onChunk('[END]');
+        } catch (error) {
+            console.error('AI 流式Function Calling调用失败:', error.message);
+            throw error;
+        }
+    }
 }
 
 module.exports = new AIService();

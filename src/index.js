@@ -1237,6 +1237,175 @@ AppDataSource.initialize().then(async () => {
         }
     })
 
+    app.post('/api/chat/enhanced', async (req, res) => {
+        const { message } = req.body;
+        try {
+            let userMessage = message.trim();
+            if(!userMessage) {
+                return res.json({ success: true });
+            }
+
+            const { AIIntentService, AI_FUNCTIONS } = require('./services/AIIntentService');
+            const intentService = new AIIntentService();
+
+            const shareLink = intentService.detectShareLink(userMessage);
+            
+            if (shareLink) {
+                AIService.streamChatWithFunctions(
+                    userMessage,
+                    AI_FUNCTIONS,
+                    (chunk) => {
+                        if (chunk !== '[END]') {
+                            sendAIMessage(chunk);
+                        }
+                    },
+                    async (functionCall) => {
+                        const { name, arguments: args } = functionCall;
+                        
+                        if (name === 'smart_create') {
+                            const result = {
+                                type: 'task_preview',
+                                message: '检测到分享链接，已为您准备创建任务',
+                                preview: {
+                                    shareLink: args.shareLink,
+                                    resourceName: '未识别资源',
+                                    videoType: 'unknown',
+                                    suggestedPath: '/media/',
+                                    needPassword: false
+                                }
+                            };
+                            sendAIMessage(JSON.stringify(result));
+                        }
+                    }
+                );
+                return res.json({ success: true });
+            }
+
+            let functionCallResult = null;
+            
+            AIService.streamChatWithFunctions(
+                userMessage,
+                AI_FUNCTIONS,
+                (chunk) => {
+                    if (chunk !== '[END]') {
+                        sendAIMessage(chunk);
+                    }
+                },
+                (functionCall) => {
+                    functionCallResult = functionCall;
+                }
+            );
+
+            setTimeout(() => {
+                if (functionCallResult) {
+                    return res.json({
+                        success: true,
+                        type: 'function_call',
+                        functionCall: functionCallResult
+                    });
+                }
+                return res.json({ success: true });
+            }, 100);
+
+        } catch (error) {
+            console.error('处理增强聊天消息失败:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    })
+
+    app.post('/api/chat/execute-function', async (req, res) => {
+        const { operation, params } = req.body;
+        try {
+            const AIOperationHandler = require('./services/AIOperationHandler');
+            const { AIIntentService } = require('./services/AIIntentService');
+            
+            const handler = new AIOperationHandler();
+            const intentService = new AIIntentService();
+
+            if (intentService.requiresConfirmation(operation)) {
+                const dialog = intentService.buildConfirmDialog(operation, params);
+                return res.json(dialog);
+            }
+
+            const result = await handler.executeOperation(operation, params);
+            
+            const message = intentService.formatSuccessMessage(operation, result.result);
+            
+            return res.json({
+                type: 'operation_result',
+                success: result.success,
+                message,
+                ...result.result
+            });
+
+        } catch (error) {
+            console.error('执行Function失败:', error);
+            res.status(500).json({ 
+                success: false, 
+                error: error.message 
+            });
+        }
+    })
+
+    app.post('/api/chat/confirm', async (req, res) => {
+        const { operation, params, confirmed } = req.body;
+        try {
+            if (!confirmed) {
+                return res.json({
+                    success: false,
+                    message: '操作已取消'
+                });
+            }
+
+            const AIOperationHandler = require('./services/AIOperationHandler');
+            const handler = new AIOperationHandler();
+
+            const result = await handler.executeOperation(operation, params);
+
+            return res.json({
+                type: 'operation_result',
+                success: result.success,
+                message: result.success ? '操作执行成功' : '操作执行失败',
+                ...result.result
+            });
+
+        } catch (error) {
+            console.error('确认操作失败:', error);
+            res.status(500).json({ 
+                success: false, 
+                error: error.message 
+            });
+        }
+    })
+
+    app.post('/api/chat/confirm-preview', async (req, res) => {
+        const { preview } = req.body;
+        try {
+            const AIOperationHandler = require('./services/AIOperationHandler');
+            const handler = new AIOperationHandler();
+
+            const result = await handler.executeOperation('create_task', {
+                shareLink: preview.shareLink,
+                targetFolder: preview.suggestedPath,
+                accountId: 1
+            });
+
+            return res.json({
+                success: result.success,
+                taskId: result.result?.taskId,
+                message: result.success ? '任务创建成功' : '任务创建失败',
+                error: result.error
+            });
+
+        } catch (error) {
+            console.error('确认创建任务失败:', error);
+            res.status(500).json({ 
+                success: false, 
+                error: error.message 
+            });
+        }
+    })
+
 
     // STRM相关API
     app.post('/api/strm/generate-all', async (req, res) => {
