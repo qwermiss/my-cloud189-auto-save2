@@ -198,27 +198,46 @@ document.addEventListener('DOMContentLoaded', () => {
             const dropdown = document.createElement('div');
             dropdown.className = 'notification-dropdown';
             dropdown.innerHTML = `
-                <div class="notification-header">
-                    <h3>系统通知</h3>
+                <div class="notification-header" style="display: flex; align-items: center;">
+                    <h3 style="margin: 0;">系统通知</h3>
                     <span class="uptime-badge" style="margin-left: 12px; padding: 4px 12px; background: rgba(16, 185, 129, 0.15); color: #10b981; border-radius: 6px; font-size: 13px; font-weight: 600;">已运行 12 天 18 小时</span>
                     <span class="notification-close" style="margin-left: auto; cursor: pointer; font-size: 20px;">&times;</span>
                 </div>
-                <div class="notification-body">
-                    <div class="notification-section">
-                        <div class="notification-section-header" onclick="toggleNotificationSection(this)" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-main); border-radius: 6px; margin-bottom: 8px;">
-                            <span style="font-size: 14px; font-weight: 600;">系统关键信息</span>
+                <div class="notification-body" style="margin-top: 12px;">
+                    <div class="notification-section" style="margin-bottom: 8px;">
+                        <div class="notification-section-header" onclick="toggleNotificationSection(this)" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-main); border-radius: 6px;">
+                            <span style="font-size: 14px; font-weight: 600;">✅ 任务完成通知</span>
                             <i class="ph ph-caret-down" style="transition: transform 0.2s;"></i>
                         </div>
-                        <div class="notification-section-content" style="display: none; padding: 12px 16px; background: var(--bg-main); border-radius: 6px;">
-                            <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                                <div style="margin-bottom: 8px;"><strong>任务状态：</strong>运行中</div>
-                                <div style="margin-bottom: 8px;"><strong>活跃任务：</strong>3 个</div>
-                                <div style="margin-bottom: 8px;"><strong>今日完成：</strong>12 个任务</div>
-                                <div style="margin-bottom: 8px;"><strong>待处理：</strong>5 个任务</div>
-                                <div style="margin-bottom: 8px;"><strong>失败任务：</strong>1 个</div>
-                                <div><strong>最后更新：</strong>2 分钟前</div>
-                            </div>
+                        <div class="notification-section-content" style="display: none; padding: 12px 16px; margin-top: 4px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                            <div>任务【进击的巨人】已完成全部 25 集下载</div>
+                            <div style="margin-top: 8px; font-size: 11px; color: var(--text-muted);">2 分钟前</div>
                         </div>
+                    </div>
+                    <div class="notification-section" style="margin-bottom: 8px;">
+                        <div class="notification-section-header" onclick="toggleNotificationSection(this)" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-main); border-radius: 6px;">
+                            <span style="font-size: 14px; font-weight: 600;">⚠️ 任务失败警告</span>
+                            <i class="ph ph-caret-down" style="transition: transform 0.2s;"></i>
+                        </div>
+                        <div class="notification-section-content" style="display: none; padding: 12px 16px; margin-top: 4px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                            <div>任务【某资源名称】执行失败：分享链接已失效</div>
+                            <div style="margin-top: 8px; font-size: 11px; color: var(--text-muted);">15 分钟前</div>
+                        </div>
+                    </div>
+                    <div class="notification-section" style="margin-bottom: 8px;">
+                        <div class="notification-section-header" onclick="toggleNotificationSection(this)" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-main); border-radius: 6px;">
+                            <span style="font-size: 14px; font-weight: 600;">📊 系统状态报告</span>
+                            <i class="ph ph-caret-down" style="transition: transform 0.2s;"></i>
+                        </div>
+                        <div class="notification-section-content" style="display: none; padding: 12px 16px; margin-top: 4px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                            <div>活跃任务：3 个 | 今日完成：12 个 | 待处理：5 个</div>
+                            <div style="margin-top: 8px; font-size: 11px; color: var(--text-muted);">1 小时前</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                        <button onclick="document.getElementById('logsModal').style.display='flex'; document.querySelector('.notification-dropdown').remove();" style="width: 100%; padding: 8px 12px; background: #4B4BFA; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s ease;">
+                            <i class="ph ph-file-text" style="margin-right: 6px;"></i>查看系统日志
+                        </button>
                     </div>
                 </div>
             `;
