@@ -208,6 +208,12 @@ docker run -d \
 
 ## 📋 版本更新日志
 
+### v2.2.61 (2026-05-08)
+
+- Webhook 支持 `{savePath}` 占位符：用于 SmartStrm 自动触发
+- 自动从消息中提取保存路径（`📁 /xxx/yyy` 格式）
+- 配置示例：`{"event": "cs_strm", "strmtask": "tv", "savepath": "{savePath}"}`
+
 ### v2.2.60 (2026-04-27)
 
 - 家庭中转目录账号级配置完善：添加/编辑账号时可选择目录
