@@ -1282,30 +1282,41 @@ AppDataSource.initialize().then(async () => {
             }
 
             let functionCallResult = null;
+            let textResponse = '';
             
-            AIService.streamChatWithFunctions(
-                userMessage,
-                AI_FUNCTIONS,
-                (chunk) => {
-                    if (chunk !== '[END]') {
-                        sendAIMessage(chunk);
+            await new Promise((resolve, reject) => {
+                AIService.streamChatWithFunctions(
+                    userMessage,
+                    AI_FUNCTIONS,
+                    (chunk) => {
+                        if (chunk !== '[END]') {
+                            textResponse += chunk;
+                        }
+                    },
+                    (functionCall) => {
+                        functionCallResult = functionCall;
+                        resolve();
                     }
-                },
-                (functionCall) => {
-                    functionCallResult = functionCall;
-                }
-            );
+                );
+                
+                setTimeout(() => {
+                    resolve();
+                }, 10000);
+            });
 
-            setTimeout(() => {
-                if (functionCallResult) {
-                    return res.json({
-                        success: true,
-                        type: 'function_call',
-                        functionCall: functionCallResult
-                    });
-                }
-                return res.json({ success: true });
-            }, 100);
+            if (functionCallResult) {
+                return res.json({
+                    success: true,
+                    type: 'function_call',
+                    functionCall: functionCallResult
+                });
+            }
+            
+            if (textResponse) {
+                sendAIMessage(textResponse);
+            }
+            
+            return res.json({ success: true });
 
         } catch (error) {
             console.error('处理增强聊天消息失败:', error);
