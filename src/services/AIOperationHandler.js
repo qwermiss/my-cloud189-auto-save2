@@ -1,6 +1,5 @@
 const TaskService = require('./task');
 const ConfigService = require('./ConfigService');
-const { Op } = require('sequelize');
 const { logTaskEvent } = require('../utils/logUtils');
 const AIDiagnosticService = require('./AIDiagnosticService');
 const OperationRecommendation = require('./OperationRecommendation');
@@ -62,26 +61,24 @@ class AIOperationHandler {
     async handleListTasks(params) {
         const { status = 'all', search, limit = 20 } = params;
         
-        const whereClause = {};
+        const tasks = await this.taskService.getTasks();
+        
+        let filteredTasks = tasks;
         
         if (status && status !== 'all') {
-            whereClause.status = status;
+            filteredTasks = filteredTasks.filter(t => t.status === status);
         }
         
         if (search) {
-            whereClause.resourceName = {
-                [Op.like]: `%${search}%`
-            };
+            filteredTasks = filteredTasks.filter(t => 
+                t.resourceName && t.resourceName.includes(search)
+            );
         }
-
-        const tasks = await this.taskService.getTasks({
-            where: whereClause,
-            limit,
-            order: [['createdAt', 'DESC']]
-        });
+        
+        filteredTasks = filteredTasks.slice(0, limit);
 
         return {
-            tasks: tasks.map(task => ({
+            tasks: filteredTasks.map(task => ({
                 id: task.id,
                 resourceName: task.resourceName,
                 status: task.status,
@@ -90,7 +87,7 @@ class AIOperationHandler {
                 shareLink: task.shareLink,
                 targetFolderId: task.targetFolderId
             })),
-            total: tasks.length,
+            total: filteredTasks.length,
             filters: { status, search }
         };
     }
@@ -337,19 +334,19 @@ class AIOperationHandler {
     }
 
     async _getFilteredTasks(filter) {
-        const whereClause = {};
+        const tasks = await this.taskService.getTasks();
+        
+        let filteredTasks = tasks;
         
         if (filter.status) {
-            whereClause.status = filter.status;
+            filteredTasks = filteredTasks.filter(t => t.status === filter.status);
         }
         
         if (filter.ids && filter.ids.length > 0) {
-            whereClause.id = { [Op.in]: filter.ids };
+            filteredTasks = filteredTasks.filter(t => filter.ids.includes(t.id));
         }
 
-        return await this.taskService.getTasks({
-            where: whereClause
-        });
+        return filteredTasks;
     }
 
     async handleDiagnoseTask(params) {
