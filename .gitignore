@@ -123,3 +123,6 @@ dist
 # Context Memory
 MEMORY.md
 memory/
+
+# Documentation
+docs/
