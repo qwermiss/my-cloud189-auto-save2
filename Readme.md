@@ -1,18 +1,80 @@
 <div align="center">
     <img src="img/cloud189.png" alt="Logo" width="200">
     <h1>cloud189-auto-save (🚀 二开定制版)</h1>
-    <p>天翼云盘自动转存系统，基于原版深度优化，新增 CAS 家庭中转秒传、AI 智能重命名、手动 TMDB 绑定等特性。</p>
+    <p>天翼云盘自动转存系统，基于原版深度优化，新增 CAS 家庭中转秒传、AI 智能重命名、AI智能助手、手动 TMDB 绑定等特性。</p>
     <a href="https://github.com/ymting/my-cloud189-auto-save/packages">
         <img src="https://img.shields.io/badge/Docker-Images-blue?style=flat-square&logo=docker" alt="Docker">
     </a>
     <a href="https://github.com/ymting/my-cloud189-auto-save/releases">
-        <img src="https://img.shields.io/badge/Version-2.2.60-green?style=flat-square" alt="Version">
+        <img src="https://img.shields.io/badge/Version-2.2.62-green?style=flat-square" alt="Version">
     </a>
 </div>
 
 ## 🌟 二开定制功能亮点
 
 本项目在[原版系统](https://github.com/1307super/cloud189-auto-save)基础上进行深度二次开发，核心特性如下：
+
+---
+
+### 🤖 AI智能助手（全新功能）
+
+**自然语言控制整个系统！**
+
+基于AI Function Calling技术，实现自然语言交互式任务管理：
+
+#### 核心能力
+
+- ✅ **自然语言对话**：直接聊天，无需记忆命令
+- ✅ **智能意图识别**：16种操作自动识别（查询/执行/管理/诊断）
+- ✅ **任务全生命周期管理**：创建/查询/执行/删除任务
+- ✅ **智能诊断修复**：失败任务自动分析原因并提供解决方案
+- ✅ **分享链接识别**：发送链接自动创建任务，TMDB自动匹配
+- ✅ **上下文记忆**：记住对话历史，理解用户偏好
+
+#### 使用示例
+
+```
+用户: 查看所有任务
+AI: 📋 任务列表 (共5个)
+    ⏳ #1 进击的巨人 S4 (pending)
+    ✅ #2 海贼王 (completed)
+    ...
+
+用户: 任务123失败了，帮我看看
+AI: 🔍 任务诊断
+    失败原因: 分享链接已失效
+    严重程度: 高
+    解决方案: ...
+    [🔧 自动修复]
+
+用户: https://cloud.189.cn/t/abc123
+AI: 📦 检测到分享链接
+    资源名称: 进击的巨人 S4
+    ⭐ TMDB评分: 9.1
+    📁 推荐路径: /media/电视剧/进击的巨人 S4/
+    [✅ 确认创建]
+```
+
+#### 安全权限控制
+
+- **SAFE（自动执行）**：查询、创建、修改、执行任务
+- **MODERATE（需确认）**：批量执行、自动修复
+- **DANGEROUS（强制确认）**：删除、批量删除、修改配置
+
+#### Telegram集成
+
+- 直接通过Telegram与AI对话
+- 发送消息即可执行操作
+- 格式化输出 + 交互式按钮
+
+#### 技术实现
+
+- AI Function Calling自动识别操作意图
+- 16种操作类型定义
+- 3级安全分级自动判断
+- SSE实时通信 + 流式响应
+- TMDB影视信息匹配
+- 对话历史持久化
 
 ---
 
