@@ -1,11 +1,11 @@
-const TaskService = require('./task');
+const { TaskService } = require('./task');
 const ConfigService = require('./ConfigService');
 const AIService = require('./ai');
 const { logTaskEvent } = require('../utils/logUtils');
 
 class AIDiagnosticService {
-    constructor() {
-        this.taskService = new TaskService();
+    constructor(taskService) {
+        this.taskService = taskService;
     }
 
     async diagnoseTask(taskId) {

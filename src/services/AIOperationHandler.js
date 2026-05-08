@@ -1,4 +1,4 @@
-const TaskService = require('./task');
+const { TaskService } = require('./task');
 const ConfigService = require('./ConfigService');
 const { logTaskEvent } = require('../utils/logUtils');
 const AIDiagnosticService = require('./AIDiagnosticService');
@@ -6,10 +6,10 @@ const OperationRecommendation = require('./OperationRecommendation');
 const { ShareLinkParserWithTMDB } = require('./ShareLinkParser');
 
 class AIOperationHandler {
-    constructor() {
-        this.taskService = new TaskService();
-        this.diagnosticService = new AIDiagnosticService();
-        this.recommendationService = new OperationRecommendation();
+    constructor(taskService) {
+        this.taskService = taskService;
+        this.diagnosticService = new AIDiagnosticService(taskService);
+        this.recommendationService = new OperationRecommendation(taskService);
         this.shareLinkParser = new ShareLinkParserWithTMDB();
     }
 

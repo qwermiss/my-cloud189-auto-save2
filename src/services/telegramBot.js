@@ -54,7 +54,7 @@ class TelegramBotService {
         
         // AI助手集成
         this.aiIntentService = new AIIntentService();
-        this.aiOperationHandler = new AIOperationHandler();
+        this.aiOperationHandler = new AIOperationHandler(this.taskService);
         this.tmdbTitleCache = new Map(); // TMDB ID → Title 缓存（避免callback_data过长）
     }
 

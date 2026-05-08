@@ -1330,7 +1330,7 @@ AppDataSource.initialize().then(async () => {
             const AIOperationHandler = require('./services/AIOperationHandler');
             const { AIIntentService } = require('./services/AIIntentService');
             
-            const handler = new AIOperationHandler();
+            const handler = new AIOperationHandler(taskService);
             const intentService = new AIIntentService();
 
             if (intentService.requiresConfirmation(operation)) {
@@ -1369,7 +1369,7 @@ AppDataSource.initialize().then(async () => {
             }
 
             const AIOperationHandler = require('./services/AIOperationHandler');
-            const handler = new AIOperationHandler();
+            const handler = new AIOperationHandler(taskService);
 
             const result = await handler.executeOperation(operation, params);
 
@@ -1393,7 +1393,7 @@ AppDataSource.initialize().then(async () => {
         const { preview } = req.body;
         try {
             const AIOperationHandler = require('./services/AIOperationHandler');
-            const handler = new AIOperationHandler();
+            const handler = new AIOperationHandler(taskService);
 
             const result = await handler.executeOperation('create_task', {
                 shareLink: preview.shareLink,

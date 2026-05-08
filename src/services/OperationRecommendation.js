@@ -1,9 +1,9 @@
-const TaskService = require('./task');
+const { TaskService } = require('./task');
 const ConfigService = require('./ConfigService');
 
 class OperationRecommendation {
-    constructor() {
-        this.taskService = new TaskService();
+    constructor(taskService) {
+        this.taskService = taskService;
     }
 
     async getRecommendations(context = {}) {
