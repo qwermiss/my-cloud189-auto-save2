@@ -27,22 +27,41 @@ class CustomPushService extends MessageService {
                   .replace(/\b/g, '\\b');
     }
 
+    // 从消息内容中提取 savePath（从 "📁 /xxx/yyy" 格式中提取）
+    _extractSavePath(content) {
+        if (typeof content !== 'string') return '';
+        // 匹配 📁 后面跟的路径
+        const match = content.match(/📁\s+(.+?)(?:\n|$)/);
+        return match ? match[1].trim() : '';
+    }
+
     _replacePlaceholders(template, title, content, escapeValuesForJson = false) {
         if (typeof template !== 'string') return template;
 
         const safeTitle = escapeValuesForJson ? this._jsonEscape(title) : title;
         const safeContent = escapeValuesForJson ? this._jsonEscape(content) : content;
+        const savePath = this._extractSavePath(content);
 
-        return template.replace(/{{title}}/g, safeTitle).replace(/{{content}}/g, safeContent);
+        // 替换 {{title}}, {{content}}, {savePath}
+        return template
+            .replace(/{{title}}/g, safeTitle)
+            .replace(/{{content}}/g, safeContent)
+            .replace(/\{savePath\}/g, savePath);
     }
 
     _replacePlaceholdersInObject(obj, title, content) {
         if (typeof obj !== 'object' || obj === null) return obj;
         const newObj = JSON.parse(JSON.stringify(obj)); // Deep clone
+        const savePath = this._extractSavePath(content);
+        
         for (const key in newObj) {
             if (Object.prototype.hasOwnProperty.call(newObj, key)) {
                 if (typeof newObj[key] === 'string') {
-                    newObj[key] = this._replacePlaceholders(newObj[key], title, content);
+                    // 替换 {{title}}, {{content}}, {savePath}
+                    newObj[key] = newObj[key]
+                        .replace(/{{title}}/g, title)
+                        .replace(/{{content}}/g, content)
+                        .replace(/\{savePath\}/g, savePath);
                 } else if (typeof newObj[key] === 'object') {
                     newObj[key] = this._replacePlaceholdersInObject(newObj[key], title, content);
                 }
