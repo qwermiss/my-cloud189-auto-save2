@@ -488,16 +488,16 @@ class TelegramBotService {
                         await this.saveFolderAsFavorite(chatId, data, messageId);
                         break;
                     case 'tr': // 进入TMDB搜索模式
-                        await this._startTmdbBind(chatId, data, messageId);
+                        await this._startTmdbBind(chatId, parsedData, messageId);
                         break;
                     case 'ts': // 设置搜索类型并提示输入
-                        await this._setTmdbSearchType(chatId, data, messageId);
+                        await this._setTmdbSearchType(chatId, parsedData, messageId);
                         break;
                     case 'tb': // 绑定所选TMDB结果
-                        await this._confirmTmdbBind(chatId, data, messageId);
+                        await this._confirmTmdbBind(chatId, parsedData, messageId);
                         break;
                     case 'tse': // 选择季数
-                        await this._selectTmdbSeason(chatId, data, messageId);
+                        await this._selectTmdbSeason(chatId, parsedData, messageId);
                         break;
                 }
             } catch (error) {
