@@ -297,19 +297,72 @@ class TaskService {
     // 从文件名提取年份
     // 支持格式: .2026. (2026) 【2026】 或末尾的年份
     _extractYear(fileName) {
-        // 格式1: .年份. (如 Gimlet Eyes.2026.S01)
         const dotYearMatch = fileName.match(/\.(20\d{2}|19\d{2})\./i);
         if (dotYearMatch) return parseInt(dotYearMatch[1]);
 
-        // 格式2: (年份) 【年份】 等括号格式
         const bracketYearMatch = fileName.match(/[\[\({【（](20\d{2}|19\d{2})[\]\)}】）]/);
         if (bracketYearMatch) return parseInt(bracketYearMatch[1]);
 
-        // 格式3: 末尾年份（如 繁花 (2023)）
         const endYearMatch = fileName.match(/[\[\({【（]?(20\d{2}|19\d{2})[\]\)}】）]?\s*$/);
         if (endYearMatch) return parseInt(endYearMatch[1]);
 
         return 0;
+    }
+
+    _calculateSimilarity(str1, str2) {
+        const set1 = new Set(str1.toLowerCase().split(/\s+/).filter(w => w.length > 0));
+        const set2 = new Set(str2.toLowerCase().split(/\s+/).filter(w => w.length > 0));
+        
+        if (set1.size === 0 || set2.size === 0) return 0;
+        
+        const intersection = new Set([...set1].filter(x => set2.has(x)));
+        const union = new Set([...set1, ...set2]);
+        
+        return intersection.size / union.size;
+    }
+
+    _validateTmdbResult(result, originalName, year, expectedType) {
+        let score = 0;
+        const maxScore = 100;
+        
+        const similarity = this._calculateSimilarity(result.title, originalName);
+        if (similarity > 0.7) {
+            score += 40;
+        } else if (similarity > 0.5) {
+            score += 20;
+        } else if (similarity < 0.3) {
+            return { valid: false, reason: `相似度过低(${similarity.toFixed(2)})` };
+        }
+        
+        if (year && result.releaseDate) {
+            const resultYear = parseInt(result.releaseDate.substring(0, 4));
+            if (Math.abs(resultYear - year) <= 1) {
+                score += 30;
+            } else if (Math.abs(resultYear - year) <= 5) {
+                score += 10;
+            } else {
+                return { valid: false, reason: `年份差距过大(期望${year}, 实际${resultYear})` };
+            }
+        }
+        
+        if (result.title.length < originalName.length * 0.3) {
+            return { valid: false, reason: '标题过短，可能是错误匹配' };
+        }
+        
+        if (result.voteCount && result.voteCount > 100) {
+            score += 20;
+        }
+        
+        if (expectedType && result.type !== expectedType) {
+            score -= 10;
+        }
+        
+        const isValid = score >= 50;
+        return { 
+            valid: isValid, 
+            score, 
+            reason: isValid ? '验证通过' : `分数不足(${score}/100)`
+        };
     }
 
     async _analyzeResourceInfo(resourcePath, files, type = 'folder', taskDto = null) {
@@ -412,12 +465,19 @@ class TaskService {
                         const words = baseName.split(/\s+/).filter(w => w.length > 0);
                         
                         searchStrategies.push({ name: '完整名称', query: baseName });
+                        
                         if (words.length >= 2) {
-                            searchStrategies.push({ name: '前两词', query: words.slice(0, 2).join(' ') });
+                            const firstTwo = words.slice(0, 2).join(' ');
+                            const isSafeToTruncate = 
+                                /^\d{4}$/.test(words[1]) ||
+                                words.length > 5 ||
+                                !/^(Star|Harry|Lord|Game|Breaking|The|Spider|Batman|Superman|Iron|Captain|Avengers)/i.test(words[0]);
+                            
+                            if (isSafeToTruncate) {
+                                searchStrategies.push({ name: '前两词', query: firstTwo });
+                            }
                         }
-                        if (words.length >= 1 && words[0].length >= 2) {
-                            searchStrategies.push({ name: '首词', query: words[0] });
-                        }
+                        
                         const noChinese = baseName.replace(/[\u4e00-\u9fa5]/g, '').trim();
                         if (noChinese && noChinese !== baseName && noChinese.length >= 2) {
                             searchStrategies.push({ name: '移除中文', query: noChinese });
@@ -438,11 +498,17 @@ class TaskService {
                                     : await tmdbService.searchMovie(strategy.query, year ? year.toString() : '');
                                 
                                 if (result && result.title) {
-                                    tmdbName = result.title;
-                                    tmdbType = type;
-                                    if (result.releaseDate) year = parseInt(result.releaseDate.substring(0, 4)) || year;
-                                    tmdbParsed = true;
-                                    logTaskEvent(`[TMDB搜索] ✅ 策略"${strategy.name}"成功匹配${type.toUpperCase()}: "${tmdbName}" (${year})`);
+                                    const validation = this._validateTmdbResult(result, baseName, year, type);
+                                    
+                                    if (validation.valid) {
+                                        tmdbName = result.title;
+                                        tmdbType = type;
+                                        if (result.releaseDate) year = parseInt(result.releaseDate.substring(0, 4)) || year;
+                                        tmdbParsed = true;
+                                        logTaskEvent(`[TMDB搜索] ✅ 策略"${strategy.name}"验证通过(${validation.score}分): "${tmdbName}" (${year})`);
+                                    } else {
+                                        logTaskEvent(`[TMDB搜索] ⚠️ 策略"${strategy.name}"匹配到但验证失败: ${validation.reason}`);
+                                    }
                                 }
                             }
                         }
