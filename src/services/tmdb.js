@@ -195,13 +195,40 @@ class TMDBService {
                 score += 10;
             }
             
-            // 2. 年份匹配加分
+            // 2. 标题包含关系加分（避免匹配到花絮、纪录片等）
+            const titleLower = title.toLowerCase();
+            const currentTitleLower = current.title.toLowerCase();
+            if (currentTitleLower.includes(titleLower) || titleLower.includes(currentTitleLower)) {
+                // 标题长度越接近，分数越高
+                const lengthDiff = Math.abs(current.title.length - title.length);
+                if (lengthDiff <= 2) {
+                    score += 8; // 几乎完全匹配
+                } else if (lengthDiff <= 5) {
+                    score += 5; // 比较接近
+                } else {
+                    score += 2; // 包含但长度差异大
+                }
+            }
+            
+            // 3. 年份匹配加分
             const mediaYear = new Date(current.releaseDate).getFullYear();
             if (year && mediaYear === parseInt(year)) {
                 score += 5;
             }
             
-            // 3. TV剧集特殊处理
+            // 4. 票数加分（热门内容优先）
+            if (current.voteCount && current.voteCount > 100) {
+                score += 3;
+            } else if (current.voteCount && current.voteCount > 10) {
+                score += 2;
+            }
+            
+            // 5. 评分加分
+            if (current.voteAverage && current.voteAverage > 7) {
+                score += 2;
+            }
+            
+            // 6. TV剧集特殊处理
             if (type === 'tv' && currentEpisodes > 0) {
                 // 如果是连载中的剧集，且已有集数小于总集数，优先级更高
                 if (current.status === 'Returning Series' && currentEpisodes <= current.lastEpisodeToAir.episode_number) {
