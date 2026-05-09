@@ -359,10 +359,6 @@ class TaskService {
             }
         }
         
-        if (result.title.length < originalName.length * 0.2) {
-            return { valid: false, reason: '标题过短，可能是错误匹配' };
-        }
-        
         if (result.voteCount && result.voteCount > 100) {
             score += 20;
         }
@@ -375,6 +371,7 @@ class TaskService {
         return { 
             valid: isValid, 
             score, 
+            similarity: maxSimilarity.toFixed(2),
             reason: isValid ? '验证通过' : `分数不足(${score}/100)`
         };
     }
@@ -723,24 +720,25 @@ class TaskService {
                         : await tmdbService.searchMovie(baseName, year ? year.toString() : '');
                     
                     if (result && result.title) {
-                        const validation = this._validateTmdbResult(result, shareInfo.fileName, year, type);
+                        const validation = this._validateTmdbResult(result, baseName, year, type);
                         
                         if (validation.valid) {
                             const resultYear = result.releaseDate ? parseInt(result.releaseDate.substring(0, 4)) : year;
                             standardName = resultYear ? `${result.title} (${resultYear})` : result.title;
                             
-                            logTaskEvent(`[任务创建] ✅ TMDB匹配成功: "${standardName}"`);
+                            logTaskEvent(`[任务创建] ✅ TMDB匹配成功: "${standardName}" (原名: ${result.originalTitle || 'N/A'}, 相似度: ${validation.similarity})`);
                             
                             tmdbInfo = {
                                 id: result.id,
                                 type: type,
                                 title: result.title,
+                                originalTitle: result.originalTitle,
                                 year: resultYear
                             };
                             
                             break;
                         } else {
-                            logTaskEvent(`[任务创建] ⚠️ TMDB匹配到但验证失败: ${validation.reason}`);
+                            logTaskEvent(`[任务创建] ⚠️ TMDB匹配到但验证失败: ${validation.reason} (分数: ${validation.score}/100)`);
                         }
                     }
                 }
