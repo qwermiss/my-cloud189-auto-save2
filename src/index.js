@@ -488,30 +488,60 @@ AppDataSource.initialize().then(async () => {
         }
     });
 
-    // 新增: TMDB 手动搜索接口
+    // 新增: TMDB 手动搜索接口（支持双语回退）
     app.get('/api/tmdb/search', async (req, res) => {
         try {
-            const { query, type } = req.query;
-            console.log(`[TMDB搜索] 关键词: "${query}", 类型: ${type}`);
+            const { query, type, enableBilingual = 'true' } = req.query;
+            console.log(`[TMDB搜索] 关键词: "${query}", 类型: ${type}, 双语回退: ${enableBilingual}`);
             
             if (!query) throw new Error('搜索关键字不能为空');
             
             const tmdbService = new TMDBService();
             console.log(`[TMDB搜索] API Key: ${tmdbService.apiKey ? '已配置' : '❌ 未配置'}`);
             
+            // 辅助函数：按语言搜索
+            const searchWithLanguage = async (language) => {
+                const endpoint = type === 'movie' ? '/search/movie' : '/search/tv';
+                console.log(`[TMDB搜索] 调用 ${endpoint}，语言: ${language}`);
+                
+                const response = await tmdbService._request(endpoint, { 
+                    query, 
+                    language,
+                    include_adult: false 
+                });
+                
+                return (response.results || []).map(item => ({
+                    ...item,
+                    _searchLanguage: language  // 标记搜索语言
+                }));
+            };
+            
             let results = [];
-            if (type === 'movie') {
-                console.log(`[TMDB搜索] 调用 /search/movie`);
-                const response = await tmdbService._request('/search/movie', { query, include_adult: false });
-                results = response.results || [];
-            } else {
-                console.log(`[TMDB搜索] 调用 /search/tv`);
-                const response = await tmdbService._request('/search/tv', { query, include_adult: false });
-                results = response.results || [];
+            
+            // 1. 优先使用中文搜索
+            console.log(`[TMDB搜索] 第一步：中文搜索（language=zh-CN）`);
+            results = await searchWithLanguage('zh-CN');
+            console.log(`[TMDB搜索] 中文结果数量: ${results.length}`);
+            
+            // 2. 如果启用双语回退且中文无结果，使用英文搜索
+            if (enableBilingual === 'true' && results.length === 0) {
+                console.log(`[TMDB搜索] 第二步：中文无结果，回退英文搜索（language=en-US）`);
+                results = await searchWithLanguage('en-US');
+                console.log(`[TMDB搜索] 英文结果数量: ${results.length}`);
             }
             
-            console.log(`[TMDB搜索] 结果数量: ${results.length}`);
-            res.json({ success: true, data: results });
+            console.log(`[TMDB搜索] 最终结果数量: ${results.length}`);
+            
+            res.json({ 
+                success: true, 
+                data: results,
+                meta: {
+                    query,
+                    type,
+                    searchedLanguages: results.length > 0 ? [results[0]._searchLanguage] : [],
+                    enableBilingual: enableBilingual === 'true'
+                }
+            });
         } catch (error) {
             console.error(`[TMDB搜索] 错误:`, error.message);
             res.json({ success: false, error: error.message });

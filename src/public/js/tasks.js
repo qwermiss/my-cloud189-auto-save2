@@ -1139,9 +1139,14 @@ async function searchTmdb() {
     resultsContainer.innerHTML = '<div style="text-align:center; padding: 20px;">正在搜索，请稍候...</div>';
     
     try {
-        const response = await fetch(`/api/tmdb/search?query=${encodeURIComponent(query)}&type=${type}`);
+        const response = await fetch(`/api/tmdb/search?query=${encodeURIComponent(query)}&type=${type}&enableBilingual=true`);
         const data = await response.json();
         if (data.success) {
+            // 显示双语搜索提示
+            if (data.meta?.searchedLanguages?.[0] === 'en-US') {
+                message.info('💡 该资源暂无中文数据，已使用英文搜索结果');
+            }
+            
             if (!data.data || data.data.length === 0) {
                 resultsContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: #888;">未找到相关结果</div>';
                 return;

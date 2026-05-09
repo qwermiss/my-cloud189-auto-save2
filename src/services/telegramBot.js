@@ -1155,12 +1155,21 @@ class TelegramBotService {
         try {
             const apiKey = require('./ConfigService').getConfigValue('system.apiKey', '');
             const port = process.env.PORT || 3000;
-            const searchUrl = `http://localhost:${port}/api/tmdb/search?query=${encodeURIComponent(input)}&type=${this.tmdbBindType}`;
+            const searchUrl = `http://localhost:${port}/api/tmdb/search?query=${encodeURIComponent(input)}&type=${this.tmdbBindType}&enableBilingual=true`;
             console.log(`[TMDB搜索] URL: ${searchUrl}`);
             const result = await got(searchUrl, {
                 headers: { 'x-api-key': apiKey },
                 responseType: 'json'
             }).json();
+            
+            // 显示双语搜索提示
+            if (result.meta?.searchedLanguages?.[0] === 'en-US') {
+                await this.bot.editMessageText(`💡 该资源暂无中文数据，已使用英文搜索结果`, { chat_id: chatId, message_id: loadMsg.message_id });
+                // 重新发送加载消息
+                const newMsg = await this.bot.sendMessage(chatId, `🔍 正在显示搜索结果...`);
+                loadMsg.message_id = newMsg.message_id;
+            }
+            
             if (!result.success || !result.data?.length) {
                 await this.bot.editMessageText(`未找到相关结果，请尝试其他关键词`, { chat_id: chatId, message_id: loadMsg.message_id });
                 return;
