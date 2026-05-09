@@ -20,16 +20,7 @@ class ConfigService {
         enableCasRapidUpload: true,
         enableDeleteCasFile: true,
         enableCasFamilyTransfer: true,
-        enableDeleteFamilyTempFile: true,
-        autoRebuildUnidentifiedTask: true,
-        autoRebuildMaxCount: 1,
-        autoRebuildMinInterval: 600000,
-        autoRebuildDeleteOriginal: true,
-        autoRebuildNotifyUser: true,
-        autoRebuildPathTemplate: {
-          tv: '/media/电视剧/{title} ({year})',
-          movie: '/media/电影/{title} ({year})'
-        }
+        enableDeleteFamilyTempFile: true
       },
       wecom: {
         enable: false,

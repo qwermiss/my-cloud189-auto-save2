@@ -3,12 +3,10 @@ const { EmbyService } = require('./emby');
 const { logTaskEvent } = require('../utils/logUtils');
 const ConfigService = require('./ConfigService');
 const { ScrapeService } = require('./ScrapeService');
-const TaskRebuildService = require('./TaskRebuildService');
 
 class TaskEventHandler {
     constructor(messageUtil) {
         this.messageUtil = messageUtil;
-        this.rebuildService = null;
     }
 
     async handle(taskCompleteEventDto) {
@@ -21,16 +19,7 @@ class TaskEventHandler {
         
         logTaskEvent(` ${task.resourceName} 触发事件:`);
         try {
-            const renameResult = await this._handleAutoRename(taskCompleteEventDto);
-            
-            if (renameResult && renameResult.tmdbInfo) {
-                await this._handleTaskRebuild({
-                    task,
-                    tmdbInfo: renameResult.tmdbInfo,
-                    taskService,
-                    taskRepo
-                });
-            }
+            await this._handleAutoRename(taskCompleteEventDto);
             
             await this._handleLatestSavedDisplay(taskCompleteEventDto);
             await this._handleStrmGeneration(taskCompleteEventDto);
@@ -192,37 +181,6 @@ class TaskEventHandler {
         return null;
     }
     
-    async _handleTaskRebuild(params) {
-        const { task, tmdbInfo, taskService, taskRepo } = params;
-        
-        if (!this.rebuildService) {
-            const accountRepo = taskService.accountRepo;
-            this.rebuildService = new TaskRebuildService(taskService, taskRepo, accountRepo);
-        }
-        
-        const checkResult = await this.rebuildService.shouldRebuildTask(task, tmdbInfo);
-        
-        if (!checkResult.should) {
-            logTaskEvent(`[智能重建] 跳过重建: ${checkResult.reason}`);
-            return;
-        }
-        
-        const rebuildResult = await this.rebuildService.rebuildTask({
-            originalTask: task,
-            tmdbInfo,
-            deleteOriginal: checkResult.config.deleteOriginal,
-            notifyUser: checkResult.config.notifyUser
-        });
-        
-        if (rebuildResult.success) {
-            logTaskEvent(`[智能重建] ✅ 重建成功: 新任务ID=${rebuildResult.newTaskId}`);
-        } else {
-            logTaskEvent(`[智能重建] ❌ 重建失败: ${rebuildResult.reason}`);
-        }
-        
-        return rebuildResult;
-    }
-
     async _handleStrmGeneration(taskCompleteEventDto) {
         try {
             const {task,taskService, overwriteStrm} = taskCompleteEventDto;
