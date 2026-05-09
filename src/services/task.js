@@ -701,8 +701,15 @@ class TaskService {
         let standardName = shareInfo.fileName;
         let tmdbInfo = null;
         
+        const isUserModifiedTaskName = taskDto.taskName && taskDto.taskName.trim() !== '' && taskDto.taskName !== shareInfo.fileName;
+        
+        if (isUserModifiedTaskName) {
+            logTaskEvent(`[任务创建] 检测到用户手动修改任务名: "${taskDto.taskName}"，将使用用户输入`);
+            standardName = taskDto.taskName;
+        }
+        
         const tmdbApiKey = ConfigService.getConfigValue('tmdb.tmdbApiKey');
-        if (tmdbApiKey) {
+        if (tmdbApiKey && !isUserModifiedTaskName) {
             try {
                 logTaskEvent(`[任务创建] 开始解析资源名称: ${shareInfo.fileName}`);
                 
@@ -747,7 +754,7 @@ class TaskService {
             }
         }
         
-        if (standardName === shareInfo.fileName && AIService.isEnabled()) {
+        if (standardName === shareInfo.fileName && AIService.isEnabled() && !isUserModifiedTaskName) {
             try {
                 logTaskEvent(`[任务创建] TMDB未匹配，尝试AI识别...`);
                 
@@ -765,7 +772,7 @@ class TaskService {
         taskDto.taskName = standardName;
         shareInfo.fileName = standardName;
         
-        if (tmdbInfo) {
+        if (tmdbInfo && !isUserModifiedTaskName) {
             taskDto.tmdbId = tmdbInfo.id;
             taskDto.videoType = tmdbInfo.type;
         }
