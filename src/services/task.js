@@ -2019,6 +2019,7 @@ class TaskService {
         let message = []
         let newFiles = [];
         let files = [];
+        let tmdbInfo = null;
 
         if (task.enableSystemProxy) {
             throw new Error('系统代理模式已移除');
@@ -2029,10 +2030,8 @@ class TaskService {
         }
         if (!files || files.length === 0) return [];
         
-        // 过滤掉文件夹
         files = files.filter(file => !file.isFolder);
 
-        // 初始化去重所需的基础名称映射表
         const mediaSuffixs = ConfigService.getConfigValue('task.mediaSuffix').split(';').map(suffix => suffix.toLowerCase());
         const getBaseName = (filename) => {
             const lastDot = filename.lastIndexOf('.');
@@ -2052,7 +2051,6 @@ class TaskService {
             }
         }
 
-        // 使用 AI 重命名或正则重命名  如果写了正则, 那么优先使用正则
         if (AIService.isEnabled() && (!task.sourceRegex || !task.targetRegex)) {
             logTaskEvent(` ${task.resourceName} 开始使用 AI 重命名`);
             try {
@@ -2062,6 +2060,16 @@ class TaskService {
                     'file',
                     task
                 );
+                
+                if (resourceInfo && resourceInfo.tmdbId) {
+                    tmdbInfo = {
+                        id: String(resourceInfo.tmdbId),
+                        title: resourceInfo.name,
+                        type: task.videoType || 'tv',
+                        year: resourceInfo.year
+                    };
+                }
+                
                 await this._processRename(cloud189, task, files, resourceInfo, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion);
             } catch (error) {
                 logTaskEvent('AI 重命名失败，使用正则表达式重命名: ' + error.message);
@@ -2072,9 +2080,8 @@ class TaskService {
             await this._processRegexRename(cloud189, task, files, message, newFiles, baseNameMap, getBaseName, isMediaFile, skipDeletion);
         }
 
-        // 处理消息和保存结果
         const renameMessages = await this._handleRenameResults(task, message, newFiles);
-        return { newFiles, renameMessages };
+        return { newFiles, renameMessages, tmdbInfo };
     }
 
 

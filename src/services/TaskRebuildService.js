@@ -1,10 +1,12 @@
 const ConfigService = require('./ConfigService');
 const { logTaskEvent } = require('../utils/logUtils');
+const { Cloud189Service } = require('./cloud189');
 
 class TaskRebuildService {
-    constructor(taskService, taskRepo) {
+    constructor(taskService, taskRepo, accountRepo) {
         this.taskService = taskService;
         this.taskRepo = taskRepo;
+        this.accountRepo = accountRepo;
     }
     
     async shouldRebuildTask(task, tmdbResult) {
@@ -99,23 +101,39 @@ class TaskRebuildService {
             logTaskEvent(`  新任务名称: "${newTaskInfo.resourceName}"`);
             logTaskEvent(`  新保存路径: "${newTaskInfo.targetFolder}"`);
             
+            const account = await this.accountRepo.findOneBy({ id: originalTask.accountId });
+            if (!account) {
+                throw new Error('无法加载任务关联的账号信息');
+            }
+            
+            const cloud189 = Cloud189Service.getInstance(account);
+            
+            logTaskEvent(`[智能重建] 📁 创建目标文件夹...`);
+            const targetFolderId = await this._createTargetFolder(cloud189, newTaskInfo.targetFolder);
+            logTaskEvent(`[智能重建] ✅ 目标文件夹已创建: ID=${targetFolderId}`);
+            
             newTask = await this.taskService.createTask({
                 accountId: originalTask.accountId,
                 shareLink: originalTask.shareLink,
+                taskName: newTaskInfo.resourceName,
+                targetFolderId: targetFolderId,
                 accessCode: originalTask.accessCode,
-                resourceName: newTaskInfo.resourceName,
-                targetFolder: newTaskInfo.targetFolder,
                 videoType: newTaskInfo.videoType,
+                enableCron: false
+            });
+            
+            logTaskEvent(`[智能重建] ✅ 新任务已创建: ID=${newTask.id}`);
+            
+            await this.taskService.updateTask(newTask.id, {
                 tmdbId: String(tmdbInfo.id),
                 tmdbTitle: tmdbInfo.title,
                 isRebuiltTask: true,
                 rebuildFromTaskId: originalTask.id,
                 rebuildCount: (originalTask.rebuildCount || 0) + 1,
-                lastRebuildTime: new Date(),
-                enableCron: false
+                lastRebuildTime: new Date()
             });
             
-            logTaskEvent(`[智能重建] ✅ 新任务已创建: ID=${newTask.id}`);
+            logTaskEvent(`[智能重建] ✅ 重建字段已更新`);
             
             if (notifyUser && this.taskService.messageUtil) {
                 await this._sendRebuildNotification({
@@ -194,7 +212,7 @@ class TaskRebuildService {
                 .replace('{year}', tmdbInfo.year || '');
         } else {
             const typeDir = videoType === 'movie' ? '电影' : '电视剧';
-            const baseDir = originalTask.account?.localStrmPrefix || '/media';
+            const baseDir = '/media';
             targetFolder = `${baseDir}/${typeDir}/${resourceName}`;
         }
         
@@ -203,6 +221,38 @@ class TaskRebuildService {
             targetFolder,
             videoType
         };
+    }
+    
+    async _createTargetFolder(cloud189, folderPath) {
+        const parts = folderPath.split('/').filter(p => p);
+        let currentFolderId = '-11';
+        
+        for (const part of parts) {
+            try {
+                const folderInfo = await cloud189.listFiles(currentFolderId);
+                const existingFolder = folderInfo?.fileListAO?.fileList?.find(
+                    f => f.isFolder && f.name === part
+                );
+                
+                if (existingFolder) {
+                    currentFolderId = existingFolder.id;
+                    logTaskEvent(`[智能重建]   文件夹已存在: ${part} (ID: ${currentFolderId})`);
+                } else {
+                    const createResult = await cloud189.createFolder(currentFolderId, part);
+                    if (createResult && createResult.id) {
+                        currentFolderId = createResult.id;
+                        logTaskEvent(`[智能重建]   文件夹已创建: ${part} (ID: ${currentFolderId})`);
+                    } else {
+                        throw new Error(`创建文件夹失败: ${part}`);
+                    }
+                }
+            } catch (error) {
+                logTaskEvent(`[智能重建]   ⚠️ 处理文件夹失败: ${part} - ${error.message}`);
+                throw error;
+            }
+        }
+        
+        return currentFolderId;
     }
     
     async _sendRebuildNotification(params) {

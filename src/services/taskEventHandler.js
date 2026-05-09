@@ -196,7 +196,8 @@ class TaskEventHandler {
         const { task, tmdbInfo, taskService, taskRepo } = params;
         
         if (!this.rebuildService) {
-            this.rebuildService = new TaskRebuildService(taskService, taskRepo);
+            const accountRepo = taskService.accountRepo;
+            this.rebuildService = new TaskRebuildService(taskService, taskRepo, accountRepo);
         }
         
         const checkResult = await this.rebuildService.shouldRebuildTask(task, tmdbInfo);
