@@ -96,7 +96,9 @@ class AIService {
                    - "OVA" -> "特别篇01"
 
                 返回格式必须是: {
-                    name: string,  // 纯净的影视剧名称，不含年份
+                    name: string,  // 纯净的影视剧名称（优先中文），不含年份
+                    chineseTitle: string,  // 中文译名（如果有）
+                    englishTitle: string,  // 英文原名（如果有）
                     year: number,  // 年份信息
                     type: "tv" | "movie",  // 资源类型
                     folders: [{    // 标准化后的文件夹列表
@@ -108,6 +110,8 @@ class AIService {
                 1. 不要使用代码块标记，直接返回 JSON 对象
                 2. 文件夹名称必须严格按照此格式返回，不要添加任何额外说明文字
                 3. 不要对文件名内容做任何主观评判，专注于格式解析
+                4. name字段优先使用中文译名，如果没有中文译名则使用英文原名
+                5. chineseTitle和englishTitle字段：如果资源路径包含中英文双语信息，请分别提取；如果只有单一语言，则对应字段可以省略或留空
                 `
             },
             {

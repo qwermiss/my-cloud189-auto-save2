@@ -639,6 +639,55 @@ class TaskService {
 
             logTaskEvent(`✅ AI分析成功，提取结果: 名称="${result.data.name}", 年份=${result.data.year}, 类型=${result.data.type}`);
 
+            // 尝试使用AI返回的中英文标题分别搜索TMDB（仅当TMDB未匹配时）
+            if (!tmdbParsed && result.data.chineseTitle && result.data.englishTitle) {
+                const aiChineseTitle = result.data.chineseTitle;
+                const aiEnglishTitle = result.data.englishTitle;
+                const aiYear = result.data.year;
+                
+                const tmdbApiKey = ConfigService.getConfigValue('tmdb.tmdbApiKey');
+                if (tmdbApiKey) {
+                    const tmdbService = new TMDBService();
+                    const typesToTry = taskDto?.videoType ? [taskDto.videoType] : ['tv', 'movie'];
+                    
+                    const searchStrategies = [];
+                    if (aiChineseTitle && aiChineseTitle !== aiEnglishTitle) {
+                        searchStrategies.push({ name: 'AI中文标题', title: aiChineseTitle });
+                    }
+                    if (aiEnglishTitle) {
+                        searchStrategies.push({ name: 'AI英文标题', title: aiEnglishTitle });
+                    }
+                    
+                    for (const strategy of searchStrategies) {
+                        if (tmdbParsed) break;
+                        
+                        logTaskEvent(`[AI重命名] 尝试${strategy.name}搜索TMDB: "${strategy.title}"`);
+                        
+                        for (const type of typesToTry) {
+                            const searchResult = type === 'tv' 
+                                ? await tmdbService.searchTV(strategy.title, aiYear ? aiYear.toString() : '')
+                                : await tmdbService.searchMovie(strategy.title, aiYear ? aiYear.toString() : '');
+                            
+                            if (searchResult && searchResult.title) {
+                                const validation = this._validateTmdbResult(searchResult, strategy.title, aiYear, type);
+                                
+                                if (validation.valid) {
+                                    tmdbName = searchResult.title;
+                                    tmdbType = type;
+                                    if (searchResult.releaseDate) year = parseInt(searchResult.releaseDate.substring(0, 4)) || aiYear;
+                                    tmdbParsed = true;
+                                    finalName = tmdbName;
+                                    logTaskEvent(`[AI重命名] ✅ ${strategy.name}TMDB匹配成功: "${tmdbName}" (分数: ${validation.score}/100)`);
+                                    break;
+                                } else {
+                                    logTaskEvent(`[AI重命名] ⚠️ ${strategy.name}TMDB匹配到但验证失败: ${validation.reason} (分数: ${validation.score}/100)`);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // 强制将 AI 给出的最终结果中的名字覆写为更准确的 TMDB 官方中文名
             if (tmdbParsed && result.data) {
                 result.data.name = finalName;
@@ -771,11 +820,75 @@ class TaskService {
                     logTaskEvent(`[任务创建] TMDB未匹配，尝试AI识别...`);
                     
                     const resourceInfo = await this._analyzeResourceInfo(shareInfo.fileName, [], 'folder', taskDto);
-                    standardName = resourceInfo.year 
-                        ? `${resourceInfo.name} (${resourceInfo.year})`
-                        : resourceInfo.name;
                     
-                    logTaskEvent(`[任务创建] ✅ AI识别成功: "${standardName}"`);
+                    // 尝试使用AI返回的中英文标题分别搜索TMDB
+                    const year = resourceInfo.year;
+                    const chineseTitle = resourceInfo.chineseTitle;
+                    const englishTitle = resourceInfo.englishTitle || resourceInfo.name;
+                    
+                    const tmdbApiKey = ConfigService.getConfigValue('tmdb.tmdbApiKey');
+                    let aiTmdbInfo = null;
+                    
+                    if (tmdbApiKey && (chineseTitle || englishTitle)) {
+                        const tmdbService = new TMDBService();
+                        const typesToTry = taskDto.videoType ? [taskDto.videoType] : ['tv', 'movie'];
+                        
+                        // 构建搜索策略：优先中文标题
+                        const searchStrategies = [];
+                        if (chineseTitle && chineseTitle !== englishTitle) {
+                            searchStrategies.push({ name: 'AI中文标题', title: chineseTitle, language: '中文' });
+                        }
+                        if (englishTitle) {
+                            searchStrategies.push({ name: 'AI英文标题', title: englishTitle, language: '英文' });
+                        }
+                        
+                        for (const strategy of searchStrategies) {
+                            if (aiTmdbInfo) break; // 已找到则退出
+                            
+                            logTaskEvent(`[任务创建] 尝试${strategy.name}搜索: "${strategy.title}"`);
+                            
+                            for (const type of typesToTry) {
+                                const result = type === 'tv' 
+                                    ? await tmdbService.searchTV(strategy.title, year ? year.toString() : '')
+                                    : await tmdbService.searchMovie(strategy.title, year ? year.toString() : '');
+                                
+                                if (result && result.title) {
+                                    const validation = this._validateTmdbResult(result, strategy.title, year, type);
+                                    
+                                    if (validation.valid) {
+                                        const resultYear = result.releaseDate ? parseInt(result.releaseDate.substring(0, 4)) : year;
+                                        
+                                        aiTmdbInfo = {
+                                            id: result.id,
+                                            type: type,
+                                            title: result.title,
+                                            originalTitle: result.originalTitle,
+                                            year: resultYear
+                                        };
+                                        
+                                        logTaskEvent(`[任务创建] ✅ ${strategy.name}TMDB匹配成功: "${result.title}" (分数: ${validation.score}/100)`);
+                                        break;
+                                    } else {
+                                        logTaskEvent(`[任务创建] ⚠️ ${strategy.name}TMDB匹配到但验证失败: ${validation.reason} (分数: ${validation.score}/100)`);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 确定最终任务名称
+                    if (aiTmdbInfo) {
+                        tmdbInfo = aiTmdbInfo;
+                        standardName = aiTmdbInfo.year 
+                            ? `${aiTmdbInfo.title} (${aiTmdbInfo.year})`
+                            : aiTmdbInfo.title;
+                        logTaskEvent(`[任务创建] ✅ AI辅助TMDB识别成功: "${standardName}"`);
+                    } else {
+                        standardName = resourceInfo.year 
+                            ? `${resourceInfo.name} (${resourceInfo.year})`
+                            : resourceInfo.name;
+                        logTaskEvent(`[任务创建] ✅ AI识别成功（未匹配TMDB）: "${standardName}"`);
+                    }
                 } catch (error) {
                     logTaskEvent(`[任务创建] ⚠️ AI识别失败，使用原始名称: ${error.message}`);
                 }
