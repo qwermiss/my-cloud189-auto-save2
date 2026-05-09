@@ -252,6 +252,7 @@ class TMDBService {
                 backdropPath: response.backdrop_path? `https://image.tmdb.org/t/p/w500${response.backdrop_path}` : null,
                 logoPath: response.images?.logos?.[0]?.file_path ? `https://image.tmdb.org/t/p/w500${response.images.logos[0].file_path}` : null,
                 voteAverage: response.vote_average,
+                voteCount: response.vote_count,
                 cast: response.credits?.cast || [],
                 type: 'tv',
                 totalSeasons: response.number_of_seasons || 0,     // 同时添加总季数
@@ -287,6 +288,7 @@ class TMDBService {
                 posterPath: response.poster_path ? `https://image.tmdb.org/t/p/w500${response.poster_path}` : null,
                 logoPath: response.images?.logos?.[0]?.file_path ? `https://image.tmdb.org/t/p/w500${response.images.logos[0].file_path}` : null,
                 voteAverage: response.vote_average,
+                voteCount: response.vote_count,
                 cast: response.credits?.cast || [],
                 type: 'movie'
             };
