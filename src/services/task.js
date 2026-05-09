@@ -3150,6 +3150,8 @@ class TaskService {
                             similarity: validation.similarity,
                             score: validation.score
                         };
+                    } else {
+                        console.log(`[TMDB识别] ${type}类型验证失败: "${result.title}" - ${validation.reason}, 分数: ${validation.score}/100, 相似度: ${validation.similarity}, voteCount: ${result.voteCount || 0}`);
                     }
                 }
             }
