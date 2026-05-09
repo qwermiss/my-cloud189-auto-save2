@@ -325,6 +325,15 @@
                                 <input type="text" id="taskName" required readonly>
                                 <small class="form-text">默认使用分享目录第一个文件夹名称,识别完成后可更改</small>
                             </div>
+                            <div class="form-group" id="tmdbInfo" style="display: none;">
+                                <label>TMDB识别结果</label>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div id="tmdbInfoText" style="flex: 1; padding: 8px 12px; background: #f5f5f5; border-radius: 4px; font-size: 13px;"></div>
+                                    <button type="button" class="btn-primary" onclick="showTmdbBindModal()" style="white-space: nowrap;">
+                                        <i class="fas fa-link"></i> TMDB绑定
+                                    </button>
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label for="videoType">视频类型</label>
                                 <select id="videoType" style="width: 100%;">
@@ -417,6 +426,33 @@
                             <button type="button" class="btn-default" onclick="closeCreateTaskModal()">取消</button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- TMDB绑定弹窗 -->
+            <div id="tmdbBindModal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3>TMDB手动绑定</h3>
+                        <span class="close" onclick="closeTmdbBindModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="tmdbSearchKeyword">搜索关键词</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="tmdbSearchKeyword" placeholder="输入影视名称搜索TMDB" style="flex: 1;">
+                                <select id="tmdbSearchType" style="width: 120px;">
+                                    <option value="movie">电影</option>
+                                    <option value="tv">剧集</option>
+                                </select>
+                                <button type="button" class="btn-primary" onclick="searchTmdb()">搜索</button>
+                            </div>
+                        </div>
+                        <div id="tmdbSearchResults" style="max-height: 400px; overflow-y: auto; margin-top: 15px;"></div>
+                    </div>
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                        <button type="button" class="btn-default" onclick="closeTmdbBindModal()">取消</button>
+                    </div>
                 </div>
             </div>
 

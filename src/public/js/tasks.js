@@ -526,6 +526,99 @@ function closeCreateTaskModal() {
     document.getElementById('createTaskModal').style.display = 'none';
     document.getElementById('taskName').readOnly = true
     document.getElementById('taskForm').reset();
+    
+    const tmdbInfoEl = document.getElementById('tmdbInfo');
+    if (tmdbInfoEl) tmdbInfoEl.style.display = 'none';
+    
+    window.tempTmdbInfo = null;
+}
+
+async function showTmdbBindModal() {
+    const modal = document.getElementById('tmdbBindModal');
+    const keywordInput = document.getElementById('tmdbSearchKeyword');
+    const resultsDiv = document.getElementById('tmdbSearchResults');
+    
+    const taskName = document.getElementById('taskName')?.value || '';
+    keywordInput.value = taskName.replace(/\s*\(\d{4}\)\s*$/, '').trim();
+    resultsDiv.innerHTML = '';
+    
+    modal.style.display = 'block';
+}
+
+function closeTmdbBindModal() {
+    document.getElementById('tmdbBindModal').style.display = 'none';
+    document.getElementById('tmdbSearchResults').innerHTML = '';
+}
+
+async function searchTmdb() {
+    const keyword = document.getElementById('tmdbSearchKeyword').value.trim();
+    const type = document.getElementById('tmdbSearchType').value;
+    const resultsDiv = document.getElementById('tmdbSearchResults');
+    
+    if (!keyword) {
+        message.warning('请输入搜索关键词');
+        return;
+    }
+    
+    try {
+        loading.show();
+        const response = await fetch('/api/tmdb/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keyword, type })
+        });
+        loading.hide();
+        
+        const data = await response.json();
+        if (data.success && data.data.length > 0) {
+            resultsDiv.innerHTML = data.data.map(item => `
+                <div class="tmdb-result-item" style="display: flex; gap: 15px; padding: 15px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 10px; cursor: pointer;" onclick="selectTmdbItem(${item.id}, '${item.type}', '${item.title.replace(/'/g, "\\'")}', ${item.year || 'null'})">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 5px;">
+                            ${item.title} ${item.year ? `(${item.year})` : ''}
+                        </div>
+                        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
+                            原名: ${item.originalTitle || 'N/A'} | 类型: ${item.type === 'movie' ? '电影' : '剧集'} | 评分: ${item.voteAverage || 'N/A'}
+                        </div>
+                        ${item.overview ? `<div style="font-size: 11px; color: #999; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.overview}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">未找到匹配结果</div>';
+        }
+    } catch (error) {
+        loading.hide();
+        message.warning('搜索失败: ' + error.message);
+    }
+}
+
+function selectTmdbItem(id, type, title, year) {
+    const taskName = document.getElementById('taskName');
+    const standardName = year ? `${title} (${year})` : title;
+    taskName.value = standardName;
+    
+    window.tempTmdbInfo = {
+        tmdbId: id,
+        videoType: type,
+        tmdbTitle: title
+    };
+    
+    const videoTypeSelect = document.getElementById('videoType');
+    videoTypeSelect.value = type;
+    
+    const tmdbInfoEl = document.getElementById('tmdbInfo');
+    const tmdbInfoText = document.getElementById('tmdbInfoText');
+    if (tmdbInfoEl && tmdbInfoText) {
+        tmdbInfoText.innerHTML = `
+            ✅ 已手动绑定: <strong>${title}</strong> ${year ? `(${year})` : ''} 
+            <br><small style="color: #666;">TMDB ID: ${id} | 类型: ${type === 'movie' ? '电影' : '剧集'}</small>
+        `;
+        tmdbInfoEl.style.display = 'block';
+    }
+    
+    closeTmdbBindModal();
+    message.success('TMDB绑定成功');
 }
 
 // 初始化任务表单
@@ -587,7 +680,15 @@ function initTaskForm() {
             message.warning('至少选择一个分享目录');
             return;
         }
-        const body = { accountId, shareLink, totalEpisodes, targetFolderId, accessCode, matchPattern, matchOperator, matchValue, overwriteFolder: 0, remark, enableCron, cronExpression, targetFolder, selectedFolders, sourceRegex, targetRegex, taskName, enableTaskScraper, videoType };
+        
+        const body = { 
+            accountId, shareLink, totalEpisodes, targetFolderId, accessCode, 
+            matchPattern, matchOperator, matchValue, overwriteFolder: 0, 
+            remark, enableCron, cronExpression, targetFolder, selectedFolders, 
+            sourceRegex, targetRegex, taskName, enableTaskScraper, videoType,
+            ...window.tempTmdbInfo
+        };
+        
         await createTask(e,body)
             
     });
@@ -1489,14 +1590,18 @@ function autoDetectVideoType(taskNameStr = null) {
 
 async function parseShareLink() {
     const shareParseError = document.getElementById('shareParseError');
-    shareParseError.textContent = ''; // 清除之前的错误信息
+    shareParseError.textContent = '';
+    
+    const tmdbInfoEl = document.getElementById('tmdbInfo');
+    if (tmdbInfoEl) tmdbInfoEl.style.display = 'none';
+    
     let shareLink = document.getElementById('shareLink')?.value?.trim();
     let accessCode = document.getElementById('accessCode')?.value?.trim();
     const accountId = document.getElementById('accountId')?.value;
     if (!shareLink || !accountId) {
         return;
     }
-    // urldecodeshareLink
+    
     shareLink = decodeURIComponent(shareLink);
     const {url: parseShareLink, accessCode: parseAccessCode} =  parseCloudShare(shareLink)
     if (parseAccessCode) {
@@ -1524,17 +1629,49 @@ async function parseShareLink() {
                     </label>
                 </div>
             `).join('');
-             // 如果有分享目录数据，使用第一个目录名称作为任务名称
+            
             if (data.data && data.data.length > 0) {
                 const taskName = document.getElementById('taskName')
                 const rawName = data.data[0].name;
-                // 默认屏蔽名称中带有年份的那部分，比如中英文的括号里面写的年份
-                const cleanedName = rawName.replace(/[\[\({【]?(19|20)\d{2}[\]\)}】]?/g, '').trim();
-                taskName.value = cleanedName;
-                // 移除taskName的只读
-                taskName.readOnly = false;
                 
-                autoDetectVideoType(cleanedName);
+                if (data.tmdbInfo) {
+                    taskName.value = data.tmdbInfo.standardName;
+                    taskName.readOnly = false;
+                    
+                    const tmdbInfoEl = document.getElementById('tmdbInfo');
+                    const tmdbInfoText = document.getElementById('tmdbInfoText');
+                    if (tmdbInfoEl && tmdbInfoText) {
+                        tmdbInfoText.innerHTML = `
+                            ✅ TMDB识别成功: <strong>${data.tmdbInfo.title}</strong> (${data.tmdbInfo.year}) 
+                            <br><small style="color: #666;">原名: ${data.tmdbInfo.originalTitle || 'N/A'} | 相似度: ${data.tmdbInfo.similarity} | 类型: ${data.tmdbInfo.type === 'movie' ? '电影' : '剧集'}</small>
+                        `;
+                        tmdbInfoEl.style.display = 'block';
+                        
+                        window.tempTmdbInfo = {
+                            tmdbId: data.tmdbInfo.id,
+                            videoType: data.tmdbInfo.type,
+                            tmdbTitle: data.tmdbInfo.title
+                        };
+                    }
+                    
+                    autoDetectVideoType(data.tmdbInfo.standardName);
+                } else {
+                    const cleanedName = rawName.replace(/[\[\({【]?(19|20)\d{2}[\]\)}】]?/g, '').trim();
+                    taskName.value = cleanedName;
+                    taskName.readOnly = false;
+                    
+                    const tmdbInfoEl = document.getElementById('tmdbInfo');
+                    const tmdbInfoText = document.getElementById('tmdbInfoText');
+                    if (tmdbInfoEl && tmdbInfoText) {
+                        tmdbInfoText.innerHTML = `
+                            ⚠️ TMDB自动识别失败，请手动填写任务名称或点击"TMDB绑定"按钮手动搜索
+                        `;
+                        tmdbInfoEl.style.display = 'block';
+                    }
+                    
+                    window.tempTmdbInfo = null;
+                    autoDetectVideoType(cleanedName);
+                }
             }
         } else {
             shareFoldersGroup.style.display = 'none';

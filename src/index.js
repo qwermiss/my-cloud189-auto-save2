@@ -1197,11 +1197,72 @@ AppDataSource.initialize().then(async () => {
             const accountId = req.body.accountId;
             const accessCode = req.body.accessCode;
             const shareFolders = await taskService.parseShareFolderByShareLink(shareLink, accountId, accessCode);
-            res.json({success: true, data: shareFolders})
+            
+            let tmdbInfo = null;
+            if (shareFolders && shareFolders.length > 0) {
+                const fileName = shareFolders[0].name;
+                tmdbInfo = await taskService.recognizeTmdbInfo(fileName);
+            }
+            
+            res.json({success: true, data: shareFolders, tmdbInfo})
         }catch (error) {
             res.status(500).json({ success: false, error: error.message });
         }
     })
+    
+    // TMDB搜索API
+    app.post('/api/tmdb/search', async (req, res) => {
+        try {
+            const { keyword, type } = req.body;
+            if (!keyword) {
+                throw new Error('搜索关键词不能为空');
+            }
+            
+            const tmdbApiKey = ConfigService.getConfigValue('tmdb.tmdbApiKey');
+            if (!tmdbApiKey) {
+                throw new Error('TMDB API Key未配置');
+            }
+            
+            const tmdbService = new TMDBService();
+            const searchType = type || 'movie';
+            
+            let results = [];
+            if (searchType === 'tv') {
+                const data = await tmdbService.searchTV(keyword, '');
+                if (data && data.results) {
+                    results = data.results.slice(0, 10).map(item => ({
+                        id: item.id,
+                        title: item.name || item.original_name,
+                        originalTitle: item.original_name,
+                        year: item.first_air_date ? parseInt(item.first_air_date.substring(0, 4)) : null,
+                        overview: item.overview,
+                        posterPath: item.poster_path,
+                        voteAverage: item.vote_average,
+                        type: 'tv'
+                    }));
+                }
+            } else {
+                const data = await tmdbService.searchMovie(keyword, '');
+                if (data && data.results) {
+                    results = data.results.slice(0, 10).map(item => ({
+                        id: item.id,
+                        title: item.title || item.original_title,
+                        originalTitle: item.original_title,
+                        year: item.release_date ? parseInt(item.release_date.substring(0, 4)) : null,
+                        overview: item.overview,
+                        posterPath: item.poster_path,
+                        voteAverage: item.vote_average,
+                        type: 'movie'
+                    }));
+                }
+            }
+            
+            res.json({ success: true, data: results });
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+    
     // 保存常用目录
     app.post('/api/saveFavorites', async (req, res) => {
         try{
