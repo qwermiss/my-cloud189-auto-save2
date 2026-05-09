@@ -1125,6 +1125,7 @@ class TelegramBotService {
 
     // 设置搜索类型，进入等待文字输入模式
     async _setTmdbSearchType(chatId, data, messageId) {
+        console.log(`[TMDB绑定] 设置类型: ${data.tp}, 任务ID: ${data.ti}, ChatID: ${chatId}`);
         this.tmdbBindType = data.tp;
         this.tmdbBindTaskId = data.ti;
         this.tmdbBindMode = true;
@@ -1138,11 +1139,14 @@ class TelegramBotService {
     // 处理用户输入的 TMDB 搜索关键词
     async _handleTmdbSearchInput(chatId, input) {
         if (!input) return;
+        console.log(`[TMDB绑定] 搜索输入: "${input}", 当前类型: ${this.tmdbBindType}, ChatID: ${chatId}`);
         const loadMsg = await this.bot.sendMessage(chatId, `🔍 正在搜索 "${input}"...`);
         try {
             const apiKey = require('./ConfigService').getConfigValue('system.apiKey', '');
             const port = process.env.PORT || 3000;
-            const result = await got(`http://localhost:${port}/api/tmdb/search?query=${encodeURIComponent(input)}&type=${this.tmdbBindType}`, {
+            const searchUrl = `http://localhost:${port}/api/tmdb/search?query=${encodeURIComponent(input)}&type=${this.tmdbBindType}`;
+            console.log(`[TMDB搜索] URL: ${searchUrl}`);
+            const result = await got(searchUrl, {
                 headers: { 'x-api-key': apiKey },
                 responseType: 'json'
             }).json();
