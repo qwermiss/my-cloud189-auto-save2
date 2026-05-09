@@ -228,18 +228,15 @@ class TelegramBotService {
             try {
                 if (!this._checkUserId(chatId)) return;
                 
-                // 先发送提示消息
-                const tipMsg = await this.bot.sendMessage(chatId, '✅ 检测到分享链接，正在为您准备创建任务...');
+                // 发送初始提示消息
+                const tipMsg = await this.bot.sendMessage(chatId, '✅ 检测到分享链接，正在准备创建任务...');
                 
                 const { url: shareLink, accessCode } = cloud189Utils.parseCloudShare(msg.text);
-                await this.handleFolderSelection(chatId, shareLink, null, accessCode);
                 
-                // 删除提示消息
-                try {
-                    await this.bot.deleteMessage(chatId, tipMsg.message_id);
-                } catch (e) {
-                    // 忽略删除失败
-                }
+                // 将提示消息的 messageId 传入，用于后续编辑
+                await this.handleFolderSelection(chatId, shareLink, tipMsg.message_id, accessCode);
+                
+                // 不删除消息，已被编辑为选择目录界面
             } catch (error) {
                 console.log(error)
                 this.bot.sendMessage(chatId, `处理失败: ${error.message}`);
@@ -740,6 +737,14 @@ class TelegramBotService {
     }
 
     async handleFolderSelection(chatId, shareLink, messageId = null,accessCode) {
+        // 如果有 messageId，先更新提示消息
+        if (messageId) {
+            await this.bot.editMessageText('⏳ 正在解析分享链接...', {
+                chat_id: chatId,
+                message_id: messageId
+            });
+        }
+        
         const folders = await this.commonFolderRepo.find({ where: { accountId: this.currentAccountId } });
         
         if (folders.length === 0) {
@@ -760,6 +765,15 @@ class TelegramBotService {
             }
             return;
         }
+        
+        // 解析链接前更新状态
+        if (messageId) {
+            await this.bot.editMessageText('⏳ 正在获取资源信息...', {
+                chat_id: chatId,
+                message_id: messageId
+            });
+        }
+        
         // 缓存当前分享信息
         this.currentShareLink = shareLink;
         this.currentAccessCode = accessCode;
@@ -769,7 +783,15 @@ class TelegramBotService {
             const shareFolders = await this.taskService.parseShareFolderByShareLink(shareLink, this.currentAccountId, accessCode);
             taskName = shareFolders[0].name;
         }catch(e){
-            await this.bot.sendMessage(chatId, `解析分享链接失败: ${e.message}`);
+            const errorMsg = `解析分享链接失败: ${e.message}`;
+            if (messageId) {
+                await this.bot.editMessageText(errorMsg, {
+                    chat_id: chatId,
+                    message_id: messageId
+                });
+            } else {
+                await this.bot.sendMessage(chatId, errorMsg);
+            }
             return;
         }
     
