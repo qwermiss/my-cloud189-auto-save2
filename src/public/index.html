@@ -974,8 +974,8 @@
                         <option value="tv">剧集 / 动漫 / 纪录片</option>
                         <option value="movie">电影</option>
                     </select>
-                    <input type="text" id="tmdbSearchQuery" placeholder="输入影视名称搜索..." style="flex: 3;" onkeyup="if(event.keyCode===13) searchTmdb()">
-                    <button class="btn-primary" onclick="searchTmdb()" style="margin-top: 0;">搜索</button>
+                    <input type="text" id="tmdbSearchQuery" placeholder="输入影视名称搜索..." style="flex: 3;" onkeyup="if(event.keyCode===13) searchTmdbManual()">
+                    <button class="btn-primary" onclick="searchTmdbManual()" style="margin-top: 0;">搜索</button>
                 </div>
                 <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 8px 10px; background: var(--hover-bg, #f5f7fa); border-radius: 6px;">
                     <label for="tmdbManualSeason" style="margin: 0; white-space: nowrap; font-size: 13px; font-weight: 500;">强制季数（选填）：</label>

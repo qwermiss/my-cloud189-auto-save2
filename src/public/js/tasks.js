@@ -1227,8 +1227,8 @@ function closeManualTmdbModal() {
     document.getElementById('tmdbManualSeason').value = '';
 }
 
-// 2. 搜索 TMDB
-async function searchTmdb() {
+// 2. 搜索 TMDB (手动指定弹窗)
+async function searchTmdbManual() {
     const query = document.getElementById('tmdbSearchQuery').value.trim();
     const type = document.getElementById('tmdbSearchType').value;
     if (!query) {
