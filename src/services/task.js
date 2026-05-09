@@ -325,13 +325,19 @@ class TaskService {
         let score = 0;
         const maxScore = 100;
         
-        const similarity = this._calculateSimilarity(result.title, originalName);
-        if (similarity > 0.7) {
+        const similarity1 = this._calculateSimilarity(result.title, originalName);
+        const similarity2 = result.originalTitle 
+            ? this._calculateSimilarity(result.originalTitle, originalName)
+            : 0;
+        
+        const maxSimilarity = Math.max(similarity1, similarity2);
+        
+        if (maxSimilarity > 0.7) {
             score += 40;
-        } else if (similarity > 0.5) {
+        } else if (maxSimilarity > 0.5) {
             score += 20;
-        } else if (similarity < 0.3) {
-            return { valid: false, reason: `相似度过低(${similarity.toFixed(2)})` };
+        } else if (maxSimilarity < 0.3) {
+            score -= 20;
         }
         
         if (year && result.releaseDate) {
@@ -343,9 +349,17 @@ class TaskService {
             } else {
                 return { valid: false, reason: `年份差距过大(期望${year}, 实际${resultYear})` };
             }
+            
+            if (resultYear === year) {
+                if (result.voteCount && result.voteCount > 500) {
+                    score += 15;
+                } else if (result.voteCount && result.voteCount > 100) {
+                    score += 10;
+                }
+            }
         }
         
-        if (result.title.length < originalName.length * 0.3) {
+        if (result.title.length < originalName.length * 0.2) {
             return { valid: false, reason: '标题过短，可能是错误匹配' };
         }
         
@@ -686,21 +700,79 @@ class TaskService {
         if (!shareInfo.shareId) {
             throw new Error('获取分享信息失败');
         }
-        // 如果启用了 AI 分析 如果任务名和分享名相同, 则使用AI分析结果更新任务名称
-        if (AIService.isEnabled() && taskDto.taskName == shareInfo.fileName) {
+        
+        let standardName = shareInfo.fileName;
+        let tmdbInfo = null;
+        
+        const tmdbApiKey = ConfigService.getConfigValue('tmdb.tmdbApiKey');
+        if (tmdbApiKey) {
             try {
-                const resourceInfo = await this._analyzeResourceInfo(shareInfo.fileName, [], 'folder');
-                // 使用 AI 分析结果更新任务名称
-                shareInfo.fileName = resourceInfo.year?`${resourceInfo.name} (${resourceInfo.year})`:resourceInfo.name;
-                taskDto.taskName = shareInfo.fileName;
+                logTaskEvent(`[任务创建] 开始解析资源名称: ${shareInfo.fileName}`);
+                
+                const baseName = this._extractCleanTitle(shareInfo.fileName);
+                const year = this._extractYear(shareInfo.fileName);
+                
+                logTaskEvent(`[任务创建] 提纯结果: "${baseName}", 年份: ${year || '未知'}`);
+                
+                const tmdbService = new TMDBService();
+                const typesToTry = taskDto.videoType ? [taskDto.videoType] : ['tv', 'movie'];
+                
+                for (const type of typesToTry) {
+                    const result = type === 'tv' 
+                        ? await tmdbService.searchTV(baseName, year ? year.toString() : '')
+                        : await tmdbService.searchMovie(baseName, year ? year.toString() : '');
+                    
+                    if (result && result.title) {
+                        const validation = this._validateTmdbResult(result, shareInfo.fileName, year, type);
+                        
+                        if (validation.valid) {
+                            const resultYear = result.releaseDate ? parseInt(result.releaseDate.substring(0, 4)) : year;
+                            standardName = resultYear ? `${result.title} (${resultYear})` : result.title;
+                            
+                            logTaskEvent(`[任务创建] ✅ TMDB匹配成功: "${standardName}"`);
+                            
+                            tmdbInfo = {
+                                id: result.id,
+                                type: type,
+                                title: result.title,
+                                year: resultYear
+                            };
+                            
+                            break;
+                        } else {
+                            logTaskEvent(`[任务创建] ⚠️ TMDB匹配到但验证失败: ${validation.reason}`);
+                        }
+                    }
+                }
             } catch (error) {
-                logTaskEvent('AI 分析失败，使用原始文件名: ' + error.message);
+                logTaskEvent(`[任务创建] ⚠️ TMDB匹配失败: ${error.message}`);
             }
         }
-        // 如果任务名称存在 且和shareInfo的name不一致
-        if (taskDto.taskName && taskDto.taskName != shareInfo.fileName) {
-            shareInfo.fileName = taskDto.taskName;
+        
+        if (standardName === shareInfo.fileName && AIService.isEnabled()) {
+            try {
+                logTaskEvent(`[任务创建] TMDB未匹配，尝试AI识别...`);
+                
+                const resourceInfo = await this._analyzeResourceInfo(shareInfo.fileName, [], 'folder', taskDto);
+                standardName = resourceInfo.year 
+                    ? `${resourceInfo.name} (${resourceInfo.year})`
+                    : resourceInfo.name;
+                
+                logTaskEvent(`[任务创建] ✅ AI识别成功: "${standardName}"`);
+            } catch (error) {
+                logTaskEvent(`[任务创建] ⚠️ AI识别失败，使用原始名称: ${error.message}`);
+            }
         }
+        
+        taskDto.taskName = standardName;
+        shareInfo.fileName = standardName;
+        
+        if (tmdbInfo) {
+            taskDto.tmdbId = tmdbInfo.id;
+            taskDto.videoType = tmdbInfo.type;
+        }
+        
+        logTaskEvent(`[任务创建] 最终任务名称: "${standardName}"`);
         taskDto.isFolder = true
         await this.increaseShareFileAccessCount(cloud189, shareInfo.shareId)
         // 检查并创建目标目录
