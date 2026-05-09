@@ -332,6 +332,11 @@ class TaskService {
         
         const maxSimilarity = Math.max(similarity1, similarity2);
         
+        // 调试：打印相似度计算详情
+        if (similarity2 > 0) {
+            console.log(`[TMDB验证] 相似度计算: 标题"${result.title}" vs "${originalName}" = ${similarity1.toFixed(2)}, 原名"${result.originalTitle}" vs "${originalName}" = ${similarity2.toFixed(2)}, 最大=${maxSimilarity.toFixed(2)}`);
+        }
+        
         if (maxSimilarity > 0.7) {
             score += 40;
         } else if (maxSimilarity > 0.5) {
