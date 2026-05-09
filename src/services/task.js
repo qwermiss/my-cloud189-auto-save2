@@ -351,15 +351,15 @@ class TaskService {
             }
             
             if (resultYear === year) {
-                if (result.voteCount && result.voteCount > 200) {
+                if (result.voteCount && result.voteCount > 100) {
                     score += 15;
-                } else if (result.voteCount && result.voteCount > 50) {
+                } else if (result.voteCount && result.voteCount > 10) {
                     score += 10;
                 }
             }
         }
         
-        if (result.voteCount && result.voteCount > 50) {
+        if (result.voteCount && result.voteCount > 10) {
             score += 20;
         }
         
