@@ -32,7 +32,10 @@ class CustomPushService extends MessageService {
         if (typeof content !== 'string') return '';
         // 匹配 📁 后面跟的路径
         const match = content.match(/📁\s+(.+?)(?:\n|$)/);
-        return match ? match[1].trim() : '';
+        if (!match) return '';
+        const path = match[1].trim();
+        // 确保路径以 / 开头（SmartStrm 要求）
+        return path.startsWith('/') ? path : '/' + path;
     }
 
     // 从消息内容中提取 videoType（从 "🎬 movie" 或 "🎬 tv" 格式中提取）
