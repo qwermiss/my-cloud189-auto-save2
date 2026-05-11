@@ -225,22 +225,22 @@
 /* 任务卡片 - 媒体墙视图 */
 [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card,
 [data-theme="cinema"] .media-wall-card {
-    background-color: rgba(30, 41, 59, 0.65) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(99, 102, 241, 0.18);
+    background-color: rgba(15, 23, 42, 0.35) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.25);
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(99, 102, 241, 0.08);
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(99, 102, 241, 0.1);
 }
 
 [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card:hover,
 [data-theme="cinema"] .media-wall-card:hover {
-    background-color: rgba(30, 41, 59, 0.75) !important;
-    border-color: rgba(99, 102, 241, 0.35);
+    background-color: rgba(15, 23, 42, 0.5) !important;
+    border-color: rgba(99, 102, 241, 0.4);
     box-shadow:
-        0 12px 48px rgba(0, 0, 0, 0.6),
-        0 0 24px rgba(99, 102, 241, 0.15);
+        0 12px 48px rgba(0, 0, 0, 0.4),
+        0 0 24px rgba(99, 102, 241, 0.2);
 }
 
 /* 影院模式下保留媒体墙卡片的渐变遮罩（用于显示卡片上的海报） */
@@ -251,10 +251,10 @@
 /* 任务卡片 - 表格视图 */
 [data-theme="cinema"] #taskTable tr,
 [data-theme="cinema"] #accountTable tr {
-    background-color: rgba(15, 23, 42, 0.75) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    background-color: rgba(15, 23, 42, 0.35) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.25);
 }
 
 /* 表格容器 */
