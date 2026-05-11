@@ -13,6 +13,9 @@
  * 更新日期：2026-05-11
  */
 
+// 文件加载确认
+console.log('[CinemaBackground] 模块已加载');
+
 class CinemaBackground {
     constructor(options = {}) {
         // 配置项
@@ -533,6 +536,7 @@ let cinemaBackgroundInstance = null;
  * 初始化影院背景
  */
 function initCinemaBackground() {
+    console.log('[CinemaBackground] initCinemaBackground 被调用');
     if (!cinemaBackgroundInstance) {
         cinemaBackgroundInstance = new CinemaBackground();
     }

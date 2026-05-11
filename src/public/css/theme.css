@@ -17,14 +17,12 @@
 
 .theme-dropdown {
     display: none;
-    position: absolute;
-    right: 0;
-    top: 100%;
+    position: fixed;
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    z-index: 2000;
+    z-index: 9999;
     min-width: 140px;
     overflow: hidden;
 }

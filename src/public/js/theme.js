@@ -11,6 +11,12 @@ function initTheme() {
     // 切换下拉菜单显示
     themeToggle.addEventListener('click', (e) => {
         e.stopPropagation();
+
+        // 动态设置下拉菜单位置（使用 fixed 定位）
+        const rect = themeToggle.getBoundingClientRect();
+        themeDropdown.style.right = `${window.innerWidth - rect.right}px`;
+        themeDropdown.style.top = `${rect.bottom + 8}px`;
+
         themeDropdown.classList.toggle('show');
     });
 
@@ -36,6 +42,8 @@ function initTheme() {
 
 
 function setTheme(theme) {
+    console.log('[Theme] 设置主题:', theme);
+
     // 更新主题和状态栏颜色的函数
     const updateThemeAndStatusBar = (isDark) => {
         const currentTheme = isDark ? 'dark' : 'light';
@@ -46,12 +54,16 @@ function setTheme(theme) {
 
     // 影院模式处理
     if (theme === 'cinema') {
+        console.log('[Theme] 切换到影院模式');
         document.documentElement.setAttribute('data-theme', 'cinema');
         document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0f172a');
 
-        // 初始化影院背景（如果尚未初始化）
+        // 初始化影院背景
         if (typeof initCinemaBackground === 'function') {
+            console.log('[Theme] 调用 initCinemaBackground');
             initCinemaBackground();
+        } else {
+            console.error('[Theme] initCinemaBackground 函数不存在!');
         }
         return;
     }
