@@ -171,6 +171,13 @@ class CustomPushService extends MessageService {
         if (!this.enabled) {
             return;
         }
+
+        // 只处理包含 📁 路径的消息（即重命名完成的消息）
+        // 避免 AI 重命名过程中、Emby 通知等其他消息触发 webhook
+        if (typeof message !== 'string' || !message.includes('📁')) {
+            return;
+        }
+
         let allSuccess = true;
         for (const config of this.customPushConfigs) {
             if (config && config.enabled) {
@@ -180,7 +187,7 @@ class CustomPushService extends MessageService {
                 }
             }
         }
-        return allSuccess; 
+        return allSuccess;
     }
 
     async _sendScrapeMessage(scrapeMessage) {
