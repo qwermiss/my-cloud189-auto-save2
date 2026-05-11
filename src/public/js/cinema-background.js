@@ -199,6 +199,42 @@ class CinemaBackground {
             console.log('[CinemaBackground] 任务数据:', data.data?.length, '个任务');
 
             if (data.success && Array.isArray(data.data)) {
+                // 使用 enrichTaskTmdb 异步加载 TMDB 信息（与任务卡片相同的方式）
+                const loadPromises = data.data.map(task => {
+                    return new Promise((resolve) => {
+                        // 检查是否已有 tmdbContent
+                        if (task.tmdbContent) {
+                            resolve(task);
+                            return;
+                        }
+
+                        // 尝试从缓存获取
+                        if (typeof taskTmdbCache !== 'undefined' && taskTmdbCache.has(task.id)) {
+                            task.tmdbContent = JSON.stringify(taskTmdbCache.get(task.id));
+                            resolve(task);
+                            return;
+                        }
+
+                        // 使用 enrichTaskTmdb 异步加载
+                        if (typeof enrichTaskTmdb === 'function') {
+                            enrichTaskTmdb(task);
+                            // 等待一小段时间让异步加载完成
+                            setTimeout(() => resolve(task), 100);
+                        } else {
+                            resolve(task);
+                        }
+                    });
+                });
+
+                // 等待所有任务加载完成（最多等待 2 秒）
+                await Promise.race([
+                    Promise.all(loadPromises),
+                    new Promise(resolve => setTimeout(resolve, 2000))
+                });
+
+                // 再等待一下让 enrichTaskTmdb 完成异步加载
+                await new Promise(resolve => setTimeout(resolve, 500));
+
                 // 调试：检查有 tmdbContent 的任务数量
                 const tasksWithTmdb = data.data.filter(task => task.tmdbContent);
                 console.log('[CinemaBackground] 有 tmdbContent 的任务:', tasksWithTmdb.length, '个');
