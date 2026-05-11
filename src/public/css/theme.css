@@ -22,7 +22,8 @@
     border: 1px solid var(--border-color);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    z-index: 9999 !important;
+    /* 主题菜单是全局悬浮层，需要压过媒体墙任务卡片的 transform/backdrop-filter 堆叠层。 */
+    z-index: 10000 !important;
     min-width: 160px;
     overflow: hidden;
     padding: 8px 0;

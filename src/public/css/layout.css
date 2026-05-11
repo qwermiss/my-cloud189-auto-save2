@@ -417,6 +417,9 @@ body::before, body::after {
 
 /* Topbar */
 .topbar {
+    position: relative;
+    /* 顶栏内含主题/通知等悬浮菜单，必须高于任务卡片创建的独立堆叠层。 */
+    z-index: 3000;
     height: var(--topbar-height);
     background-color: var(--bg-sidebar);
     display: flex;
@@ -598,6 +601,8 @@ body::before, body::after {
 
 /* Page Container */
 .page-container {
+    position: relative;
+    z-index: 1;
     flex: 1;
     overflow-y: auto;
     padding: 32px;
