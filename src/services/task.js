@@ -2041,10 +2041,10 @@ class TaskService {
                 }
 
                 // 构建具有表头的结构化通知消息
+                // 注意：不包含 📁 路径，webhook 在重命名完成后触发（taskEventHandler.js）
                 const lines = [
                     `【天翼云转存】`,
                     `✅《${resourceName}》新增 ${actualNewCount} 集`,
-                    `📁 ${folderPath}`,
                     ...fileNameList,
                 ];
                 // 添加 CAS 秒传结果到通知（只有实际秒传成功才显示）
@@ -2091,11 +2091,10 @@ class TaskService {
                 // 手动触发时，即使无新增也发送通知
                 if (manualTrigger) {
                     const resourceName = task.resourceName;
-                    const folderPath = task.realFolderName || task.realFolderId || '';
+                    // 注意：不包含 📁 路径，webhook 在重命名完成后触发（taskEventHandler.js）
                     const lines = [
                         `【天翼云转存】`,
                         `ℹ️《${resourceName}》无新增剧集`,
-                        `📁 ${folderPath}`,
                     ];
                     if (task.totalEpisodes > 0 || existingMediaCount > 0) {
                         lines.push(`🚀 当前进度：${existingMediaCount}${task.totalEpisodes > 0 ? '/' + task.totalEpisodes : ''} 集`);
