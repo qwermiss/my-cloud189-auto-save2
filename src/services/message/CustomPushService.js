@@ -35,33 +35,44 @@ class CustomPushService extends MessageService {
         return match ? match[1].trim() : '';
     }
 
+    // 从消息内容中提取 videoType（从 "🎬 movie" 或 "🎬 tv" 格式中提取）
+    _extractVideoType(content) {
+        if (typeof content !== 'string') return 'tv'; // 默认剧集
+        const match = content.match(/🎬\s+(movie|tv)/);
+        return match ? match[1].trim() : 'tv';
+    }
+
     _replacePlaceholders(template, title, content, escapeValuesForJson = false) {
         if (typeof template !== 'string') return template;
 
         const safeTitle = escapeValuesForJson ? this._jsonEscape(title) : title;
         const safeContent = escapeValuesForJson ? this._jsonEscape(content) : content;
         const savePath = this._extractSavePath(content);
+        const videoType = this._extractVideoType(content);
 
-        // 替换 {{title}}, {{content}}, {savePath}
+        // 替换 {{title}}, {{content}}, {savePath}, {videoType}
         return template
             .replace(/{{title}}/g, safeTitle)
             .replace(/{{content}}/g, safeContent)
-            .replace(/\{savePath\}/g, savePath);
+            .replace(/\{savePath\}/g, savePath)
+            .replace(/\{videoType\}/g, videoType);
     }
 
     _replacePlaceholdersInObject(obj, title, content) {
         if (typeof obj !== 'object' || obj === null) return obj;
         const newObj = JSON.parse(JSON.stringify(obj)); // Deep clone
         const savePath = this._extractSavePath(content);
-        
+        const videoType = this._extractVideoType(content);
+
         for (const key in newObj) {
             if (Object.prototype.hasOwnProperty.call(newObj, key)) {
                 if (typeof newObj[key] === 'string') {
-                    // 替换 {{title}}, {{content}}, {savePath}
+                    // 替换 {{title}}, {{content}}, {savePath}, {videoType}
                     newObj[key] = newObj[key]
                         .replace(/{{title}}/g, title)
                         .replace(/{{content}}/g, content)
-                        .replace(/\{savePath\}/g, savePath);
+                        .replace(/\{savePath\}/g, savePath)
+                        .replace(/\{videoType\}/g, videoType);
                 } else if (typeof newObj[key] === 'object') {
                     newObj[key] = this._replacePlaceholdersInObject(newObj[key], title, content);
                 }
