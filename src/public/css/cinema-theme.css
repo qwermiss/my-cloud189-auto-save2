@@ -263,6 +263,17 @@
     border-color: transparent !important;
 }
 
+/* 影院模式媒体墙：外层表格/网格必须透明，避免空白列区域形成整块遮罩盖住轮播背景。 */
+[data-theme="cinema"][data-ui-style="media"] #taskTable,
+[data-theme="cinema"][data-ui-style="media"] #taskTable tbody,
+[data-theme="cinema"][data-ui-style="media"] #taskTab .table-container {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
 /* 弹窗 */
 [data-theme="cinema"] .modal-content {
     background: rgba(30, 41, 59, 0.92);
@@ -326,10 +337,12 @@
 
 /* 添加任务占位卡片 */
 [data-theme="cinema"] .add-task-placeholder {
-    background: rgba(30, 41, 59, 0.5) !important;
+    background: transparent !important;
+    background-color: transparent !important;
     border: 2px dashed rgba(99, 102, 241, 0.4) !important;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
 /* 面板卡片 */
