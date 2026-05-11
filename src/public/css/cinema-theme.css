@@ -11,7 +11,7 @@
 .cinema-bg-container {
     position: fixed;
     inset: 0;
-    z-index: -1;
+    z-index: 0;
     overflow: hidden;
     opacity: 0;
     visibility: hidden;
@@ -361,6 +361,23 @@
     --card-bg: rgba(30, 41, 59, 0.78);
     --shadow-color: rgba(0, 0, 0, 0.5);
     --thead-bg: rgba(15, 23, 42, 0.5);
+}
+
+/* 影院模式下确保内容层在背景之上 */
+[data-theme="cinema"] .app-layout {
+    position: relative;
+    z-index: 1;
+}
+
+/* 影院模式下 body 背景透明，露出底层海报 */
+[data-theme="cinema"] body {
+    background-color: transparent;
+    background-image: none;
+}
+
+[data-theme="cinema"] body::before,
+[data-theme="cinema"] body::after {
+    display: none !important;
 }
 
 /* ============================================
