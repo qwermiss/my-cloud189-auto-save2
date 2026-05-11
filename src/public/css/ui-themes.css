@@ -897,20 +897,20 @@ tbody th:last-child {
 
 /* 影院模式媒体墙卡片 */
 [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card {
-    background: rgba(30, 41, 59, 0.78) !important;
+    background-color: rgba(30, 41, 59, 0.65) !important;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(99, 102, 241, 0.18);
 }
 
 [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card:hover {
-    background: rgba(30, 41, 59, 0.85) !important;
+    background-color: rgba(30, 41, 59, 0.75) !important;
     border-color: rgba(99, 102, 241, 0.35);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(99, 102, 241, 0.15);
 }
 
 [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card::before {
-    background: transparent !important;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.85) 100%) !important;
 }
 
 /* 添加任务占位卡片样式 */
