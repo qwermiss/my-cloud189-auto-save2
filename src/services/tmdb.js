@@ -145,9 +145,13 @@ class TMDBService {
                 id: item.id,
                 title: item.title || item.name,
                 name: item.name || item.title,
+                original_title: item.original_title || item.original_name,
+                original_name: item.original_name || item.original_title,
                 release_date: item.release_date || item.first_air_date,
                 first_air_date: item.first_air_date || item.release_date,
-                poster_path: item.poster_path
+                poster_path: item.poster_path,
+                overview: item.overview,
+                vote_average: item.vote_average
             }));
         } catch (e) {
             throw new Error(`TMDB搜索失败: ${e.message}`);
