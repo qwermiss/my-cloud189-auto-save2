@@ -37,9 +37,9 @@
     background-position: center;
     background-repeat: no-repeat;
 
-    /* 视觉效果处理 */
-    filter: blur(35px) saturate(1.3) brightness(0.6);
-    transform: scale(1.15);
+    /* 视觉效果处理：保留轻微虚化，避免背景海报过糊。 */
+    filter: blur(18px) saturate(1.2) brightness(0.72);
+    transform: scale(1.08);
 
     /* 过渡动画 */
     transition: opacity 1.8s ease-in-out;
@@ -199,6 +199,21 @@
     background: transparent;
 }
 
+/* 影院模式页签外层：这些只负责布局，不能形成大面积遮罩盖住背景轮播。 */
+[data-theme="cinema"] #dashboardTab,
+[data-theme="cinema"] #accountTab,
+[data-theme="cinema"] #settingsTab,
+[data-theme="cinema"] #settingsForm,
+[data-theme="cinema"] .hero-stats,
+[data-theme="cinema"] .settings-card-body,
+[data-theme="cinema"] .settings-group {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
 /* 任务操作栏 */
 [data-theme="cinema"] .task-operations {
     background: rgba(30, 41, 59, 0.6);
@@ -261,12 +276,18 @@
 [data-theme="cinema"] .table-container {
     background: transparent !important;
     border-color: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
-/* 影院模式媒体墙：外层表格/网格必须透明，避免空白列区域形成整块遮罩盖住轮播背景。 */
+/* 影院模式表格外层：外层表格/网格必须透明，避免空白区域形成整块遮罩盖住轮播背景。 */
 [data-theme="cinema"][data-ui-style="media"] #taskTable,
 [data-theme="cinema"][data-ui-style="media"] #taskTable tbody,
-[data-theme="cinema"][data-ui-style="media"] #taskTab .table-container {
+[data-theme="cinema"][data-ui-style="media"] #taskTab .table-container,
+[data-theme="cinema"][data-ui-style="media"] #accountTable,
+[data-theme="cinema"][data-ui-style="media"] #accountTable tbody,
+[data-theme="cinema"][data-ui-style="media"] #accountTab .table-container {
     background: transparent !important;
     background-color: transparent !important;
     box-shadow: none !important;
@@ -285,9 +306,9 @@
 
 /* 设置卡片 */
 [data-theme="cinema"] .settings-card {
-    background: rgba(30, 41, 59, 0.8);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: rgba(30, 41, 59, 0.62);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(99, 102, 241, 0.12);
 }
 
@@ -345,19 +366,19 @@
     -webkit-backdrop-filter: none !important;
 }
 
-/* 面板卡片 */
+/* 面板卡片：修正内联 var(--bg-card) 造成的大块遮罩，只保留轻玻璃面板。 */
 [data-theme="cinema"] .panel-card {
-    background: rgba(30, 41, 59, 0.78);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: rgba(30, 41, 59, 0.62) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(99, 102, 241, 0.12);
 }
 
 /* 统计卡片 */
 [data-theme="cinema"] .hero-stat-card {
-    background: rgba(30, 41, 59, 0.78);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(30, 41, 59, 0.62);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(99, 102, 241, 0.12);
 }
 
