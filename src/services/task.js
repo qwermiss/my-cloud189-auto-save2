@@ -423,9 +423,10 @@ class TaskService {
             let tmdbParsed = false;
             let tmdbType = type;
             try {
-                // 如果用户已经手动指定了 TMDB，则直接获取该详情
-                if (taskDto && taskDto.manualTmdbBound && taskDto.tmdbId && taskDto.videoType) {
-                    logTaskEvent(`[AI重命名] 检测到任务已手动绑定 TMDB ID: ${taskDto.tmdbId}，跳过自动搜索，直接拉取绑定信息。`);
+                // 如果任务已有 TMDB 信息（无论是手动绑定还是自动识别），直接使用，避免重复搜索
+                if (taskDto && taskDto.tmdbId && taskDto.videoType) {
+                    const bindType = taskDto.manualTmdbBound ? '手动绑定' : '自动识别';
+                    logTaskEvent(`[AI重命名] 检测到任务已${bindType} TMDB ID: ${taskDto.tmdbId}，跳过自动搜索，直接拉取绑定信息。`);
                     const tmdbService = new TMDBService();
                     const detail = taskDto.videoType === 'movie'
                         ? await tmdbService.getMovieDetails(taskDto.tmdbId)
@@ -436,9 +437,9 @@ class TaskService {
                         tmdbType = detail.type || taskDto.videoType;
                         if (detail.releaseDate) year = parseInt(detail.releaseDate.substring(0, 4)) || year;
                         tmdbParsed = true;
-                        logTaskEvent(`[AI重命名] 手动指定匹配成功: 成功获得影视名称【${tmdbName} (${year})】`);
+                        logTaskEvent(`[AI重命名] ${bindType}匹配成功: 成功获得影视名称【${tmdbName} (${year})】`);
                     } else {
-                        logTaskEvent(`[AI重命名] 手动指定匹配失败: 无法根据提供的 TMDB ID 从远程获取到实际名称`);
+                        logTaskEvent(`[AI重命名] ${bindType}匹配失败: 无法根据提供的 TMDB ID 从远程获取到实际名称`);
                     }
                 } else if (extractedTmdbId) {
                     // ====== 优先使用提取到的 TMDB ID，直接调用详情 API ======
