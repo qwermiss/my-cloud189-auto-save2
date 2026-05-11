@@ -199,6 +199,20 @@ class CinemaBackground {
             console.log('[CinemaBackground] 任务数据:', data.data?.length, '个任务');
 
             if (data.success && Array.isArray(data.data)) {
+                // 调试：检查有 tmdbContent 的任务数量
+                const tasksWithTmdb = data.data.filter(task => task.tmdbContent);
+                console.log('[CinemaBackground] 有 tmdbContent 的任务:', tasksWithTmdb.length, '个');
+
+                // 调试：检查第一个任务的 tmdbContent 结构
+                if (tasksWithTmdb.length > 0) {
+                    const firstTask = tasksWithTmdb[0];
+                    console.log('[CinemaBackground] 第一个任务示例:', {
+                        id: firstTask.id,
+                        resourceName: firstTask.resourceName,
+                        tmdbContent: firstTask.tmdbContent
+                    });
+                }
+
                 this.posters = data.data
                     .filter(task => task.tmdbContent)
                     .map(task => ({

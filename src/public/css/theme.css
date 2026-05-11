@@ -17,14 +17,15 @@
 
 .theme-dropdown {
     display: none;
-    position: fixed;
+    position: fixed !important;
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    z-index: 9999;
-    min-width: 140px;
+    z-index: 9999 !important;
+    min-width: 160px;
     overflow: hidden;
+    padding: 8px 0;
 }
 
 .theme-dropdown.show {
@@ -49,6 +50,18 @@
 .theme-option i {
     font-size: 16px;
 }
+
+/* 深色模式下拉菜单样式 */
+[data-theme="dark"] .theme-dropdown {
+    background: rgba(30, 41, 59, 0.98);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+[data-theme="cinema"] .theme-dropdown {
+    background: rgba(30, 41, 59, 0.98);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
 /* 暗黑模式变量 */
 :root {
     --primary-rgb: 64, 158, 255;
