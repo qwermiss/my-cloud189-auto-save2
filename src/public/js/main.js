@@ -26,9 +26,14 @@ async function loadDashboardStats() {
             return;
         }
         const tasks = data.data || [];
+        // 追剧中：processing状态 + pending状态但已有集数的任务
+        const watchingCount = tasks.filter(task =>
+            task.status === 'processing' ||
+            (task.status === 'pending' && task.currentEpisodes > 0)
+        ).length;
         const stats = {
             total: tasks.length,
-            processing: tasks.filter(task => task.status === 'processing').length,
+            processing: watchingCount,
             completed: tasks.filter(task => task.status === 'completed').length,
             failed: tasks.filter(task => task.status === 'failed' || task.status === 'error').length
         };
