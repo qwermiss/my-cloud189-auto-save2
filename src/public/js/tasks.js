@@ -276,21 +276,18 @@ function renderTaskMediaWall(tasks) {
             tmdbUrl = `https://www.themoviedb.org/${type}/${tmdbContent.id}`;
         }
         
-        let progressHtml = '';
-        let percentage = 0;
-        
-        if (task.videoType !== 'movie' && task.totalEpisodes > 0) {
-            // Assume missing episodes is JSON array and calculate progress
-            let missingCount = 0;
-            if (task.missingEpisodes) {
-                try {
-                    const missing = JSON.parse(task.missingEpisodes);
-                    missingCount = missing.length;
-                } catch(e) {}
-            }
-            // Count total episodes vs missing. This is an approximation since we don't have current downloaded count
-            // Or maybe just show missing text. Wait, we have latestSaved maybe we can use update count.
-            // Let's use the UI text format.
+        // 计算进度条百分比
+        let progressPercent = 0;
+        if (task.totalEpisodes > 0 && task.currentEpisodes > 0) {
+            progressPercent = Math.min(100, Math.round((task.currentEpisodes / task.totalEpisodes) * 100));
+        } else if (task.status === 'completed') {
+            progressPercent = 100;
+        } else if (!task.lastSavedDisplayText && !task.lastSavedFileName) {
+            // 清缓存后无转存记录，进度为 0
+            progressPercent = 0;
+        } else {
+            // 有转存记录但无法计算进度，显示默认进度
+            progressPercent = task.currentEpisodes > 0 ? Math.min(100, task.currentEpisodes * 10) : 0;
         }
 
         tbody.innerHTML += `
@@ -299,11 +296,11 @@ function renderTaskMediaWall(tasks) {
                     <div class="media-card-top">
                         <span class="status-badge ${getStatusClass(task)}">${formatTaskStatus(task)}</span>
                     </div>
-                    
+
                     <div class="media-card-hover-overview" onclick="event.stopPropagation();">
                         ${getTaskOverview(task)}
                     </div>
-                    
+
                     <div class="media-card-bottom">
                         <div class="media-wall-title" title="${taskName}" onclick="event.stopPropagation(); window.open('${task.shareLink}', '_blank');" style="cursor: pointer;">${taskName}</div>
                         <div class="media-wall-meta" ${tmdbUrl ? `onclick="event.stopPropagation(); window.open('${tmdbUrl}', '_blank');" style="cursor: pointer;" title="查看TMDB详情"` : ''}>
@@ -311,14 +308,14 @@ function renderTaskMediaWall(tasks) {
                             ${metaLine || '暂无信息'}
                             ${tmdbUrl ? '<span style="margin-left: 8px; padding: 2px 6px; background: rgba(99, 102, 241, 0.2); border-radius: 4px; font-size: 11px; font-weight: 600;">TMDB</span>' : ''}
                         </div>
-                        
+
                         <div class="media-progress-container" onclick="event.stopPropagation(); showFileListModal('${task.id}');" style="cursor: pointer;" title="${getProgressTooltip(task)}">
                             <div class="media-progress-text">
                                 <span>${latestSaved}</span>
                                 ${formatMissingEpisodes(task) ? `<span style="color: #fca5a5">${formatMissingEpisodes(task)}</span>` : ''}
                             </div>
                             <div class="media-progress-bar">
-                                <div class="media-progress-fill" style="width: ${task.status === 'completed' ? '100%' : '50%'}"></div>
+                                <div class="media-progress-fill" style="width: ${progressPercent}%"></div>
                             </div>
                         </div>
 
@@ -327,9 +324,9 @@ function renderTaskMediaWall(tasks) {
                                 <span class="media-tag">${task.videoType === 'movie' ? '电影' : '剧集'}</span>
                                 <span class="media-tag">${task.account?.username || '账号'}</span>
                             </div>
-                            
+
                             <div class="media-actions">
-                                <div class="media-btn-circle primary" onclick="event.stopPropagation(); executeTask(${task.id})" title="执行任务">
+                                <div class="media-btn-circle primary execute-btn" onclick="event.stopPropagation(); executeTaskWithAnimation(this, ${task.id})" title="执行任务">
                                     <i class="ph-fill ph-play"></i>
                                 </div>
                                 <div class="media-btn-circle more-actions-btn" onclick="event.stopPropagation(); toggleMoreActions(this, ${task.id})" title="更多操作">
@@ -489,6 +486,42 @@ async function executeTask(id, refresh = true) {
             executeBtn.classList.remove('loading');
             executeBtn.disabled = false;
         }
+    }
+}
+
+// 带动画效果的执行任务（媒体墙卡片）
+async function executeTaskWithAnimation(btnElement, id) {
+    if (!btnElement || btnElement.classList.contains('executing')) return;
+
+    // 添加执行动画
+    btnElement.classList.add('executing');
+    const icon = btnElement.querySelector('i');
+    if (icon) {
+        icon.style.animation = 'spin 1s linear infinite';
+    }
+
+    message.info('任务开始执行，请查看日志...');
+
+    try {
+        const response = await fetch(`/api/tasks/${id}/execute`, {
+            method: 'POST'
+        });
+        if (response.ok) {
+            // 任务执行是异步的，刷新任务列表
+            setTimeout(() => fetchTasks(), 1000);
+        } else {
+            message.warning('任务执行请求失败');
+        }
+    } catch (error) {
+        message.warning('任务执行失败: ' + error.message);
+    } finally {
+        // 移除动画（延迟一点让用户看到反馈）
+        setTimeout(() => {
+            btnElement.classList.remove('executing');
+            if (icon) {
+                icon.style.animation = '';
+            }
+        }, 500);
     }
 }
 

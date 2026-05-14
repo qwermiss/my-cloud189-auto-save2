@@ -886,6 +886,52 @@ tbody th:last-child {
     background: var(--primary-hover, #4f46e5);
 }
 
+/* 执行按钮点击动画 */
+.media-btn-circle.execute-btn {
+    position: relative;
+    overflow: visible;
+}
+
+.media-btn-circle.execute-btn.executing {
+    animation: pulse-ring 0.6s ease-out;
+}
+
+.media-btn-circle.execute-btn.executing::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color, #6366f1);
+    transform: translate(-50%, -50%) scale(1);
+    animation: ripple 0.6s ease-out;
+    pointer-events: none;
+}
+
+@keyframes pulse-ring {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.9); }
+    100% { transform: scale(1); }
+}
+
+@keyframes ripple {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+    }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 [data-ui-style="media"] #taskTable tr.media-wall-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 24px 48px rgba(120, 53, 15, 0.18);
