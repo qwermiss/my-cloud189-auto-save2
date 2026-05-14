@@ -8,6 +8,7 @@ class TaskCompleteEventDto  {
         this.taskRepo = data?.taskRepo;
         this.firstExecution = data?.firstExecution;
         this.existingFiles = data?.existingFiles;
+        this.actualNewCount = data?.actualNewCount || 0; // 智能去重场景的实际新增数量
     }
 }
 

@@ -2099,7 +2099,8 @@ class TaskService {
                         overwriteStrm: false,
                         firstExecution: firstExecution,
                         taskService: this,
-                        taskRepo: this.taskRepo
+                        taskRepo: this.taskRepo,
+                        actualNewCount: actualNewCount // 智能去重场景的实际新增数量
                     }));
                 })
             } else {

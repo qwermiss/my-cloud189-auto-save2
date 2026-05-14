@@ -10,13 +10,17 @@ class TaskEventHandler {
     }
 
     async handle(taskCompleteEventDto) {
-        if (taskCompleteEventDto.fileList.length === 0) {
-            return;
-        }
         const task = taskCompleteEventDto.task;
         const taskRepo = taskCompleteEventDto.taskRepo;
         const taskService = taskCompleteEventDto.taskService;
-        
+        const actualNewCount = taskCompleteEventDto.actualNewCount || 0;
+
+        // 修改判断逻辑：不仅检查 fileList，还检查 actualNewCount（智能去重场景）
+        // 智能去重流程中 newFiles 可能是空，但 actualNewCount > 0 表示有秒传成功
+        if (taskCompleteEventDto.fileList.length === 0 && actualNewCount === 0) {
+            return;
+        }
+
         logTaskEvent(` ${task.resourceName} 触发事件:`);
         try {
             await this._handleAutoRename(taskCompleteEventDto);
