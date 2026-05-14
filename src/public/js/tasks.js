@@ -1498,6 +1498,8 @@ function formatTaskStatus(task) {
     if (task.status === 'processing') return '运行中';
     if (task.status === 'paused') return '暂停中';
     if (task.status === 'pending') {
+        // pending 但已有剧集进度时，说明任务已进入追更/转存链路，展示为运行中而不是等待中。
+        if (task.currentEpisodes > 0) return '运行中';
         return '等待中';
     }
     return task.status;
@@ -1509,7 +1511,10 @@ function getStatusClass(task) {
     if (task.status === 'failed') return 'status-failed';
     if (task.status === 'processing') return 'status-processing';
     if (task.status === 'paused') return 'status-paused';
-    if (task.status === 'pending') return 'status-pending';
+    if (task.status === 'pending') {
+        if (task.currentEpisodes > 0) return 'status-processing';
+        return 'status-pending';
+    }
     return 'status-' + task.status;
 }
 
