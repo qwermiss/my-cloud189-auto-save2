@@ -294,7 +294,7 @@ function renderTaskMediaWall(tasks) {
             <tr class="media-wall-card" data-status='${task.status}' data-task-id='${task.id}' data-name='${taskName}' style="background-image: url('${poster || ''}')">
                 <td class="media-wall-info-cell" style="display: contents;">
                     <div class="media-card-top">
-                        <span class="status-badge ${getStatusClass(task)}">${formatTaskStatus(task)}</span>
+                        ${renderStatusCapsule(task)}
                     </div>
 
                     <div class="media-card-hover-overview" onclick="event.stopPropagation();">
@@ -400,7 +400,7 @@ async function fetchTasks() {
                     </td>
                     <td data-label="转存时间" style="font-size: 13px; color: #3b82f6; font-weight: 500;">${formatDateTime(task.lastFileUpdateTime)}</td>
                     <td data-label="备注">${task.remark?task.remark:''}</td>
-                    <td data-label="状态"><span class="status-badge ${getStatusClass(task)}">${formatTaskStatus(task)}</span>${task.status === 'failed' && task.lastError ? `<span style="color: #ff4d4f; font-size: 11px; margin-left: 5px;">(${task.lastError.slice(0, 30)}${task.lastError.length > 30 ? '...' : ''})</span>` : ''}</td>
+                    <td data-label="状态">${renderStatusCapsule(task)}${task.status === 'failed' && task.lastError ? `<span style="color: #ff4d4f; font-size: 11px; margin-left: 5px;">(${task.lastError.slice(0, 30)}${task.lastError.length > 30 ? '...' : ''})</span>` : ''}</td>
                 </tr>
             `;
         });
@@ -1481,9 +1481,10 @@ function formatDateTime(dateStr) {
 
 const statusOptions = {
     pending: '等待中',
-    processing: '追剧中',
-    completed: '已完结',
-    failed: '失败'
+    processing: '运行中',
+    completed: '成功',
+    failed: '失败',
+    paused: '暂停中'
 }
 // 格式化状态
 function formatStatus(status) {
@@ -1492,28 +1493,49 @@ function formatStatus(status) {
 
 // 根据任务状态和剧集数量显示更精确的状态文字
 function formatTaskStatus(task) {
-    if (task.status === 'completed') return '已完结';
+    if (task.status === 'completed') return '成功';
     if (task.status === 'failed') return '失败';
-    if (task.status === 'processing') return '追剧中';
+    if (task.status === 'processing') return '运行中';
+    if (task.status === 'paused') return '暂停中';
     if (task.status === 'pending') {
-        // 有剧集内容显示追剧中，无内容显示等待中
-        if (task.currentEpisodes > 0) return '追剧中';
         return '等待中';
     }
     return task.status;
 }
 
 // 根据任务状态和剧集数量获取正确的CSS类名
-// 追剧中使用processing样式（橙色），等待中使用pending样式（蓝色）
 function getStatusClass(task) {
     if (task.status === 'completed') return 'status-completed';
     if (task.status === 'failed') return 'status-failed';
     if (task.status === 'processing') return 'status-processing';
-    if (task.status === 'pending') {
-        if (task.currentEpisodes > 0) return 'status-processing'; // 追剧中用橙色
-        return 'status-pending'; // 等待中用蓝色
-    }
+    if (task.status === 'paused') return 'status-paused';
+    if (task.status === 'pending') return 'status-pending';
     return 'status-' + task.status;
+}
+
+function getStatusMeta(task) {
+    const className = getStatusClass(task);
+    const metaMap = {
+        'status-processing': { icon: 'ph ph-activity', label: '运行中' },
+        'status-completed': { icon: 'ph ph-check-circle', label: '成功' },
+        'status-failed': { icon: 'ph ph-x-circle', label: '失败' },
+        'status-paused': { icon: 'ph ph-pause-circle', label: '暂停中' },
+        'status-pending': { icon: 'ph ph-clock', label: '等待中' }
+    };
+    return metaMap[className] || { icon: 'ph ph-circle', label: formatTaskStatus(task) };
+}
+
+function renderStatusCapsule(task) {
+    const meta = getStatusMeta(task);
+    const className = getStatusClass(task);
+    return `
+        <span class="status-capsule ${className}" aria-label="任务状态：${meta.label}">
+            <span class="status-capsule-orb" aria-hidden="true">
+                <i class="${meta.icon}"></i>
+            </span>
+            <span class="status-capsule-text">${meta.label}</span>
+        </span>
+    `;
 }
 
 // 更多操作菜单
