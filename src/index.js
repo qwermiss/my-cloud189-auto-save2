@@ -1117,6 +1117,7 @@ AppDataSource.initialize().then(async () => {
         const cloud189 = Cloud189Service.getInstance(account);
         const result = []
         const successFiles = []
+        const renameDetails = [] // 保存重命名详情（原名→新名）
         for (const file of files) {
             const renameResult = await cloud189.renameFile(file.fileId, file.destFileName);
             if (!renameResult) {
@@ -1134,6 +1135,7 @@ AppDataSource.initialize().then(async () => {
                     await strmService.delete(path.join(task.account.localStrmPrefix, oldFile))
                 }
                 successFiles.push({id: file.fileId, name: file.destFileName})
+                renameDetails.push({ oldName: file.oldName, newName: file.destFileName })
             }
         }
         logTaskEvent(`[批量重命名] 对选中的文件重命名请求执行完成。成功: ${successFiles.length}，失败: ${result.length}`);
@@ -1159,7 +1161,22 @@ AppDataSource.initialize().then(async () => {
             if (folderPath && !folderPath.startsWith('/')) {
                 folderPath = '/' + folderPath;
             }
-            const message = `✅《${task.resourceName}》重命名完成\n已处理 ${successFiles.length} 个文件\n📁 ${folderPath}`;
+
+            // 构建重命名详情列表（超过6个时中间省略）
+            const detailLines = [];
+            if (renameDetails.length > 6) {
+                const first3 = renameDetails.slice(0, 3);
+                const last3 = renameDetails.slice(-3);
+                first3.forEach(d => detailLines.push(`├─ ${d.oldName} → ${d.newName}`));
+                detailLines.push(`├─ ... 省略 ${renameDetails.length - 6} 个`);
+                last3.forEach((d, i) => detailLines.push(i === last3.length - 1 ? `└─ ${d.oldName} → ${d.newName}` : `├─ ${d.oldName} → ${d.newName}`));
+            } else {
+                renameDetails.forEach((d, i) => {
+                    detailLines.push(i === renameDetails.length - 1 ? `└─ ${d.oldName} → ${d.newName}` : `├─ ${d.oldName} → ${d.newName}`);
+                });
+            }
+
+            const message = `✅《${task.resourceName}》重命名完成\n已处理 ${successFiles.length} 个文件\n📁 ${folderPath}\n${detailLines.join('\n')}`;
             messageUtil.sendMessage(message);
             logTaskEvent(`[批量重命名] 已发送重命名完成通知，路径: ${folderPath}`);
         }
