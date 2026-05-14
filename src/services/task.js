@@ -1591,17 +1591,16 @@ class TaskService {
                                 casTempFolderCreated = familyFolderIdResult.isTemp;
                                 logTaskEvent(`[家庭中转] 中转目录: ${casFamilyFolderIdActual} (${familyFolderIdResult.source})`);
 
-                                // 保底动作：清空 cas_temp 目录中的数据（如果是默认目录）
-                                if (familyFolderIdResult.source === '默认目录 cas_temp') {
-                                    logTaskEvent(`[家庭中转] 开始清空默认目录 cas_temp...`);
-                                    await familyCloud189.clearFamilyFolder(familyId, casFamilyFolderIdActual);
-                                    // 清空家庭回收站
-                                    logTaskEvent(`[家庭中转] 清空家庭回收站...`);
-                                    try {
-                                        await familyCloud189.clearFamilyRecycleBin(familyId);
-                                    } catch (e) {
-                                        logTaskEvent(`[家庭中转] 清空回收站失败: ${e.message}`);
-                                    }
+                                // 任务开始前清空中转目录和家庭回收站（默认目录和自定义目录都支持）
+                                // 注意：只有家庭根目录不清空（可能会影响其他文件）
+                                logTaskEvent(`[家庭中转] 开始清空中转目录...`);
+                                await familyCloud189.clearFamilyFolder(familyId, casFamilyFolderIdActual);
+                                // 清空家庭回收站
+                                logTaskEvent(`[家庭中转] 清空家庭回收站...`);
+                                try {
+                                    await familyCloud189.clearFamilyRecycleBin(familyId);
+                                } catch (e) {
+                                    logTaskEvent(`[家庭中转] 清空回收站失败: ${e.message}`);
                                 }
                             } else {
                                 casFamilyFolderIdActual = this._casFamilyRootFolderId;
