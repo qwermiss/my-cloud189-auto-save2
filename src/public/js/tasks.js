@@ -450,6 +450,7 @@ async function clearTaskCache(id) {
         const data = await response.json();
         if (data.success) {
             message.success('任务缓存已清除');
+            fetchTasks(); // 刷新任务列表，更新前端显示的进度
         } else {
             message.warning('任务缓存清除失败: ' + data.error);
         }
@@ -469,15 +470,17 @@ async function executeTask(id, refresh = true) {
         executeBtn.classList.add('loading');
         executeBtn.disabled = true;
     }
+    message.info('任务开始执行，请查看日志...');
     try {
         const response = await fetch(`/api/tasks/${id}/execute`, {
             method: 'POST'
         });
         if (response.ok) {
-            refresh && message.success('任务执行完成');
-            refresh && fetchTasks();
+            // 任务执行是异步的，这里只是触发执行请求
+            // 刷新任务列表以更新状态
+            setTimeout(() => fetchTasks(), 1000);
         } else {
-            message.warning('任务执行失败');
+            message.warning('任务执行请求失败');
         }
     } catch (error) {
         message.warning('任务执行失败: ' + error.message);

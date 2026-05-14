@@ -2352,7 +2352,14 @@ class TaskService {
         // 以上条件都不满足 → 直接返回空
         const hasRegex = task.sourceRegex && task.targetRegex;
         const hasTmdb = task.tmdbId && task.videoType;
-        if (!hasRegex && !AIService.isEnabled() && !hasTmdb) return [];
+        const aiEnabled = AIService.isEnabled();
+
+        logTaskEvent(`[autoRename] 入口检查: hasRegex=${hasRegex}, aiEnabled=${aiEnabled}, hasTmdb=${hasTmdb} (tmdbId=${task.tmdbId}, videoType=${task.videoType})`);
+
+        if (!hasRegex && !aiEnabled && !hasTmdb) {
+            logTaskEvent(`[autoRename] 跳过：无正则、AI未启用、未绑定TMDB`);
+            return [];
+        }
 
         let message = []
         let newFiles = [];
