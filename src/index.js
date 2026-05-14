@@ -1149,6 +1149,18 @@ AppDataSource.initialize().then(async () => {
         if (result.length > 0) {
             logTaskEvent(result.join('\n'));
         }
+
+        // 发送重命名完成通知（带路径，触发 webhook）
+        if (successFiles.length > 0) {
+            const { MessageUtil } = require('./services/message');
+            const messageUtil = new MessageUtil();
+            const folderPath = task.realFolderName || task.realFolderId || '';
+            const videoType = task.videoType || 'tv';
+            const message = `✅《${task.resourceName}》重命名完成\n已处理 ${successFiles.length} 个文件\n📁 ${folderPath}\n🎬 ${videoType}`;
+            messageUtil.sendMessage(message);
+            logTaskEvent(`[批量重命名] 已发送重命名完成通知，路径: ${folderPath}`);
+        }
+
         res.json({ success: true, data: result });
     });
 
