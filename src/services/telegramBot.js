@@ -1381,13 +1381,17 @@ class TelegramBotService {
             // 发送"正在输入"状态
             await this.bot.sendChatAction(chatId, 'typing');
 
-            // 检测分享链接
-            const shareLink = this.aiIntentService.detectShareLink(message);
+            // 检测分享链接 - 使用 cloud189Utils.parseCloudShare 正确提取链接和访问码
+            const shareLinkMatch = message.match(/https?:\/\/cloud\.189\.cn\/t\/[\w]+/gi);
 
-            if (shareLink) {
-                // 分享链接智能创建
-                logTaskEvent(`[AI助手] 检测到分享链接，触发智能创建`);
-                await this._handleSmartCreate(chatId, shareLink);
+            if (shareLinkMatch) {
+                // 使用 parseCloudShare 正确解析链接和访问码
+                const { url: shareLink, accessCode } = cloud189Utils.parseCloudShare(message);
+                logTaskEvent(`[AI助手] 检测到分享链接，触发智能创建，访问码: ${accessCode || '无'}`);
+
+                // 直接走原有的目录选择流程（已正确处理访问码）
+                const tipMsg = await this.bot.sendMessage(chatId, '✅ 检测到分享链接，正在准备创建任务...');
+                await this.handleFolderSelection(chatId, shareLink, tipMsg.message_id, accessCode);
                 return;
             }
 

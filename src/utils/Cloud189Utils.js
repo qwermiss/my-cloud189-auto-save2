@@ -31,16 +31,17 @@ class Cloud189Utils {
         // 提取基本URL和访问码
         let url = '';
         let accessCode = '';
-        
+
         // 匹配访问码的几种常见格式
         const accessCodePatterns = [
             /[（(]访问码[：:]\s*([a-zA-Z0-9]{4})[)）]/,  // （访问码：xxxx）
             /[（(]提取码[：:]\s*([a-zA-Z0-9]{4})[)）]/,  // （提取码：xxxx）
             /访问码[：:]\s*([a-zA-Z0-9]{4})/,           // 访问码：xxxx
             /提取码[：:]\s*([a-zA-Z0-9]{4})/,           // 提取码：xxxx
-            /[（(]([a-zA-Z0-9]{4})[)）]/                // （xxxx）
+            /[（(]([a-zA-Z0-9]{4})[)）]/,               // （xxxx）
+            /\/([a-zA-Z0-9]{4})$/                       // /xxxx 格式（链接后直接跟访问码）
         ];
-        
+
         // 尝试匹配访问码
         for (const pattern of accessCodePatterns) {
             const match = shareText.match(pattern);
@@ -51,8 +52,8 @@ class Cloud189Utils {
                 break;
             }
         }
-        
-        // 提取URL - 支持两种格式
+
+        // 提取URL - 支持多种格式
         const urlPatterns = [
             /(https?:\/\/cloud\.189\.cn\/web\/share\?[^\s]+)/,     // web/share格式
             /(https?:\/\/cloud\.189\.cn\/t\/[a-zA-Z0-9]+)/,        // t/xxx格式
@@ -62,7 +63,7 @@ class Cloud189Utils {
             /(https?:\/\/[^/]+\/share\.html[^\s]*)/,               // share.html格式
             /(https?:\/\/content\.21cn\.com[^\s]+)/                // 订阅链接格式
         ];
-    
+
         for (const pattern of urlPatterns) {
             const urlMatch = shareText.match(pattern);
             if (urlMatch) {
@@ -70,7 +71,7 @@ class Cloud189Utils {
                 break;
             }
         }
-        
+
         return {
             url: url,
             accessCode: accessCode

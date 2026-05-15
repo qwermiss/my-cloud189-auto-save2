@@ -634,10 +634,16 @@ AppDataSource.initialize().then(async () => {
                     logTaskEvent(`[TMDB绑定] 自动触发重命名: ${task.resourceName}`);
                     // TMDB 绑定后的重命名：只重命名，不删除文件（避免误删）
                     const result = await taskService.autoRename(cloud189, task, { skipDeletion: true });
-                    
+
                     let message = '';
                     if (result && result.newFiles && result.newFiles.length > 0) {
-                        message = `✅《${task.resourceName}》TMDB绑定并重命名完成\n已处理 ${result.newFiles.length} 个文件`;
+                        // 获取保存路径用于 webhook 占位符
+                        // 确保路径以 / 开头（SmartStrm webhook 要求）
+                        let folderPath = task.realFolderName || task.realFolderId || '';
+                        if (folderPath && !folderPath.startsWith('/')) {
+                            folderPath = '/' + folderPath;
+                        }
+                        message = `✅《${task.resourceName}》TMDB绑定并重命名完成\n已处理 ${result.newFiles.length} 个文件\n📁 ${folderPath}`;
                         if (result.renameMessages && result.renameMessages.length > 0) {
                             const details = result.renameMessages.slice(0, 10);
                             message += `\n${details.join('\n')}`;
@@ -646,6 +652,8 @@ AppDataSource.initialize().then(async () => {
                             }
                         }
                         messageUtil.sendMessage(message);
+                        // TMDB绑定重命名后触发 webhook 通知下游
+                        messageUtil.sendWebhookMessage(message);
 
                         // 重命名后触发 Emby 扫库
                         const { EmbyService } = require('./services/emby');
