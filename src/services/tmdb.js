@@ -307,10 +307,23 @@ class TMDBService {
                 });
                 response.images = imagesResponse;
             }
+
+            // 获取英文标题用于匹配（解决中文标题与英文搜索词不匹配的问题）
+            let englishTitle = null;
+            try {
+                const enResponse = await this._request(`/tv/${id}`, {
+                    language: 'en-US'
+                });
+                englishTitle = enResponse.name;  // TV使用name字段
+            } catch (e) {
+                // 忽略错误
+            }
+
             return {
                 id: response.id,
                 title: response.name,
                 originalTitle: response.original_name,
+                englishTitle: englishTitle,  // 英文标题
                 overview: response.overview,
                 releaseDate: response.first_air_date,
                 posterPath: response.poster_path ? `https://image.tmdb.org/t/p/w500${response.poster_path}` : null,
@@ -325,7 +338,7 @@ class TMDBService {
                 lastEpisodeToAir: response.last_episode_to_air,
                 status: response.status,
             };
-            
+
         } catch (error) {
             console.error(`获取电视剧详情失败: ${error.message}`);
             return null;
