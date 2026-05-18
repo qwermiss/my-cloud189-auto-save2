@@ -49,7 +49,7 @@ class TaskService {
 
     // 创建任务的基础配置
     _createTaskConfig(taskDto, shareInfo, realFolder, resourceName, currentEpisodes = 0, shareFolderId = null, shareFolderName = "") {
-        return {
+        const config = {
             accountId: taskDto.accountId,
             shareLink: taskDto.shareLink,
             targetFolderId: taskDto.targetFolderId,
@@ -78,6 +78,18 @@ class TaskService {
             isFolder: taskDto.isFolder,
             videoType: taskDto.videoType
         };
+
+        // 如果自动识别到了 TMDB 信息，直接绑定到任务（标记为自动识别而非手动绑定）
+        if (taskDto.tmdbId) {
+            config.tmdbId = taskDto.tmdbId;
+            config.tmdbTitle = taskDto.tmdbTitle;
+            config.manualTmdbBound = false; // 自动识别绑定，非手动
+        }
+        if (taskDto.tmdbContent) {
+            config.tmdbContent = taskDto.tmdbContent;
+        }
+
+        return config;
     }
 
      // 验证并创建目标目录
@@ -913,6 +925,7 @@ class TaskService {
         if (tmdbInfo) {
             taskDto.tmdbId = tmdbInfo.id;
             taskDto.videoType = tmdbInfo.type;
+            taskDto.tmdbTitle = tmdbInfo.title; // 绑定 TMDB 标题
 
             // 获取完整的 TMDB 详情信息（包含海报、简介等），避免 Web 端再次搜索
             try {
@@ -923,7 +936,7 @@ class TaskService {
 
                 if (detail) {
                     taskDto.tmdbContent = JSON.stringify(detail);
-                    logTaskEvent(`[任务创建] ✅ 已获取 TMDB 详情信息（海报、简介等）`);
+                    logTaskEvent(`[任务创建] ✅ 已自动绑定 TMDB 信息: ID=${tmdbInfo.id}, 标题="${tmdbInfo.title}", 类型=${tmdbInfo.type}`);
                 }
             } catch (error) {
                 logTaskEvent(`[任务创建] ⚠️ 获取 TMDB 详情失败: ${error.message}`);
