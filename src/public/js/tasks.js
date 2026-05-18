@@ -235,10 +235,20 @@ function getTaskPoster(task) {
 
 function getTaskOverview(task) {
     const tmdbContent = parseTmdbContent(task);
+    let overview = '';
     if (tmdbContent?.overview) {
-        return tmdbContent.overview;
+        overview = tmdbContent.overview;
+    } else if (task.remark) {
+        overview = task.remark;
+    } else {
+        return '暂无简介';
     }
-    return task.remark || '暂无简介';
+    // 截断简介，避免遮挡卡片功能区（最多80个字符）
+    const MAX_LENGTH = 80;
+    if (overview.length > MAX_LENGTH) {
+        return overview.slice(0, MAX_LENGTH) + '...';
+    }
+    return overview;
 }
 
 function getTaskMetaLine(task) {

@@ -918,7 +918,7 @@ tbody th:last-child {
     color: #f8fafc;
     padding: 20px;
     padding-top: 60px;
-    padding-bottom: 200px;
+    padding-bottom: 240px;  /* 增加底部预留空间，确保功能区不被遮挡 */
     font-size: 13px;
     line-height: 1.5;
     opacity: 0;
@@ -927,7 +927,7 @@ tbody th:last-child {
     z-index: 10;
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 4;
+    -webkit-line-clamp: 2;  /* 限制最多显示2行，避免遮挡功能区 */
     -webkit-box-orient: vertical;
     text-overflow: ellipsis;
     pointer-events: none;
