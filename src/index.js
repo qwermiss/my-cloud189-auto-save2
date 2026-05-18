@@ -595,7 +595,9 @@ AppDataSource.initialize().then(async () => {
                 ? parseInt(manualSeason) 
                 : null;
             task.manualTmdbBound = true;
-            
+            // 同步更新最新转存显示文本，确保手动修正后界面刷新
+            task.lastSavedDisplayText = task.tmdbTitle || title;
+
             // 从 TMDB API 获取更多信息更新任务卡片
             try {
                 const { TMDBService } = require('./services/tmdb');
@@ -938,7 +940,7 @@ AppDataSource.initialize().then(async () => {
                 const embyService = new EmbyService(messageUtil);
                 try {
                     logTaskEvent(`执行Emby通知: ${task.resourceName}`);
-                    await embyService.notifyEmby(task);
+                    await embyService.notify(task);
                 } catch (e) {
                     logTaskEvent(`Emby扫库失败: ${e.message}`);
                 }
