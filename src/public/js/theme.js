@@ -3,7 +3,8 @@
 function initTheme() {
     const themeToggle = document.getElementById('themeToggle');
     const themeDropdown = document.getElementById('themeDropdown');
-    const savedTheme = localStorage.getItem('theme') || 'auto';
+    // 默认主题改为 light，移除 auto
+    const savedTheme = localStorage.getItem('theme') || 'light';
 
     // 设置初始主题
     setTheme(savedTheme);
@@ -44,15 +45,18 @@ function initTheme() {
 function setTheme(theme) {
     console.log('[Theme] 设置主题:', theme);
 
-    // 更新主题和状态栏颜色的函数
-    const updateThemeAndStatusBar = (isDark) => {
-        const currentTheme = isDark ? 'dark' : 'light';
-        const statusBarColor = isDark ? '#1a1a1a' : '#ffffff';
-        document.documentElement.setAttribute('data-theme', currentTheme);
-        document.querySelector('meta[name="theme-color"]').setAttribute('content', statusBarColor);
-    };
+    // 获取当前主题，用于判断是否需要清理影院背景
+    const previousTheme = document.documentElement.getAttribute('data-theme');
 
-    // 影院模式处理
+    // 离开 cinema 模式时清理背景
+    if (previousTheme === 'cinema' && theme !== 'cinema') {
+        if (typeof cleanupCinemaBackground === 'function') {
+            console.log('[Theme] 清理影院背景');
+            cleanupCinemaBackground();
+        }
+    }
+
+    // 简化：只有 light 和 cinema 两种主题
     if (theme === 'cinema') {
         console.log('[Theme] 切换到影院模式');
         document.documentElement.setAttribute('data-theme', 'cinema');
@@ -65,19 +69,10 @@ function setTheme(theme) {
         } else {
             console.error('[Theme] initCinemaBackground 函数不存在!');
         }
-        return;
-    }
-
-    if (theme === 'auto') {
-        // 检查系统主题
-        const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        updateThemeAndStatusBar(darkModeMediaQuery.matches);
-
-        // 监听系统主题变化
-        darkModeMediaQuery.addEventListener('change', e => {
-            updateThemeAndStatusBar(e.matches);
-        });
     } else {
-        updateThemeAndStatusBar(theme === 'dark');
+        // 默认明亮主题（兼容旧值：dark/auto/未知值都降级为light）
+        console.log('[Theme] 切换到明亮模式');
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff');
     }
 }

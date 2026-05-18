@@ -23,16 +23,17 @@
     --radius-sm: 12px;
 }
 
-[data-theme="dark"] {
-    --header-surface: rgba(14, 23, 38, 0.72);
-    --panel-surface: rgba(10, 18, 30, 0.84);
-    --panel-border: rgba(148, 163, 184, 0.14);
-    --panel-shadow: 0 26px 70px rgba(2, 6, 23, 0.45);
-    --hero-shadow: 0 24px 60px rgba(2, 6, 23, 0.42);
-    --surface-muted: rgba(148, 163, 184, 0.10);
-    --tab-surface: rgba(8, 15, 27, 0.6);
-    --tab-active-surface: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.9));
-    --body-gradient: radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 28%), radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 30%), linear-gradient(180deg, #07111f 0%, #0b1728 54%, #0f1c2f 100%);
+/* 明亮模式 - 主分支样式 */
+[data-theme="light"] {
+    --header-surface: rgba(255, 255, 255, 0.72);
+    --panel-surface: rgba(255, 255, 255, 0.88);
+    --panel-border: rgba(15, 23, 42, 0.08);
+    --panel-shadow: 0 20px 60px rgba(15, 23, 42, 0.10);
+    --hero-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
+    --surface-muted: rgba(148, 163, 184, 0.12);
+    --tab-surface: rgba(255, 255, 255, 0.68);
+    --tab-active-surface: linear-gradient(135deg, #ffffff, #f8fbff);
+    --body-gradient: radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 32%), radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 30%), linear-gradient(180deg, #f4f8fc 0%, #eef3f8 100%);
 }
 
 [data-ui-style="media"] {
@@ -44,14 +45,15 @@
     --danger-soft: rgba(244, 63, 94, 0.14);
     --surface-muted: rgba(14, 165, 233, 0.12);
     --tab-active-surface: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.12));
-    --body-gradient: var(--bg-color);
+    --body-gradient: radial-gradient(circle at left top, rgba(56, 189, 248, 0.22), transparent 28%), radial-gradient(circle at right top, rgba(167, 139, 250, 0.16), transparent 26%), linear-gradient(180deg, #f4f8fc 0%, #f0f9ff 48%, #e0f2fe 100%);
     --font-display: "Trebuchet MS", "Segoe UI Variable", "PingFang SC", sans-serif;
     --font-body: "Segoe UI Variable", "PingFang SC", "Microsoft YaHei UI", sans-serif;
 }
 
-[data-theme="dark"][data-ui-style="media"] {
-    --tab-active-surface: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.2));
-    --body-gradient: var(--bg-color);
+/* 明亮模式 + 媒体墙样式 */
+[data-theme="light"][data-ui-style="media"] {
+    --tab-active-surface: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.12));
+    --body-gradient: radial-gradient(circle at left top, rgba(56, 189, 248, 0.22), transparent 28%), radial-gradient(circle at right top, rgba(167, 139, 250, 0.16), transparent 26%), linear-gradient(180deg, #f4f8fc 0%, #f0f9ff 48%, #e0f2fe 100%);
 }
 
 html {
@@ -227,10 +229,6 @@ body::after {
     color: rgba(71, 85, 105, 0.94);
 }
 
-[data-theme="dark"] .hero-copy p {
-    color: rgba(203, 213, 225, 0.88);
-}
-
 .hero-stats {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -247,11 +245,6 @@ body::after {
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.45);
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(248, 250, 252, 0.68));
-}
-
-[data-theme="dark"] .hero-stat-card {
-    border-color: rgba(148, 163, 184, 0.12);
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(30, 41, 59, 0.72));
 }
 
 .hero-stat-label {
@@ -271,11 +264,6 @@ body::after {
 [data-ui-style="media"] .hero-copy,
 [data-ui-style="media"] .hero-stats {
     background: rgba(255, 248, 240, 0.74);
-}
-
-[data-theme="dark"][data-ui-style="media"] .hero-copy,
-[data-theme="dark"][data-ui-style="media"] .hero-stats {
-    background: rgba(38, 23, 18, 0.76);
 }
 
 .tabs {
@@ -362,23 +350,11 @@ button:hover,
     box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
 }
 
-[data-theme="dark"] button:hover,
-[data-theme="dark"] .btn-primary:hover {
-    box-shadow: 0 4px 16px rgba(75, 75, 250, 0.5), 0 0 28px rgba(75, 75, 250, 0.25);
-}
-
 .btn-primary,
 button:not(.btn-default):not(.theme-toggle-btn):not(.sidebar-toggle):not(.sidebar-pin) {
-    background: #4B4BFA;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
     border: 1px solid transparent;
     box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
-}
-
-[data-theme="dark"] .btn-primary,
-[data-theme="dark"] button:not(.btn-default):not(.theme-toggle-btn):not(.sidebar-toggle):not(.sidebar-pin) {
-    background: #4B4BFA;
-    border: 1px solid rgba(75, 75, 250, 0.3);
-    box-shadow: 0 2px 12px rgba(75, 75, 250, 0.4), 0 0 20px rgba(75, 75, 250, 0.15);
 }
 
 .btn-default {
@@ -483,11 +459,6 @@ tbody tr {
 #taskTable tr,
 #accountTable tr {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.94));
-}
-
-[data-theme="dark"] #taskTable tr,
-[data-theme="dark"] #accountTable tr {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(17, 24, 39, 0.92));
 }
 
 tbody td:first-child,
@@ -674,13 +645,49 @@ tbody th:last-child {
     animation: statusCapsulePulse 1.7s ease-in-out infinite;
 }
 
-[data-theme="light"] .status-capsule,
-[data-theme="auto"] .status-capsule {
-    --status-capsule-bg: rgba(11, 18, 32, 0.62);
-    --status-capsule-border: rgba(255, 255, 255, 0.22);
+[data-theme="light"] .status-capsule {
+    --status-capsule-bg: rgba(255, 255, 255, 0.85);
+    --status-capsule-border: rgba(15, 23, 42, 0.12);
+    color: var(--text-color);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
-[data-theme="dark"] .status-capsule,
+/* 明亮模式下状态颜色保持语义化 */
+[data-theme="light"] .status-capsule.status-processing {
+    --status-capsule-bg: rgba(16, 185, 129, 0.12);
+    --status-capsule-border: rgba(16, 185, 129, 0.2);
+    color: #047857;
+}
+
+[data-theme="light"] .status-capsule.status-completed {
+    --status-capsule-bg: rgba(34, 197, 94, 0.12);
+    --status-capsule-border: rgba(34, 197, 94, 0.2);
+    color: #15803d;
+}
+
+[data-theme="light"] .status-capsule.status-failed {
+    --status-capsule-bg: rgba(239, 68, 68, 0.12);
+    --status-capsule-border: rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+}
+
+[data-theme="light"] .status-capsule.status-paused {
+    --status-capsule-bg: rgba(148, 163, 184, 0.12);
+    --status-capsule-border: rgba(148, 163, 184, 0.2);
+    color: #475569;
+}
+
+[data-theme="light"] .status-capsule.status-pending {
+    --status-capsule-bg: rgba(245, 158, 11, 0.12);
+    --status-capsule-border: rgba(245, 158, 11, 0.2);
+    color: #b45309;
+}
+
+[data-theme="light"] .status-capsule-text {
+    color: inherit;
+}
+
 [data-theme="cinema"] .status-capsule {
     --status-capsule-bg: rgba(2, 6, 23, 0.68);
     --status-capsule-border: rgba(255, 255, 255, 0.14);
@@ -1015,16 +1022,6 @@ tbody th:last-child {
     font-size: 18px;
 }
 
-[data-theme="dark"] .more-actions-menu {
-    background: rgba(30, 41, 59, 0.95);
-    border: 1px solid rgba(71, 85, 105, 0.3);
-}
-
-[data-theme="dark"] .more-actions-item:hover {
-    background: rgba(99, 102, 241, 0.1);
-    color: #818cf8;
-}
-
 .media-progress-text {
     font-size: 12px;
     font-weight: 600;
@@ -1155,10 +1152,6 @@ tbody th:last-child {
     box-shadow: 0 24px 48px rgba(120, 53, 15, 0.18);
 }
 
-[data-theme="dark"][data-ui-style="media"] #taskTable tr.media-wall-card:hover {
-    box-shadow: 0 22px 50px rgba(2, 6, 23, 0.52);
-}
-
 /* 影院模式媒体墙卡片 */
 [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card {
     background-color: rgba(15, 23, 42, 0.35) !important;
@@ -1196,16 +1189,6 @@ tbody th:last-child {
     transform: scale(1.05);
 }
 
-[data-theme="dark"] .add-task-placeholder {
-    border-color: rgba(99, 102, 241, 0.4) !important;
-}
-
-[data-theme="dark"] .add-task-placeholder:hover {
-    background: rgba(99, 102, 241, 0.08) !important;
-    border-color: rgba(99, 102, 241, 0.6) !important;
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15) !important;
-}
-
 .media-wall-actions button {
     margin: 0;
 }
@@ -1215,10 +1198,6 @@ tbody th:last-child {
     border-color: var(--accent-strong);
     box-shadow: 0 0 0 2px var(--accent-strong) inset, 0 10px 24px rgba(0, 0, 0, 0.12);
     transform: translateY(-4px);
-}
-
-[data-theme="dark"][data-ui-style="media"] #taskTable tr.media-wall-card.selected {
-    box-shadow: 0 0 0 2px var(--accent-strong) inset, 0 10px 24px rgba(0, 0, 0, 0.4);
 }
 
 [data-ui-style="media"] #taskTable tr.media-wall-card.selected::after {

@@ -608,3 +608,14 @@ function refreshCinemaBackground() {
         cinemaBackgroundInstance.refresh();
     }
 }
+
+/**
+ * 清理影院背景（从 cinema 切换到其他主题时调用）
+ */
+function cleanupCinemaBackground() {
+    console.log('[CinemaBackground] cleanupCinemaBackground 被调用');
+    if (cinemaBackgroundInstance) {
+        cinemaBackgroundInstance.destroy();
+        cinemaBackgroundInstance = null;
+    }
+}
