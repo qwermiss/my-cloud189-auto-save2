@@ -226,9 +226,9 @@
                                 <small class="form-text">保存STRM文件的目录前缀, 详情查看<a href='https://github.com/1307super/cloud189-auto-save/wiki/3.STRM%E4%B8%8EEmby' target="_blank">wiki</a></small>
                             </div>
                             <div class="form-group">
-                                <label for="alias">Emby替换路径(可选)</label>
-                                <input type="text" id="embyPathReplace" placeholder="/影视剧:/cloud/天翼云盘">
-                                <small class="form-text">通知Emby扫库的替换逻辑, 详情查看<a href='https://github.com/1307super/cloud189-auto-save/wiki/3.STRM%E4%B8%8EEmby' target="_blank">wiki</a></small>
+                                <label for="embyPathReplace">Emby替换路径(可选)</label>
+                                <textarea id="embyPathReplace" rows="4" placeholder="/我的应用/极空间/动漫:/strm/tydm&#10;/我的应用/极空间/剧集:/strm/tyjj&#10;/我的应用/极空间/电影:/strm/tydy" style="resize: vertical; min-height: 80px;"></textarea>
+                                <small class="form-text">每行一个映射，格式: 网盘路径:Emby本地路径，支持中英文冒号</small>
                             </div>
                             <div class="form-group" id="familyFolderFormGroup">
                                 <label for="familyFolderId">家庭中转目录（可选）</label>

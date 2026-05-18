@@ -169,18 +169,46 @@ class EmbyService {
             // 移除额外的空格
             .trim();
     }
-    // 路径替换
+    /**
+     * 解析路径映射配置
+     * 支持多行配置，每行一个映射关系
+     * 支持中英文冒号分隔
+     * @returns {Array<{cloudPath: string, localPath: string}>} 映射数组，按路径长度降序排列
+     */
+    _parsePathMappings() {
+        if (!this.embyPathReplace) return [];
+
+        // 支持换行符和分号分隔
+        const lines = this.embyPathReplace.split(/[\n;]/).filter(line => line.trim());
+
+        return lines.map(line => {
+            // 兼容中英文冒号
+            const parts = line.trim().split(/[:：]/);
+            if (parts.length >= 2) {
+                return {
+                    cloudPath: parts[0].trim(),
+                    localPath: parts[1].trim()
+                };
+            }
+            return null;
+        }).filter(Boolean)
+          .sort((a, b) => b.cloudPath.length - a.cloudPath.length); // 按路径长度降序，优先匹配最长路径
+    }
+
+    // 路径替换：网盘路径 → Emby本地路径
     _replacePath(path) {
         if (!path.startsWith('/')) {
             path = '/' + path;
         }
-        if (this.embyPathReplace) {
-            const pathReplaceArr = this.embyPathReplace.split(';');
-            for (let i = 0; i < pathReplaceArr.length; i++) {
-                const pathReplace = pathReplaceArr[i].split(':');
-                path = path.replace(pathReplace[0], pathReplace[1]);
+
+        const mappings = this._parsePathMappings();
+        for (const mapping of mappings) {
+            if (path.startsWith(mapping.cloudPath)) {
+                path = path.replace(mapping.cloudPath, mapping.localPath);
+                break; // 匹配到最长的路径后退出
             }
         }
+
         // 如果结尾有斜杠, 则移除
         path = path.replace(/\/+$/, '');
         return path;
@@ -221,45 +249,51 @@ class EmbyService {
                     { embyPathReplace: Not(IsNull()) }
                 ]
             })
-            // 2. 遍历accounts, 检查path是否包含embyPathReplace(本地路径) embyPathReplace的内容为: xx(网盘路径):xxx(本地路径)
+            // 2. 遍历accounts, 用路径映射将Emby本地路径反向替换为网盘路径
             const tasks = [];
             for (const account of accounts) {
-                let embyPathReplace = account.embyPathReplace.split(':');
-                let embyPath = ""
-                let cloudPath = embyPathReplace[0]
-                if (embyPathReplace.length === 2) {
-                    embyPath = embyPathReplace[1]
-                }
-                // 检查itemPath是否是embyPath开头
-                if (itemPath.startsWith(embyPath)) {
-                    // 将itemPath中的embyPath替换为cloudPath 并且去掉首尾的/
-                    itemPath = itemPath.replace(embyPath, cloudPath).replace(/^\/+|\/+$/g, '');
-                    if (!isFolder) {
-                        // 剧集, 需要去掉文件名
-                        itemPath = path.dirname(itemPath);
+                // 解析多行映射配置，兼容中英文冒号
+                const lines = account.embyPathReplace.split(/[\n;]/).filter(l => l.trim());
+                const mappings = lines.map(line => {
+                    const parts = line.trim().split(/[:：]/);
+                    if (parts.length >= 2) {
+                        return { cloudPath: parts[0].trim(), localPath: parts[1].trim() };
                     }
-                    const task = await this._taskRepo.findOne({
-                        where: {
-                            accountId: account.id,
-                            realFolderName: Like(`%${itemPath}%`)
-                        },
-                        relations: {
-                            account: true
-                        },
-                        select: {
-                            account: {
-                                username: true,
-                                password: true,
-                                cookies: true,
-                                localStrmPrefix: true,
-                                cloudStrmPrefix: true,
-                                embyPathReplace: true
-                            }
+                    return null;
+                }).filter(Boolean).sort((a, b) => b.localPath.length - a.localPath.length); // 按本地路径长度降序
+
+                // 检查itemPath是否匹配某个本地路径
+                for (const mapping of mappings) {
+                    if (itemPath.startsWith(mapping.localPath)) {
+                        // 将Emby本地路径替换为网盘路径
+                        let cloudItemPath = itemPath.replace(mapping.localPath, mapping.cloudPath).replace(/^\/+|\/+$/g, '');
+                        if (!isFolder) {
+                            cloudItemPath = path.dirname(cloudItemPath);
                         }
-                    })
-                    if (task) {
-                        tasks.push(task);
-                    }   
+                        const task = await this._taskRepo.findOne({
+                            where: {
+                                accountId: account.id,
+                                realFolderName: Like(`%${cloudItemPath}%`)
+                            },
+                            relations: {
+                                account: true
+                            },
+                            select: {
+                                account: {
+                                    username: true,
+                                    password: true,
+                                    cookies: true,
+                                    localStrmPrefix: true,
+                                    cloudStrmPrefix: true,
+                                    embyPathReplace: true
+                                }
+                            }
+                        })
+                        if (task) {
+                            tasks.push(task);
+                        }
+                        break; // 匹配到最长的路径后退出
+                    }
                 }
             }
             if (tasks.length === 0) {
