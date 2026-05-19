@@ -117,7 +117,7 @@ button:active {
     box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
 }
 
-[data-theme="dark"] .btn-primary {
+[data-theme="cinema"] .btn-primary {
     background: #4B4BFA;
     border: 1px solid rgba(75, 75, 250, 0.3);
     box-shadow: 0 2px 12px rgba(75, 75, 250, 0.4), 0 0 20px rgba(75, 75, 250, 0.15);
@@ -146,7 +146,7 @@ button:active {
     box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
 }
 
-[data-theme="dark"] .btn-primary:hover {
+[data-theme="cinema"] .btn-primary:hover {
     box-shadow: 0 4px 16px rgba(75, 75, 250, 0.5), 0 0 28px rgba(75, 75, 250, 0.25);
     border-color: rgba(75, 75, 250, 0.5);
 }

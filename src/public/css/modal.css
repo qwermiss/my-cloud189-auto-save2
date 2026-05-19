@@ -97,18 +97,18 @@
     margin-bottom: 20px;
 }
 
-[data-theme="dark"] .modal {
+[data-theme="cinema"] .modal {
     background-color: rgba(0, 0, 0, 0.7);
 }
 
-[data-theme="dark"] .modal-content {
+[data-theme="cinema"] .modal-content {
     background: rgba(30, 41, 59, 0.95);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(99, 102, 241, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 40px rgba(99, 102, 241, 0.1);
 }
 
-[data-theme="dark"] .form-actions {
+[data-theme="cinema"] .form-actions {
     background: rgba(30, 41, 59, 0.95);
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(71, 85, 105, 0.3);

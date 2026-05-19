@@ -26,7 +26,7 @@
     --input-radius: 6px;
 }
 
-[data-theme="dark"] {
+[data-theme="cinema"] {
     --primary-rgb: 10, 132, 255;  /* #0a84ff 的 RGB 值 - macOS暗色模式蓝色 */
     --bg-color: #1e1e1e;
     --background-color: #1e1e1e;
@@ -50,13 +50,13 @@
 }
 
 /* 增强暗色模式下表格文本对比度 */
-[data-theme="dark"] #taskTable tr,
-[data-theme="dark"] #accountTable tr {
+[data-theme="cinema"] #taskTable tr,
+[data-theme="cinema"] #accountTable tr {
     background-color: #2d2d2d; /* 稍微提亮背景色 */
 }
 
 /* 增强暗色模式下链接对比度 */
-[data-theme="dark"] a {
+[data-theme="cinema"] a {
     color: var(--link-color);
     font-weight: 500; /* 稍微加粗 */
 }
@@ -70,10 +70,10 @@ b {
 }
 
 /* 暗色模式下的强调文本 */
-[data-theme="dark"] .highlight, 
-[data-theme="dark"] .emphasis,
-[data-theme="dark"] strong, 
-[data-theme="dark"] b {
+[data-theme="cinema"] .highlight, 
+[data-theme="cinema"] .emphasis,
+[data-theme="cinema"] strong, 
+[data-theme="cinema"] b {
     color: #ffffff; /* 确保强调文本在暗色模式下足够明显 */
 }
 
@@ -97,7 +97,7 @@ b {
 }
 
 /* 暗黑模式变量 */
-[data-theme="dark"] {
+[data-theme="cinema"] {
   --macos-bg: #1e1e1e;
   --macos-container-bg: #2a2a2a;
   --macos-text: #ffffff; /* 提高主要文本对比度 */
