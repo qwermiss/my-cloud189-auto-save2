@@ -647,11 +647,6 @@ tbody th:last-child {
     backdrop-filter: blur(8px);
 }
 
-[data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card {
-    background: linear-gradient(180deg, rgba(41, 27, 20, 0.96), rgba(31, 22, 18, 0.94));
-    box-shadow: 0 18px 42px rgba(2, 6, 23, 0.38);
-}
-
 [data-ui-style="media"] #taskTable tr.media-wall-card td {
     padding: 0;
     border: none;
@@ -803,12 +798,249 @@ tbody th:last-child {
     box-shadow: 0 24px 48px rgba(120, 53, 15, 0.18);
 }
 
-[data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card:hover {
-    box-shadow: 0 22px 50px rgba(2, 6, 23, 0.52);
-}
-
 .media-wall-actions button {
     margin: 0;
+}
+
+/* ========== 影院模式媒体墙卡片布局覆盖 ========== */
+/* 影院模式使用垂直卡片布局，与明亮模式的双栏布局不同 */
+[data-theme="cinema"][data-ui-style="media"] #taskTable tbody {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+[data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 380px;
+    padding: 16px;
+    background-color: rgba(15, 23, 42, 0.35) !important;
+    background-size: cover;
+    background-position: center;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card:hover {
+    transform: translateY(-5px);
+    background-color: rgba(15, 23, 42, 0.5) !important;
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 24px rgba(99, 102, 241, 0.2);
+}
+
+[data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.85) 100%) !important;
+    z-index: 1;
+}
+
+[data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card td {
+    position: relative;
+    z-index: 2;
+    background: transparent !important;
+}
+
+/* 影院模式卡片顶部状态区 */
+[data-theme="cinema"] .media-card-top {
+    display: flex;
+    justify-content: flex-start;
+    z-index: 15;
+    position: relative;
+}
+
+/* 影院模式悬浮简介 */
+[data-theme="cinema"] .media-card-hover-overview {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    color: #f8fafc;
+    padding: 20px;
+    padding-top: 60px;
+    padding-bottom: 160px;
+    font-size: 13px;
+    line-height: 1.6;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(4px);
+    z-index: 10;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+}
+
+[data-theme="cinema"] #taskTable tr.media-wall-card:hover .media-card-hover-overview {
+    opacity: 1;
+}
+
+/* 影院模式卡片底部信息区 */
+[data-theme="cinema"] .media-card-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: #fff;
+    margin-top: auto;
+    z-index: 15;
+    position: relative;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+}
+
+/* 影院模式标题样式 */
+[data-theme="cinema"][data-ui-style="media"] .media-wall-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* 影院模式元信息样式 */
+[data-theme="cinema"][data-ui-style="media"] .media-wall-meta {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    background: transparent;
+    padding: 0;
+}
+
+/* 影院模式版本徽章 */
+[data-theme="cinema"] .version-badge {
+    font-size: 10px;
+    background: rgba(99, 102, 241, 0.2);
+    color: #c7d2fe;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    font-weight: 600;
+    text-shadow: none;
+    margin-left: 4px;
+}
+
+/* 影院模式进度条 */
+[data-theme="cinema"] .media-progress-container {
+    margin-top: 4px;
+}
+
+[data-theme="cinema"] .media-progress-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+}
+
+[data-theme="cinema"] .media-progress-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+[data-theme="cinema"] .media-progress-fill {
+    height: 100%;
+    background: var(--status-green, #10b981);
+    border-radius: 2px;
+}
+
+/* 影院模式卡片底部 */
+[data-theme="cinema"] .media-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+/* 影院模式标签 */
+[data-theme="cinema"] .media-tags {
+    display: flex;
+    gap: 6px;
+}
+
+[data-theme="cinema"] .media-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* 影院模式操作按钮 */
+[data-theme="cinema"] .media-actions {
+    display: flex;
+    gap: 8px;
+}
+
+[data-theme="cinema"] .media-btn-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+[data-theme="cinema"] .media-btn-circle:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+[data-theme="cinema"] .media-btn-circle.primary {
+    background: var(--primary-color, #6366f1);
+    border-color: var(--primary-color, #6366f1);
+}
+
+[data-theme="cinema"] .media-btn-circle.primary:hover {
+    background: var(--primary-hover, #4f46e5);
+}
+
+/* 影院模式隐藏双栏布局的海报和信息区 */
+[data-theme="cinema"][data-ui-style="media"] .media-wall-poster,
+[data-theme="cinema"][data-ui-style="media"] .media-wall-info-cell,
+[data-theme="cinema"][data-ui-style="media"] .media-wall-topline,
+[data-theme="cinema"][data-ui-style="media"] .media-wall-overview,
+[data-theme="cinema"][data-ui-style="media"] .media-wall-latest,
+[data-theme="cinema"][data-ui-style="media"] .media-wall-missing,
+[data-theme="cinema"][data-ui-style="media"] .media-wall-path,
+[data-theme="cinema"][data-ui-style="media"] .media-wall-actions {
+    display: none !important;
+}
+
+/* 影院模式添加任务占位卡片 */
+[data-theme="cinema"][data-ui-style="media"] .add-task-placeholder {
+    height: 380px;
+    background: transparent !important;
+    border: 2px dashed rgba(99, 102, 241, 0.3) !important;
+    box-shadow: none !important;
+}
+
+[data-theme="cinema"][data-ui-style="media"] .add-task-placeholder:hover {
+    background: rgba(99, 102, 241, 0.08) !important;
+    border-color: rgba(99, 102, 241, 0.6) !important;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15) !important;
 }
 
 [data-ui-style="media"] #taskTable tr.media-wall-card.selected {
