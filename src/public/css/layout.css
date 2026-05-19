@@ -465,7 +465,9 @@ body::before, body::after {
     border-radius: var(--radius-md);
     padding: 0 16px;
     height: 40px;
-    width: 360px;
+    /* 菜单按钮约84px，3倍约252px */
+    width: calc((18px + 6px + 2em + 32px) * 3);
+    max-width: 260px;
     color: var(--text-muted);
     box-sizing: border-box;
 }
@@ -499,6 +501,29 @@ body::before, body::after {
     border-radius: 4px;
     color: var(--text-muted);
     flex: 0 0 auto;
+    transition: opacity 0.2s ease, width 0.2s ease;
+}
+
+/* 搜索框输入/聚焦状态：隐藏图标和快捷键，输入框撑满 */
+.topbar-search.searching i {
+    opacity: 0;
+    width: 0;
+    margin-right: 0;
+    overflow: hidden;
+    transition: opacity 0.15s ease, width 0.2s ease, margin 0.2s ease;
+}
+
+.topbar-search.searching .search-shortcut {
+    opacity: 0;
+    width: 0;
+    padding: 0;
+    border: none;
+    overflow: hidden;
+    transition: opacity 0.15s ease, width 0.2s ease, padding 0.2s ease;
+}
+
+.topbar-search i {
+    transition: opacity 0.2s ease, width 0.2s ease, margin 0.2s ease;
 }
 
 .topbar-actions {

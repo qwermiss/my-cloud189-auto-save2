@@ -270,6 +270,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // 搜索框交互：输入时隐藏图标和快捷键提示
+    const topbarSearch = document.querySelector('.topbar-search');
+    const searchInput = document.getElementById('globalSearch');
+    const searchIcon = topbarSearch?.querySelector('i');
+    const searchShortcut = topbarSearch?.querySelector('.search-shortcut');
+
+    if (searchInput && topbarSearch) {
+        const updateSearchUI = () => {
+            const hasValue = searchInput.value.length > 0;
+            const isFocused = document.activeElement === searchInput;
+
+            // 有内容或聚焦时，隐藏图标和快捷键
+            if (hasValue || isFocused) {
+                topbarSearch.classList.add('searching');
+            } else {
+                topbarSearch.classList.remove('searching');
+            }
+        };
+
+        searchInput.addEventListener('focus', updateSearchUI);
+        searchInput.addEventListener('blur', updateSearchUI);
+        searchInput.addEventListener('input', updateSearchUI);
+
+        // ⌘K / Ctrl+K 快捷键聚焦搜索框
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
+    }
+
     // 主题切换由 theme.js 的 initTheme() 统一处理
 
     // 加载版本号和仪表盘
