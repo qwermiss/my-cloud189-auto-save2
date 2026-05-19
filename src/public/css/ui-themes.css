@@ -112,7 +112,7 @@ body::after {
     display: flex;
     margin-bottom: 12px;
     padding: 12px 24px;
-    border: none;
+    border: 1px solid var(--panel-border);
     border-radius: var(--radius-lg);
     background: transparent;
     box-shadow: none;
