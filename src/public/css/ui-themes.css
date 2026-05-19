@@ -740,6 +740,26 @@ tbody th:last-child {
     backdrop-filter: blur(14px);
 }
 
+/* 明亮模式下保持主题按钮为品牌蓝底，避免白色图标落在白底上失去可读性。 */
+[data-theme="light"] .theme-toggle-btn,
+:root:not([data-theme]) .theme-toggle-btn {
+    background: #4B4BFA;
+    border-color: #4B4BFA;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
+}
+
+[data-theme="light"] .theme-toggle-btn:hover,
+:root:not([data-theme]) .theme-toggle-btn:hover {
+    box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
+    transform: translateY(-1px);
+}
+
+[data-theme="light"] .theme-toggle-btn i,
+:root:not([data-theme]) .theme-toggle-btn i {
+    color: #fff;
+}
+
 .theme-dropdown {
     width: 220px;
     margin-top: 10px;
