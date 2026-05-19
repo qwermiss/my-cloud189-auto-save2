@@ -112,20 +112,16 @@ body::after {
     display: flex;
     margin-bottom: 12px;
     padding: 12px 24px;
-    border: 1px solid var(--panel-border);
+    border: none;
     border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, var(--header-surface), rgba(255, 255, 255, 0.38));
-    box-shadow: var(--hero-shadow);
-    backdrop-filter: blur(18px);
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
     overflow: hidden;
 }
 
 .header::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(120deg, var(--accent-soft), transparent 45%);
-    pointer-events: none;
+    display: none;
 }
 
 .header h1 {
