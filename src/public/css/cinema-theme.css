@@ -237,6 +237,30 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.18);
 }
 
+/* 顶部栏搜索框 - 透明效果并填满可用空间 */
+[data-theme="cinema"] .topbar-search {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+[data-theme="cinema"] .topbar-search input {
+    background: transparent;
+    color: #e2e8f0;
+}
+
+[data-theme="cinema"] .topbar-search input::placeholder {
+    color: rgba(226, 232, 240, 0.5);
+}
+
+[data-theme="cinema"] .search-shortcut {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgba(226, 232, 240, 0.6);
+}
+
 /* 页面容器 */
 [data-theme="cinema"] .page-container {
     background: transparent;
@@ -645,6 +669,10 @@
     }
 
     [data-theme="cinema"] .topbar {
+        background: transparent;
+    }
+
+    [data-theme="cinema"] .topbar-search {
         background: transparent;
     }
 
