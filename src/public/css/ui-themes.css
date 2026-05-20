@@ -722,9 +722,16 @@ tbody th:last-child {
 }
 
 [data-ui-style="media"] .header,
-[data-ui-style="media"] .theme-switch,
 [data-ui-style="media"] .container {
     max-width: min(1940px, calc(100vw - 36px));
+}
+
+.topbar .theme-switch {
+    position: absolute;
+    top: 50%;
+    right: var(--topbar-theme-right);
+    transform: translateY(-50%);
+    max-width: none;
 }
 
 .theme-toggle-btn {
@@ -738,6 +745,28 @@ tbody th:last-child {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(248, 250, 252, 0.74));
     box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
     backdrop-filter: blur(14px);
+}
+
+.topbar .sidebar-toggle,
+.topbar .theme-toggle-btn,
+.topbar .notification-btn {
+    background: var(--brand-action);
+    border-color: var(--brand-action);
+    color: #fff;
+    box-shadow: 0 2px 8px var(--brand-action-shadow);
+}
+
+.topbar .sidebar-toggle:hover,
+.topbar .theme-toggle-btn:hover,
+.topbar .notification-btn:hover {
+    background: var(--brand-action-hover);
+    box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
+}
+
+.topbar .sidebar-toggle i,
+.topbar .theme-toggle-btn i,
+.topbar .notification-btn i {
+    color: #fff;
 }
 
 /* 明亮模式下保持主题按钮为品牌蓝底，避免白色图标落在白底上失去可读性。 */
@@ -1308,7 +1337,6 @@ tbody th:last-child {
 
 @media (max-width: 900px) {
     [data-ui-style="media"] .header,
-    [data-ui-style="media"] .theme-switch,
     [data-ui-style="media"] .container {
         max-width: min(1940px, calc(100vw - 24px));
     }
@@ -1369,7 +1397,7 @@ tbody th:last-child {
         padding-right: 20px;
     }
 
-    .theme-switch {
+    .header > .theme-switch {
         top: 12px;
     }
 

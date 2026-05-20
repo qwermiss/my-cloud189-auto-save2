@@ -4,6 +4,11 @@
 :root {
     --sidebar-width: 260px;
     --topbar-height: 72px;
+    --brand-action: #4B4BFA;
+    --brand-action-hover: #3B3BEA;
+    --brand-action-shadow: rgba(75, 75, 250, 0.3);
+    --topbar-search-width: 252px;
+    --topbar-theme-right: 60px;
     --bg-main: #f8fafc;
     --bg-sidebar: #ffffff;
     --bg-card: #ffffff;
@@ -433,7 +438,7 @@ body::before, body::after {
 .sidebar-toggle {
     padding: 8px 16px;
     border: none;
-    background: #4B4BFA;
+    background: var(--brand-action);
     border-radius: 8px;
     cursor: pointer;
     display: flex;
@@ -441,13 +446,14 @@ body::before, body::after {
     justify-content: center;
     gap: 6px;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
+    box-shadow: 0 2px 8px var(--brand-action-shadow);
     color: #fff;
     font-weight: 600;
     font-size: 14px;
 }
 
 .sidebar-toggle:hover {
+    background: var(--brand-action-hover);
     box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
     transform: translateY(-1px);
 }
@@ -465,9 +471,10 @@ body::before, body::after {
     border-radius: var(--radius-md);
     padding: 0 16px;
     height: 40px;
-    /* 菜单按钮约84px，3倍约252px */
-    width: calc((18px + 6px + 2em + 32px) * 3);
-    max-width: 260px;
+    /* 菜单按钮约 84px，搜索框固定为其 3 倍左右，避免被 flex 或影院模式覆盖拉满。 */
+    flex: 0 0 var(--topbar-search-width);
+    width: var(--topbar-search-width);
+    max-width: var(--topbar-search-width);
     color: var(--text-muted);
     box-sizing: border-box;
 }
@@ -530,6 +537,8 @@ body::before, body::after {
     display: flex;
     align-items: center;
     gap: 24px;
+    margin-left: auto;
+    padding-right: calc(var(--topbar-theme-right) + 40px);
 }
 
 .status-pill {
@@ -555,14 +564,15 @@ body::before, body::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #4B4BFA;
+    background: var(--brand-action);
     border: none;
     border-radius: 50%;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
+    box-shadow: 0 2px 8px var(--brand-action-shadow);
 }
 
 .notification-btn:hover {
+    background: var(--brand-action-hover);
     box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
     transform: translateY(-1px);
 }
@@ -572,21 +582,31 @@ body::before, body::after {
     color: #fff;
 }
 
+.topbar .theme-switch {
+    position: absolute;
+    top: 50%;
+    right: var(--topbar-theme-right);
+    margin: 0;
+    transform: translateY(-50%);
+    z-index: 2;
+}
+
 .theme-toggle-btn {
     width: 40px;
     height: 40px;
     border: none;
-    background: #4B4BFA;
+    background: var(--brand-action);
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
+    box-shadow: 0 2px 8px var(--brand-action-shadow);
 }
 
 .theme-toggle-btn:hover {
+    background: var(--brand-action-hover);
     box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
     transform: translateY(-1px);
 }
@@ -594,6 +614,19 @@ body::before, body::after {
 .theme-toggle-btn i {
     font-size: 20px;
     color: #fff;
+}
+
+@media (max-width: 720px) {
+    .topbar-search,
+    [data-theme="cinema"] .topbar-search {
+        flex-basis: min(var(--topbar-search-width), calc(100vw - 220px));
+        width: min(var(--topbar-search-width), calc(100vw - 220px));
+        max-width: min(var(--topbar-search-width), calc(100vw - 220px));
+    }
+
+    .search-shortcut {
+        display: none;
+    }
 }
 
 .notification-btn .badge {

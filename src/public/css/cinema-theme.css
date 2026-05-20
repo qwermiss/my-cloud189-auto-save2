@@ -239,9 +239,9 @@
 
 /* 顶部栏搜索框 - 透明效果并填满可用空间 */
 [data-theme="cinema"] .topbar-search {
-    flex: 1 1 auto;
-    width: auto;
-    max-width: none;
+    flex: 0 0 var(--topbar-search-width);
+    width: var(--topbar-search-width);
+    max-width: var(--topbar-search-width);
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.18);
 }
@@ -685,6 +685,24 @@
     }
 }
 
+/* 顶栏按钮在影院模式下保持实色按钮，不叠加玻璃/阴影，避免海报背景上出现光晕。 */
+[data-theme="cinema"] .topbar .sidebar-toggle,
+[data-theme="cinema"] .topbar .theme-toggle-btn,
+[data-theme="cinema"] .topbar .notification-btn {
+    background: var(--brand-action);
+    border-color: var(--brand-action);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+[data-theme="cinema"] .topbar .sidebar-toggle:hover,
+[data-theme="cinema"] .topbar .theme-toggle-btn:hover,
+[data-theme="cinema"] .topbar .notification-btn:hover {
+    background: var(--brand-action-hover);
+    box-shadow: none;
+}
+
 /* ============================================
    影院模式 - 删除确认弹窗适配
    ============================================ */
@@ -740,4 +758,12 @@
 [data-theme="cinema"] .btn-cancel:hover {
     background: rgba(99, 102, 241, 0.2);
     border-color: rgba(99, 102, 241, 0.4);
+}
+
+@media (max-width: 720px) {
+    [data-theme="cinema"] .topbar-search {
+        flex-basis: min(var(--topbar-search-width), calc(100vw - 220px));
+        width: min(var(--topbar-search-width), calc(100vw - 220px));
+        max-width: min(var(--topbar-search-width), calc(100vw - 220px));
+    }
 }
