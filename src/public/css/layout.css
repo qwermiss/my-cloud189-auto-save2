@@ -677,7 +677,7 @@ body::before, body::after {
 
 .tab-content {
     display: none;
-    height: 100%;
+    min-height: 100%; /* 改为 min-height，允许内容超出时增长，父容器可滚动 */
 }
 
 .tab-content.active {
