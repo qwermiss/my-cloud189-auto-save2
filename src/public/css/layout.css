@@ -435,21 +435,20 @@ body::before, body::after {
     gap: 16px;
 }
 
+/* 菜单按钮：圆形风格，与通知/主题按钮统一 */
 .sidebar-toggle {
-    padding: 8px 16px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
     border: none;
     background: var(--brand-action);
-    border-radius: 8px;
+    border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px var(--brand-action-shadow);
-    color: #fff;
-    font-weight: 600;
-    font-size: 14px;
 }
 
 .sidebar-toggle:hover {
@@ -459,7 +458,7 @@ body::before, body::after {
 }
 
 .sidebar-toggle i {
-    font-size: 18px;
+    font-size: 20px;
     color: #fff;
 }
 
@@ -591,24 +590,55 @@ body::before, body::after {
     z-index: 2;
 }
 
+/* AI风格主题切换按钮：芯片/神经网络节点形状 */
 .theme-toggle-btn {
     width: 40px;
     height: 40px;
     border: none;
     background: var(--brand-action);
-    border-radius: 50%;
+    /* AI芯片风格：圆角八边形（超级椭圆） */
+    border-radius: 12px;
+    clip-path: polygon(
+        20% 0%, 80% 0%,    /* 顶部：切角 */
+        100% 20%, 100% 80%, /* 右侧：切角 */
+        80% 100%, 20% 100%, /* 底部：切角 */
+        0% 80%, 0% 20%      /* 左侧：切角 */
+    );
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px var(--brand-action-shadow);
+    position: relative;
+}
+
+/* AI风格光晕效果 */
+.theme-toggle-btn::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(75, 75, 250, 0.4), rgba(139, 92, 246, 0.3), rgba(75, 75, 250, 0.4));
+    clip-path: polygon(
+        18% 0%, 82% 0%,
+        100% 18%, 100% 82%,
+        82% 100%, 18% 100%,
+        0% 82%, 0% 18%
+    );
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .theme-toggle-btn:hover {
     background: var(--brand-action-hover);
     box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
     transform: translateY(-1px);
+}
+
+.theme-toggle-btn:hover::before {
+    opacity: 1;
 }
 
 .theme-toggle-btn i {
