@@ -358,10 +358,18 @@ button:hover,
     box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
 }
 
+/* 明亮模式下按钮统一为品牌蓝色 #4B4BFA */
 .btn-primary,
-button:not(.btn-default):not(.theme-toggle-btn) {
-    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+button:not(.btn-default):not(.btn-danger):not(.btn-warning):not(.theme-toggle-btn):not(.sidebar-toggle):not(.sidebar-pin) {
+    background: #4B4BFA;
     border: 1px solid transparent;
+    box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
+}
+
+.btn-primary:hover,
+button:not(.btn-default):not(.btn-danger):not(.btn-warning):not(.theme-toggle-btn):not(.sidebar-toggle):not(.sidebar-pin):hover {
+    background: #3B3BEA;
+    box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
 }
 
 .btn-default {
@@ -734,21 +742,42 @@ tbody th:last-child {
     max-width: none;
 }
 
+/* AI芯片风格主题切换按钮 */
 .theme-toggle-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--panel-border);
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(248, 250, 252, 0.74));
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
-    backdrop-filter: blur(14px);
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: #4B4BFA;
+    /* AI芯片风格：圆角八边形 */
+    border-radius: 12px;
+    clip-path: polygon(
+        20% 0%, 80% 0%,
+        100% 20%, 100% 80%,
+        80% 100%, 20% 100%,
+        0% 80%, 0% 20%
+    );
+    box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
 }
 
+.theme-toggle-btn:hover {
+    background: #3B3BEA;
+    box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
+    transform: translateY(-1px);
+}
+
+.theme-toggle-btn i {
+    color: #fff;
+    font-size: 20px;
+}
+
+/* 顶栏按钮统一样式 */
 .topbar .sidebar-toggle,
-.topbar .theme-toggle-btn,
 .topbar .notification-btn {
     background: var(--brand-action);
     border-color: var(--brand-action);
@@ -757,35 +786,13 @@ tbody th:last-child {
 }
 
 .topbar .sidebar-toggle:hover,
-.topbar .theme-toggle-btn:hover,
 .topbar .notification-btn:hover {
     background: var(--brand-action-hover);
     box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
 }
 
 .topbar .sidebar-toggle i,
-.topbar .theme-toggle-btn i,
 .topbar .notification-btn i {
-    color: #fff;
-}
-
-/* 明亮模式下保持主题按钮为品牌蓝底，避免白色图标落在白底上失去可读性。 */
-[data-theme="light"] .theme-toggle-btn,
-:root:not([data-theme]) .theme-toggle-btn {
-    background: #4B4BFA;
-    border-color: #4B4BFA;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(75, 75, 250, 0.3);
-}
-
-[data-theme="light"] .theme-toggle-btn:hover,
-:root:not([data-theme]) .theme-toggle-btn:hover {
-    box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
-    transform: translateY(-1px);
-}
-
-[data-theme="light"] .theme-toggle-btn i,
-:root:not([data-theme]) .theme-toggle-btn i {
     color: #fff;
 }
 

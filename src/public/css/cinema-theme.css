@@ -452,7 +452,20 @@
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-/* 按钮 */
+/* 按钮 - 影院模式统一为品牌蓝色 */
+[data-theme="cinema"] button:not(.theme-toggle-btn):not(.sidebar-toggle):not(.sidebar-pin):not(.btn-default):not(.btn-danger):not(.btn-warning) {
+    background: #4B4BFA;
+    border-color: rgba(75, 75, 250, 0.3);
+    box-shadow: 0 2px 12px rgba(75, 75, 250, 0.4), 0 0 20px rgba(75, 75, 250, 0.15);
+    color: #fff;
+}
+
+[data-theme="cinema"] button:not(.theme-toggle-btn):not(.sidebar-toggle):not(.sidebar-pin):not(.btn-default):not(.btn-danger):not(.btn-warning):hover {
+    background: #3B3BEA;
+    box-shadow: 0 4px 16px rgba(75, 75, 250, 0.5), 0 0 28px rgba(75, 75, 250, 0.25);
+    border-color: rgba(75, 75, 250, 0.5);
+}
+
 [data-theme="cinema"] .btn-default {
     background: rgba(30, 41, 59, 0.9);
     border: 1px solid rgba(99, 102, 241, 0.25);
@@ -687,7 +700,6 @@
 
 /* 顶栏按钮在影院模式下保持实色按钮，不叠加玻璃/阴影，避免海报背景上出现光晕。 */
 [data-theme="cinema"] .topbar .sidebar-toggle,
-[data-theme="cinema"] .topbar .theme-toggle-btn,
 [data-theme="cinema"] .topbar .notification-btn {
     background: var(--brand-action);
     border-color: var(--brand-action);
@@ -697,10 +709,19 @@
 }
 
 [data-theme="cinema"] .topbar .sidebar-toggle:hover,
-[data-theme="cinema"] .topbar .theme-toggle-btn:hover,
 [data-theme="cinema"] .topbar .notification-btn:hover {
     background: var(--brand-action-hover);
     box-shadow: none;
+}
+
+/* 影院模式下主题按钮保持AI芯片风格 */
+[data-theme="cinema"] .theme-toggle-btn {
+    background: #4B4BFA;
+    box-shadow: none;
+}
+
+[data-theme="cinema"] .theme-toggle-btn:hover {
+    background: #3B3BEA;
 }
 
 /* ============================================
