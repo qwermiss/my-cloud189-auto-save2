@@ -348,12 +348,19 @@ AppDataSource.initialize().then(async () => {
         }
         whereClause.enableSystemProxy = Or(IsNull(), false);
 
-        // 添加搜索过滤
+        // 添加全局模糊搜索过滤：任务标题、TMDB信息、分享链接、目录、备注、账号等都纳入匹配范围
         if (search) {
+            const searchKeyword = `%${String(search).trim()}%`;
             const searchConditions = [
-                { realFolderName: Like(`%${search}%`) },
-                { remark: Like(`%${search}%`) },
-                { account: { username: Like(`%${search}%`) } }
+                { resourceName: Like(searchKeyword) },
+                { shareFolderName: Like(searchKeyword) },
+                { tmdbTitle: Like(searchKeyword) },
+                { shareLink: Like(searchKeyword) },
+                { realFolderName: Like(searchKeyword) },
+                { remark: Like(searchKeyword) },
+                { lastSavedDisplayText: Like(searchKeyword) },
+                { lastSavedFileName: Like(searchKeyword) },
+                { account: { username: Like(searchKeyword) } }
             ];
             if (Object.keys(whereClause).length > 0) {
                 whereClause = searchConditions.map(searchCond => ({

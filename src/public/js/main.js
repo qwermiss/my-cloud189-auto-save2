@@ -307,8 +307,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // 更新任务过滤参数并刷新任务列表
             if (typeof taskFilterParams !== 'undefined') {
                 taskFilterParams.search = searchValue;
+                const taskSearch = document.getElementById('taskSearch');
+                if (taskSearch && taskSearch.value !== searchValue) {
+                    taskSearch.value = searchValue;
+                }
                 if (typeof fetchTasks === 'function') {
-                    fetchTasks();
+                    fetchTasks({ silent: true });
                 }
             }
         }, 500);
@@ -320,12 +324,15 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                performGlobalSearch.cancel && performGlobalSearch.cancel();
                 const searchValue = searchInput.value.trim();
                 if (typeof taskFilterParams !== 'undefined') {
                     taskFilterParams.search = searchValue;
+                    const taskSearch = document.getElementById('taskSearch');
+                    if (taskSearch && taskSearch.value !== searchValue) {
+                        taskSearch.value = searchValue;
+                    }
                     if (typeof fetchTasks === 'function') {
-                        fetchTasks();
+                        fetchTasks({ silent: true });
                     }
                 }
             }

@@ -408,6 +408,15 @@ textarea {
     padding: 12px;
     border: 1px solid var(--panel-border);
     background: rgba(255, 255, 255, 0.4);
+    transition: opacity 0.18s ease, transform 0.18s ease, filter 0.18s ease;
+}
+
+/* 搜索刷新时只做局部过渡，避免任务列表整体清空造成闪烁 */
+.table-container.is-searching {
+    opacity: 0.68;
+    transform: translateY(2px);
+    filter: saturate(0.9);
+    pointer-events: none;
 }
 
 [data-ui-style="console"] #taskTable,

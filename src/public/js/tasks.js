@@ -432,46 +432,67 @@ var taskList = []
 function getTaskById(id) {
     return taskList.find(task => task.id == id);
 }
-async function fetchTasks() {
-    taskList = []
-    loading.show()
-    const response = await fetch(`/api/tasks?status=${taskFilterParams.status}&search=${encodeURIComponent(taskFilterParams.search)}`);
-    const data = await response.json();
-    loading.hide()
-    if (data.success) {
-        const tbody = document.querySelector('#taskTable tbody');
-        tbody.innerHTML = '';
-        const currentUiStyle = document.documentElement.getAttribute('data-ui-style') || 'classic';
-        if (currentUiStyle === 'media') {
-            renderTaskMediaWall(data.data);
-            return;
+async function fetchTasks(options = {}) {
+    const { silent = false } = options;
+    const tableContainer = document.querySelector('#taskTab .table-container');
+
+    // 搜索输入场景使用局部过渡，避免全局遮罩和列表空白闪烁。
+    if (silent && tableContainer) {
+        tableContainer.classList.add('is-searching');
+    } else {
+        loading.show();
+    }
+
+    try {
+        const response = await fetch(`/api/tasks?status=${taskFilterParams.status}&search=${encodeURIComponent(taskFilterParams.search)}`);
+        const data = await response.json();
+        if (data.success) {
+            taskList = [];
+            const tbody = document.querySelector('#taskTable tbody');
+            tbody.innerHTML = '';
+            const currentUiStyle = document.documentElement.getAttribute('data-ui-style') || 'classic';
+            if (currentUiStyle === 'media') {
+                renderTaskMediaWall(data.data);
+                return;
+            }
+            data.data.forEach(task => {
+                taskList.push(task)
+                const taskName = task.shareFolderName?(task.resourceName + '/' + task.shareFolderName): task.resourceName || '未知'
+                const cronIcon = task.enableCron ? '<span class="cron-icon" title="已开启自定义定时任务">⏰</span>' : '';
+                tbody.innerHTML += `
+                    <tr data-status='${task.status}' data-task-id='${task.id}' data-name='${taskName}'>
+                        <td>
+                            <button class="btn-warning" onclick="executeTask(${task.id})">执行</button>
+                            <button onclick="showEditTaskModal(${task.id})">修改</button>
+                            <button class="btn-danger" onclick="deleteTask(${task.id})">删除</button>
+                            <button class="btn-default" onclick="clearTaskCache(${task.id})">清缓存</button>
+                        </td>
+                        <td data-label="资源名称">${cronIcon}<a href="${task.shareLink}" target="_blank" class='ellipsis' title="${taskName}">${taskName}</a>${task.tmdbId ? `<span style="background:${task.manualTmdbBound ? '#10b981' : '#6b7280'};color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;margin-left:4px;">🎬 ${task.tmdbTitle || task.tmdbId}${task.manualSeason ? ' S' + task.manualSeason : ''}${task.manualTmdbBound ? '' : ' (自动)'}</span>` : ''}</td>
+                        <td data-label="账号">${task.account.username}</td>
+                        <!--<td data-label="首次保存目录"><a href="https://cloud.189.cn/web/main/file/folder/${task.targetFolderId}" target="_blank">${task.targetFolderId}</a></td>-->
+                         <td data-label="更新目录"><a href="javascript:void(0)" onclick="showFileListModal('${task.id}')" class='ellipsis'>${task.realFolderName || task.realFolderId}</a></td>
+                        <td data-label="最新转存">
+                            <div class='ellipsis' title="${formatLatestSavedFile(task)}">${formatLatestSavedFile(task)}</div>
+                            ${formatMissingEpisodes(task) ? `<div class='ellipsis' title="${formatMissingEpisodesTitle(task)}">${formatMissingEpisodes(task)}</div>` : ''}
+                        </td>
+                        <td data-label="转存时间" style="font-size: 13px; color: #3b82f6; font-weight: 500;">${formatDateTime(task.lastFileUpdateTime)}</td>
+                        <td data-label="备注">${task.remark?task.remark:''}</td>
+                        <td data-label="状态">${renderStatusCapsule(task)}${task.status === 'failed' && task.lastError ? `<span style="color: #ff4d4f; font-size: 11px; margin-left: 5px;">(${task.lastError.slice(0, 30)}${task.lastError.length > 30 ? '...' : ''})</span>` : ''}</td>
+                    </tr>
+                `;
+            });
+        } else if (silent) {
+            message.warning('任务搜索失败: ' + (data.error || '未知错误'));
         }
-        data.data.forEach(task => {
-            taskList.push(task)
-            const taskName = task.shareFolderName?(task.resourceName + '/' + task.shareFolderName): task.resourceName || '未知'
-            const cronIcon = task.enableCron ? '<span class="cron-icon" title="已开启自定义定时任务">⏰</span>' : '';
-            tbody.innerHTML += `
-                <tr data-status='${task.status}' data-task-id='${task.id}' data-name='${taskName}'>
-                    <td>
-                        <button class="btn-warning" onclick="executeTask(${task.id})">执行</button>
-                        <button onclick="showEditTaskModal(${task.id})">修改</button>
-                        <button class="btn-danger" onclick="deleteTask(${task.id})">删除</button>
-                        <button class="btn-default" onclick="clearTaskCache(${task.id})">清缓存</button>
-                    </td>
-                    <td data-label="资源名称">${cronIcon}<a href="${task.shareLink}" target="_blank" class='ellipsis' title="${taskName}">${taskName}</a>${task.tmdbId ? `<span style="background:${task.manualTmdbBound ? '#10b981' : '#6b7280'};color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;margin-left:4px;">🎬 ${task.tmdbTitle || task.tmdbId}${task.manualSeason ? ' S' + task.manualSeason : ''}${task.manualTmdbBound ? '' : ' (自动)'}</span>` : ''}</td>
-                    <td data-label="账号">${task.account.username}</td>
-                    <!--<td data-label="首次保存目录"><a href="https://cloud.189.cn/web/main/file/folder/${task.targetFolderId}" target="_blank">${task.targetFolderId}</a></td>-->
-                     <td data-label="更新目录"><a href="javascript:void(0)" onclick="showFileListModal('${task.id}')" class='ellipsis'>${task.realFolderName || task.realFolderId}</a></td>
-                    <td data-label="最新转存">
-                        <div class='ellipsis' title="${formatLatestSavedFile(task)}">${formatLatestSavedFile(task)}</div>
-                        ${formatMissingEpisodes(task) ? `<div class='ellipsis' title="${formatMissingEpisodesTitle(task)}">${formatMissingEpisodes(task)}</div>` : ''}
-                    </td>
-                    <td data-label="转存时间" style="font-size: 13px; color: #3b82f6; font-weight: 500;">${formatDateTime(task.lastFileUpdateTime)}</td>
-                    <td data-label="备注">${task.remark?task.remark:''}</td>
-                    <td data-label="状态">${renderStatusCapsule(task)}${task.status === 'failed' && task.lastError ? `<span style="color: #ff4d4f; font-size: 11px; margin-left: 5px;">(${task.lastError.slice(0, 30)}${task.lastError.length > 30 ? '...' : ''})</span>` : ''}</td>
-                </tr>
-            `;
-        });
+    } catch (error) {
+        // 静默搜索失败时保留旧列表，避免用户看到空白结果。
+        message.warning('任务列表加载失败: ' + error.message);
+    } finally {
+        if (silent && tableContainer) {
+            requestAnimationFrame(() => tableContainer.classList.remove('is-searching'));
+        } else {
+            loading.hide();
+        }
     }
 
     // 刷新影院背景海报列表（如果影院模式已激活）
@@ -1438,9 +1459,21 @@ async function bindTmdbToTasks(tmdbId, videoType, title) {
 function filterTasks() {
     const taskFilter = document.getElementById('taskFilter');
     const taskSearch = document.getElementById('taskSearch');
+    const searchValue = taskSearch.value.trim();
     taskFilterParams.status = taskFilter.value;
-    taskFilterParams.search = taskSearch.value.trim();
-    fetchTasks();
+    taskFilterParams.search = searchValue;
+
+    // 同步顶部全局搜索框，避免两个搜索入口显示状态不一致。
+    const globalSearch = document.getElementById('globalSearch');
+    if (globalSearch && globalSearch.value !== searchValue) {
+        globalSearch.value = searchValue;
+        const topbarSearch = document.querySelector('.topbar-search');
+        if (topbarSearch) {
+            topbarSearch.classList.toggle('searching', searchValue.length > 0 || document.activeElement === globalSearch);
+        }
+    }
+
+    fetchTasks({ silent: true });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
