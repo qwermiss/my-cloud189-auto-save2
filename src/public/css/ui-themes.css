@@ -1207,7 +1207,7 @@ tbody th:last-child {
     margin-left: 4px;
 }
 
-/* 影院模式进度条 */
+/* 影院模式追更信息 */
 [data-theme="cinema"] .media-progress-container {
     margin-top: 4px;
 }
@@ -1216,23 +1216,23 @@ tbody th:last-child {
     font-size: 12px;
     font-weight: 600;
     color: #f8fafc;
-    margin-bottom: 4px;
     display: flex;
     justify-content: space-between;
+    gap: 12px;
     text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 
-[data-theme="cinema"] .media-progress-bar {
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
-    overflow: hidden;
+[data-theme="cinema"] .media-progress-date {
+    color: rgba(248, 250, 252, 0.82);
+    white-space: nowrap;
 }
 
-[data-theme="cinema"] .media-progress-fill {
-    height: 100%;
-    background: var(--status-green, #10b981);
-    border-radius: 2px;
+[data-theme="cinema"] .media-progress-missing {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fca5a5;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
 
 /* 影院模式卡片底部 */

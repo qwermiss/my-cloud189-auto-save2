@@ -292,18 +292,6 @@ function renderTaskMediaWall(tasks) {
             tmdbUrl = `https://www.themoviedb.org/${type}/${tmdbContent.id}`;
         }
 
-        // 计算进度条百分比
-        let progressPercent = 0;
-        if (task.totalEpisodes > 0 && task.currentEpisodes > 0) {
-            progressPercent = Math.min(100, Math.round((task.currentEpisodes / task.totalEpisodes) * 100));
-        } else if (task.status === 'completed') {
-            progressPercent = 100;
-        } else if (!task.lastSavedDisplayText && !task.lastSavedFileName) {
-            progressPercent = 0;
-        } else {
-            progressPercent = task.currentEpisodes > 0 ? Math.min(100, task.currentEpisodes * 10) : 0;
-        }
-
         if (isCinemaMode) {
             // 影院模式：使用垂直卡片布局（背景图在tr上）
             tbody.innerHTML += `
@@ -328,11 +316,9 @@ function renderTaskMediaWall(tasks) {
                             <div class="media-progress-container" onclick="event.stopPropagation(); showFileListModal('${task.id}');" style="cursor: pointer;" title="${getProgressTooltip(task)}">
                                 <div class="media-progress-text">
                                     <span>${latestSaved}</span>
-                                    ${formatMissingEpisodes(task) ? `<span style="color: #fca5a5">${formatMissingEpisodes(task)}</span>` : ''}
+                                    <span class="media-progress-date">${formatDateOnly(task.lastFileUpdateTime) || '无'}</span>
                                 </div>
-                                <div class="media-progress-bar">
-                                    <div class="media-progress-fill" style="width: ${progressPercent}%"></div>
-                                </div>
+                                ${formatMissingEpisodes(task) ? `<div class="media-progress-missing">${formatMissingEpisodes(task)}</div>` : ''}
                             </div>
 
                             <div class="media-card-footer">
@@ -1575,11 +1561,18 @@ async function deleteSelectedTasks() {
         message.warning('操作失败: ' + error.message);
     }
 }
+// 添加日期格式化函数
+function formatDateOnly(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 // 添加时间格式化函数
 function formatDateTime(dateStr) {
     if (!dateStr) return '未更新';
     const date = new Date(dateStr);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    return `${formatDateOnly(dateStr)} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
 const statusOptions = {
