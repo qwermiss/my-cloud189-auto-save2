@@ -231,10 +231,11 @@
         font-size: 12px;
     }
 
-    /* 影院模式卡片移动端：单列布局 + 竖向海报卡片等比例缩小展示（高度从 320px 增至 350px 以适配单屏展示两个完整卡片） */
+    /* 影院模式卡片移动端：单列布局 + 竖向海报卡片等比例缩小展示（高度从 320px 增至 350px，宽度设为 220px 并居中，适配单屏展示两个完整竖向卡片） */
     [data-theme="cinema"][data-ui-style="media"] #taskTable tbody {
         display: grid !important;
         grid-template-columns: 1fr !important;
+        justify-items: center !important;
         gap: 12px;
     }
 
@@ -242,15 +243,18 @@
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;
+        width: 220px !important;
         height: 350px !important;
         min-height: 350px !important;
         max-height: 350px !important;
         padding: 10px !important;
         border-radius: 12px !important;
+        box-sizing: border-box !important;
     }
 
     /* 影院模式添加任务占位卡片：跟随单列高度并等比例缩小 */
     [data-theme="cinema"][data-ui-style="media"] .add-task-placeholder {
+        width: 220px !important;
         height: 350px !important;
         min-height: 350px !important;
         max-height: 350px !important;
