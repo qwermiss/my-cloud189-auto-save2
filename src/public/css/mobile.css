@@ -231,33 +231,33 @@
         font-size: 12px;
     }
 
-    /* 影院模式卡片移动端：单列布局 + 竖向海报卡片等比例缩小展示（高度从 320px 增至 350px，宽度设为 220px 并居中，适配单屏展示两个完整竖向卡片） */
+    /* 影院模式卡片移动端：单列布局 + 竖向海报卡片等比例放大展示（宽度设为 260px 并居中以减少两边留白，高度 410px 保持等比例竖版形态） */
     [data-theme="cinema"][data-ui-style="media"] #taskTable tbody {
         display: grid !important;
         grid-template-columns: 1fr !important;
         justify-items: center !important;
-        gap: 12px;
+        gap: 16px;
     }
 
     [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card {
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;
-        width: 220px !important;
-        height: 350px !important;
-        min-height: 350px !important;
-        max-height: 350px !important;
+        width: 260px !important;
+        height: 410px !important;
+        min-height: 410px !important;
+        max-height: 410px !important;
         padding: 10px !important;
         border-radius: 12px !important;
         box-sizing: border-box !important;
     }
 
-    /* 影院模式添加任务占位卡片：跟随单列高度并等比例缩小 */
+    /* 影院模式添加任务占位卡片：跟随单列高度并等比例缩放 */
     [data-theme="cinema"][data-ui-style="media"] .add-task-placeholder {
-        width: 220px !important;
-        height: 350px !important;
-        min-height: 350px !important;
-        max-height: 350px !important;
+        width: 260px !important;
+        height: 410px !important;
+        min-height: 410px !important;
+        max-height: 410px !important;
     }
 
     [data-theme="cinema"][data-ui-style="media"] .add-task-placeholder td {
@@ -265,18 +265,27 @@
     }
 
     [data-theme="cinema"][data-ui-style="media"] .add-task-placeholder .add-task-icon {
-        width: 48px !important;
-        height: 48px !important;
-        margin-bottom: 10px !important;
+        width: 52px !important;
+        height: 52px !important;
+        margin-bottom: 12px !important;
     }
 
     [data-theme="cinema"][data-ui-style="media"] .add-task-placeholder .add-task-icon i {
-        font-size: 24px !important;
+        font-size: 26px !important;
     }
 
     [data-theme="cinema"][data-ui-style="media"] .add-task-placeholder div {
-        font-size: 11px !important;
+        font-size: 12px !important;
         margin-bottom: 4px !important;
+    }
+
+    /* 解决移动端媒体墙下的左右滑动问题，同时保持表格视图下的横向滚动 */
+    [data-ui-style="media"] .table-container {
+        overflow-x: hidden !important;
+    }
+    [data-ui-style="media"] #taskTable {
+        min-width: 0 !important;
+        width: 100% !important;
     }
 
     .task-card {
