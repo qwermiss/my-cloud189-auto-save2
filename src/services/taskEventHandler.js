@@ -23,12 +23,25 @@ class TaskEventHandler {
 
         logTaskEvent(` ${task.resourceName} 触发事件:`);
         try {
+            // 第1步：发送转存成功通知（确保最先发送）
+            await this._handleSaveSuccessNotification(taskCompleteEventDto);
+
+            // 第2步：自动重命名（发送重命名完成通知）
             await this._handleAutoRename(taskCompleteEventDto);
-            
+
+            // 第3步：更新最新保存显示
             await this._handleLatestSavedDisplay(taskCompleteEventDto);
+
+            // 第4步：生成STRM文件
             await this._handleStrmGeneration(taskCompleteEventDto);
+
+            // 第5步：刷新Alist缓存
             await this._handleAlistCache(taskCompleteEventDto);
+
+            // 第6步：媒体刮削
             await this._handleMediaScraping(taskCompleteEventDto);
+
+            // 第7步：Emby入库通知（确保最后发送）
             this._handleEmbyNotification(taskCompleteEventDto)
         } catch (error) {
             console.error(error);
@@ -150,6 +163,22 @@ class TaskEventHandler {
         task.missingEpisodes = latestSavedDisplay.missingEpisodes;
         await taskRepo.save(task);
     }
+
+    /**
+     * 发送转存成功通知（确保在重命名和入库通知之前）
+     * 通知顺序：转存成功 → 重命名完成 → Emby入库
+     */
+    async _handleSaveSuccessNotification(taskCompleteEventDto) {
+        const { task, saveResults } = taskCompleteEventDto;
+
+        // 如果有预构建的 saveResults，直接发送
+        if (saveResults && saveResults.length > 0) {
+            const message = saveResults.join('\n\n');
+            this.messageUtil.sendMessage(message);
+            logTaskEvent(`[转存通知] 已发送转存成功通知: ${task.resourceName}`);
+        }
+    }
+
     async _handleAutoRename(taskCompleteEventDto) {
         try {
             const {task, taskService, cloud189, taskRepo} = taskCompleteEventDto;

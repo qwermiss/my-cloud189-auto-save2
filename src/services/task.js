@@ -2121,9 +2121,13 @@ class TaskService {
                         firstExecution: firstExecution,
                         taskService: this,
                         taskRepo: this.taskRepo,
-                        actualNewCount: actualNewCount // 智能去重场景的实际新增数量
+                        actualNewCount: actualNewCount, // 智能去重场景的实际新增数量
+                        saveResults: saveResults // 传递转存成功通知内容，由 taskEventHandler 统一发送
                     }));
                 })
+                // 返回空字符串，通知由 taskEventHandler 统一发送，确保顺序正确
+                // 顺序：转存成功 → 重命名完成 → Emby入库
+                return '';
             } else {
                 // 无新增文件的情况
                 // 手动触发时，即使无新增也发送通知

@@ -9,6 +9,7 @@ class TaskCompleteEventDto  {
         this.firstExecution = data?.firstExecution;
         this.existingFiles = data?.existingFiles;
         this.actualNewCount = data?.actualNewCount || 0; // 智能去重场景的实际新增数量
+        this.saveResults = data?.saveResults || []; // 转存成功通知内容，由 taskEventHandler 统一发送
     }
 }
 
