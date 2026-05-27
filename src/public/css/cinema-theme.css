@@ -145,7 +145,8 @@
     opacity: 0;
     transform: translateY(20px) scale(0.9);
     transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    pointer-events: none;
+    pointer-events: auto; /* 允许点击关闭 */
+    cursor: pointer;
 }
 
 .cinema-locked-indicator.show {
@@ -162,6 +163,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* 移动端锁定指示器：点击可关闭 */
+.cinema-locked-indicator::after {
+    content: "×";
+    margin-left: 8px;
+    font-size: 16px;
+    opacity: 0.7;
 }
 
 /* ============================================

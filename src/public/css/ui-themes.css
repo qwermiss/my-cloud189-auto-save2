@@ -751,6 +751,15 @@ tbody th:last-child {
     max-width: none;
 }
 
+/* 移动端：主题按钮不再绝对定位 */
+@media (max-width: 768px) {
+    .topbar .theme-switch {
+        position: static;
+        transform: none;
+        right: auto;
+    }
+}
+
 /* AI芯片风格主题切换按钮 */
 .theme-toggle-btn {
     display: inline-flex;
@@ -1397,6 +1406,26 @@ tbody th:last-child {
 
     .media-wall-title {
         font-size: 18px;
+    }
+}
+
+/* 移动端媒体墙：单列布局，禁止水平滚动 */
+@media (max-width: 768px) {
+    [data-ui-style="media"] #taskTable tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    [data-ui-style="media"] #taskTable tr.media-wall-card {
+        width: 100%;
+        min-width: auto;
+    }
+
+    /* 影院模式移动端卡片 */
+    [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card {
+        height: auto;
+        min-height: 220px;
     }
 }
 

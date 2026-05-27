@@ -126,6 +126,14 @@ class CinemaBackground {
 
         // 页面可见性变化
         document.addEventListener('visibilitychange', this.handleVisibilityChange);
+
+        // 锁定指示器点击关闭
+        if (this.lockedIndicator) {
+            this.lockedIndicator.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.unlock();
+            });
+        }
     }
 
     /**
@@ -518,6 +526,10 @@ class CinemaBackground {
         const taskCard = e.target.closest('.media-wall-card');
 
         if (taskCard && taskCard.dataset.taskId) {
+            // 移动端：点击卡片切换简介显示状态
+            if (this.isMobile()) {
+                this.toggleCardOverview(taskCard);
+            }
             // 点击任务卡片 - 锁定海报
             this.lockToTask(taskCard.dataset.taskId);
         } else if (!e.target.closest('.sidebar') &&
@@ -525,10 +537,42 @@ class CinemaBackground {
                    !e.target.closest('.modal') &&
                    !e.target.closest('.cinema-locked-indicator') &&
                    !e.target.closest('.theme-dropdown') &&
-                   !e.target.closest('.notification-dropdown')) {
+                   !e.target.closest('.notification-dropdown') &&
+                   !e.target.closest('.media-btn-circle') && // 不在点击操作按钮时解锁
+                   !e.target.closest('.media-actions')) {
             // 点击空白区域 - 解除锁定
             this.unlock();
         }
+    }
+
+    /**
+     * 检测是否为移动设备
+     */
+    isMobile() {
+        return window.innerWidth <= 768 || ('ontouchstart' in window);
+    }
+
+    /**
+     * 切换卡片简介显示状态（移动端专用）
+     */
+    toggleCardOverview(card) {
+        const overview = card.querySelector('.media-card-hover-overview');
+        if (!overview) return;
+
+        // 清除其他卡片的展开状态
+        document.querySelectorAll('.media-wall-card.overview-expanded').forEach(c => {
+            if (c !== card) {
+                c.classList.remove('overview-expanded');
+                const otherOverview = c.querySelector('.media-card-hover-overview');
+                if (otherOverview) {
+                    otherOverview.style.opacity = '0';
+                }
+            }
+        });
+
+        // 切换当前卡片
+        const isExpanded = card.classList.toggle('overview-expanded');
+        overview.style.opacity = isExpanded ? '1' : '0';
     }
 
     /**

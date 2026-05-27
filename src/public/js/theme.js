@@ -3,8 +3,9 @@
 function initTheme() {
     const themeToggle = document.getElementById('themeToggle');
     const themeDropdown = document.getElementById('themeDropdown');
-    // 默认主题改为 light，移除 auto
-    const savedTheme = localStorage.getItem('theme') || 'light';
+
+    // 默认影院主题
+    const savedTheme = localStorage.getItem('theme') || 'cinema';
 
     // 设置初始主题
     setTheme(savedTheme);

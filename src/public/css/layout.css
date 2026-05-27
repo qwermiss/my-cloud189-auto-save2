@@ -542,6 +542,14 @@ body::before, body::after {
     padding-right: calc(var(--topbar-theme-right) + 40px);
 }
 
+/* 移动端顶栏操作区：移除右侧padding */
+@media (max-width: 768px) {
+    .topbar-actions {
+        gap: 8px;
+        padding-right: 0;
+    }
+}
+
 .status-pill {
     display: flex;
     align-items: center;
