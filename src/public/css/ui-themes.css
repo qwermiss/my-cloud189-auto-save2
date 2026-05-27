@@ -515,6 +515,18 @@ tbody th:last-child {
 .status-completed { background: var(--success-soft); color: #15803d; }
 .status-failed { background: var(--danger-soft); color: #dc2626; }
 
+/* 仪表盘专用状态标签颜色 */
+.status-dash-pending { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
+.status-dash-processing { background: var(--success-soft); color: #15803d; }
+.status-dash-completed { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
+.status-dash-failed { background: var(--success-soft); color: #15803d; }
+
+/* 仪表盘专用状态标签在影院模式下的适配 */
+[data-theme="cinema"] .status-dash-pending { background: rgba(99, 102, 241, 0.14); color: #818cf8; }
+[data-theme="cinema"] .status-dash-processing { background: rgba(34, 197, 94, 0.16); color: #4ade80; }
+[data-theme="cinema"] .status-dash-completed { background: rgba(99, 102, 241, 0.14); color: #818cf8; }
+[data-theme="cinema"] .status-dash-failed { background: rgba(34, 197, 94, 0.16); color: #4ade80; }
+
 /* Status Capsule: Vercel/Linear style floating HUD over poster cards. */
 :root {
     --status-capsule-bg: rgba(8, 13, 23, 0.64);

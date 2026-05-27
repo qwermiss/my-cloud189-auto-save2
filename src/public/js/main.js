@@ -60,14 +60,14 @@ async function loadDashboardStats() {
             };
             
             const getStatusStyle = (task) => {
-                if (task.status === 'completed') return 'status-completed';
-                if (task.status === 'failed') return 'status-failed';
-                if (task.status === 'processing') return 'status-processing';
+                if (task.status === 'completed') return 'status-dash-completed';
+                if (task.status === 'failed') return 'status-dash-failed';
+                if (task.status === 'processing') return 'status-dash-processing';
                 if (task.status === 'pending') {
-                    if (task.currentEpisodes > 0) return 'status-processing';
-                    return 'status-pending';
+                    if (task.currentEpisodes > 0) return 'status-dash-processing';
+                    return 'status-dash-pending';
                 }
-                return 'status-' + (task.status || 'unknown');
+                return 'status-dash-' + (task.status || 'unknown');
             };
             
             dashRecentTasks.innerHTML = recent.map(task => {
