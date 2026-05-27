@@ -301,7 +301,7 @@ function renderTaskMediaWall(tasks) {
                             ${renderStatusCapsule(task)}
                         </div>
 
-                        <div class="media-card-hover-overview" onclick="event.stopPropagation();">
+                        <div class="media-card-hover-overview" onclick="if(window.innerWidth > 768 && !('ontouchstart' in window)) event.stopPropagation();">
                             ${overview}
                         </div>
 
