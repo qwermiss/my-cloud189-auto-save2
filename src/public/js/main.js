@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const notificationBtn = document.querySelector('.notification-btn');
     if (notificationBtn) {
         notificationBtn.style.cursor = 'pointer';
-        notificationBtn.addEventListener('click', () => {
+        notificationBtn.addEventListener('click', async () => {
             // 创建通知弹窗
             const existing = document.querySelector('.notification-dropdown');
             if (existing) {
@@ -249,48 +249,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
+            let uptimeStr = '获取中...';
+            try {
+                const res = await fetch('/api/version');
+                const data = await res.json();
+                if (data && typeof data.uptime === 'number') {
+                    const seconds = data.uptime;
+                    const d = Math.floor(seconds / (3600 * 24));
+                    const h = Math.floor((seconds % (3600 * 24)) / 3600);
+                    const m = Math.floor((seconds % 3600) / 60);
+                    const s = Math.floor(seconds % 60);
+                    
+                    let parts = [];
+                    if (d > 0) parts.push(`${d} 天`);
+                    if (h > 0 || d > 0) parts.push(`${h} 小时`);
+                    if (m > 0 || h > 0 || d > 0) parts.push(`${m} 分钟`);
+                    if (parts.length === 0) {
+                        parts.push(`${s} 秒`);
+                    }
+                    uptimeStr = parts.join(' ');
+                } else {
+                    uptimeStr = '未知';
+                }
+            } catch (err) {
+                console.error('Failed to fetch uptime:', err);
+                uptimeStr = '获取失败';
+            }
+
             const dropdown = document.createElement('div');
             dropdown.className = 'notification-dropdown';
             dropdown.innerHTML = `
-                <div class="notification-header" style="display: flex; align-items: center;">
-                    <h3 style="margin: 0;">系统通知</h3>
-                    <span class="uptime-badge" style="margin-left: 12px; padding: 4px 12px; background: rgba(16, 185, 129, 0.15); color: #10b981; border-radius: 6px; font-size: 13px; font-weight: 600;">已运行 12 天 18 小时</span>
-                    <span class="notification-close" style="margin-left: auto; cursor: pointer; font-size: 20px;">&times;</span>
+                <div class="notification-header" style="display: flex; align-items: center; justify-content: space-between;">
+                    <h3 style="margin: 0; font-size: 15px; font-weight: 600;">系统状态</h3>
+                    <span class="notification-close" style="cursor: pointer; font-size: 20px; line-height: 1;">&times;</span>
                 </div>
-                <div class="notification-body" style="margin-top: 12px;">
-                    <div class="notification-section" style="margin-bottom: 8px;">
-                        <div class="notification-section-header" onclick="toggleNotificationSection(this)" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-main); border-radius: 6px;">
-                            <span style="font-size: 14px; font-weight: 600;">✅ 任务完成通知</span>
-                            <i class="ph ph-caret-down" style="transition: transform 0.2s;"></i>
-                        </div>
-                        <div class="notification-section-content" style="display: none; padding: 12px 16px; margin-top: 4px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                            <div>任务【进击的巨人】已完成全部 25 集下载</div>
-                            <div style="margin-top: 8px; font-size: 11px; color: var(--text-muted);">2 分钟前</div>
+                <div class="notification-body" style="padding: 16px; display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 10px; background: rgba(75, 75, 250, 0.1); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(75, 75, 250, 0.2);">
+                        <i class="ph ph-clock" style="font-size: 20px; color: #4B4BFA;"></i>
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <span style="font-size: 12px; color: var(--text-muted);">运行时长</span>
+                            <span class="uptime-text" style="font-size: 14px; font-weight: 600; color: var(--text-main);">${uptimeStr}</span>
                         </div>
                     </div>
-                    <div class="notification-section" style="margin-bottom: 8px;">
-                        <div class="notification-section-header" onclick="toggleNotificationSection(this)" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-main); border-radius: 6px;">
-                            <span style="font-size: 14px; font-weight: 600;">⚠️ 任务失败警告</span>
-                            <i class="ph ph-caret-down" style="transition: transform 0.2s;"></i>
-                        </div>
-                        <div class="notification-section-content" style="display: none; padding: 12px 16px; margin-top: 4px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                            <div>任务【某资源名称】执行失败：分享链接已失效</div>
-                            <div style="margin-top: 8px; font-size: 11px; color: var(--text-muted);">15 分钟前</div>
-                        </div>
-                    </div>
-                    <div class="notification-section" style="margin-bottom: 8px;">
-                        <div class="notification-section-header" onclick="toggleNotificationSection(this)" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-main); border-radius: 6px;">
-                            <span style="font-size: 14px; font-weight: 600;">📊 系统状态报告</span>
-                            <i class="ph ph-caret-down" style="transition: transform 0.2s;"></i>
-                        </div>
-                        <div class="notification-section-content" style="display: none; padding: 12px 16px; margin-top: 4px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                            <div>活跃任务：3 个 | 今日完成：12 个 | 待处理：5 个</div>
-                            <div style="margin-top: 8px; font-size: 11px; color: var(--text-muted);">1 小时前</div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
-                        <button onclick="document.getElementById('logsModal').style.display='flex'; document.querySelector('.notification-dropdown').remove();" style="width: 100%; padding: 8px 12px; background: #4B4BFA; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s ease;">
-                            <i class="ph ph-file-text" style="margin-right: 6px;"></i>查看系统日志
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 12px;">
+                        <button onclick="document.getElementById('logsModal').style.display='flex'; document.querySelector('.notification-dropdown').remove();" style="width: 100%; padding: 10px 12px; background: #4B4BFA; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease;">
+                            <i class="ph ph-file-text" style="font-size: 16px;"></i>查看系统日志
                         </button>
                     </div>
                 </div>
@@ -531,17 +534,7 @@ function toggleFloatingBtns() {
     icon.classList.toggle('expanded');
 }
 
-function toggleNotificationSection(header) {
-    const content = header.nextElementSibling;
-    const icon = header.querySelector('i');
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
-        icon.style.transform = 'rotate(180deg)';
-    } else {
-        content.style.display = 'none';
-        icon.style.transform = 'rotate(0deg)';
-    }
-}
+
 
 
 function toggleHelpText(button) {

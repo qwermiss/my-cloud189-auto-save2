@@ -1240,7 +1240,10 @@ AppDataSource.initialize().then(async () => {
     })
 
     app.get('/api/version', (req, res) => {
-        res.json({ version: currentVersion });
+        res.json({ 
+            version: currentVersion,
+            uptime: process.uptime()
+        });
     });
 
     // 解析分享链接
