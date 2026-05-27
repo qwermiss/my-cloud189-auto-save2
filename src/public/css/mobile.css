@@ -94,20 +94,7 @@
         box-sizing: border-box;
     }
 
-    .sidebar-toggle {
-        padding: 6px 10px;
-        font-size: 13px;
-        gap: 4px;
-        flex-shrink: 0;
-    }
 
-    .sidebar-toggle span {
-        display: none;
-    }
-
-    .sidebar-toggle i {
-        font-size: 20px;
-    }
 
     /* 搜索框弹性收缩，保证按钮不被挤出 */
     .topbar-search {
@@ -140,6 +127,7 @@
         right: auto !important;
     }
 
+    .sidebar-toggle,
     .notification-btn,
     .theme-toggle-btn {
         width: 36px;
@@ -147,6 +135,7 @@
         flex-shrink: 0;
     }
 
+    .sidebar-toggle i,
     .notification-btn i,
     .theme-toggle-btn i {
         font-size: 18px;
@@ -515,6 +504,7 @@
         font-size: 14px;
     }
 
+    .sidebar-toggle,
     .notification-btn,
     .theme-toggle-btn {
         width: 32px;

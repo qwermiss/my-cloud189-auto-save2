@@ -435,22 +435,19 @@ body::before, body::after {
     gap: 16px;
 }
 
-/* 菜单按钮：方形圆角 + 文字风格 */
+/* 菜单按钮：与主题切换按钮相同的圆形风格 */
 .sidebar-toggle {
-    padding: 8px 16px;
+    width: 40px;
+    height: 40px;
     border: none;
     background: var(--brand-action);
-    border-radius: 8px;
+    border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px var(--brand-action-shadow);
-    color: #fff;
-    font-weight: 600;
-    font-size: 14px;
 }
 
 .sidebar-toggle:hover {
@@ -460,7 +457,7 @@ body::before, body::after {
 }
 
 .sidebar-toggle i {
-    font-size: 18px;
+    font-size: 20px;
     color: #fff;
 }
 

@@ -760,8 +760,10 @@ tbody th:last-child {
     }
 }
 
-/* AI芯片风格主题切换按钮 */
-.theme-toggle-btn {
+/* AI芯片风格顶栏按钮：主题切换、菜单、通知 */
+.theme-toggle-btn,
+.topbar .sidebar-toggle,
+.topbar .notification-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -781,37 +783,22 @@ tbody th:last-child {
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
+    padding: 0;
 }
 
-.theme-toggle-btn:hover {
+.theme-toggle-btn:hover,
+.topbar .sidebar-toggle:hover,
+.topbar .notification-btn:hover {
     background: #3B3BEA;
     box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
     transform: translateY(-1px);
 }
 
-.theme-toggle-btn i {
-    color: #fff;
-    font-size: 20px;
-}
-
-/* 顶栏按钮统一样式 */
-.topbar .sidebar-toggle,
-.topbar .notification-btn {
-    background: var(--brand-action);
-    border-color: var(--brand-action);
-    color: #fff;
-    box-shadow: 0 2px 8px var(--brand-action-shadow);
-}
-
-.topbar .sidebar-toggle:hover,
-.topbar .notification-btn:hover {
-    background: var(--brand-action-hover);
-    box-shadow: 0 4px 12px rgba(75, 75, 250, 0.4);
-}
-
+.theme-toggle-btn i,
 .topbar .sidebar-toggle i,
 .topbar .notification-btn i {
     color: #fff;
+    font-size: 20px;
 }
 
 .theme-dropdown {
