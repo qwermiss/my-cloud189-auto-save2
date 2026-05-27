@@ -1412,9 +1412,10 @@ tbody th:last-child {
 /* 移动端媒体墙：单列布局，禁止水平滚动 */
 @media (max-width: 768px) {
     [data-ui-style="media"] #taskTable tbody {
-        display: flex;
+        display: flex !important;
         flex-direction: column;
         gap: 12px;
+        overflow-x: hidden;
     }
 
     [data-ui-style="media"] #taskTable tr.media-wall-card {
@@ -1422,16 +1423,17 @@ tbody th:last-child {
         min-width: auto;
     }
 
-    /* 影院模式移动端卡片 */
+    /* 影院模式移动端卡片：覆盖桌面端 380px 高度 */
     [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card {
-        height: auto;
-        min-height: 220px;
+        height: auto !important;
+        min-height: 220px !important;
     }
 }
 
 @media (max-width: 900px) {
     body {
-        padding: 18px;
+        padding: 0; /* 移除 padding，避免水平滚动 */
+        margin: 0;
     }
 
     .header,

@@ -1494,10 +1494,20 @@ document.addEventListener('DOMContentLoaded', function() {
     if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', function() {
             const rows = document.querySelectorAll('#taskTable tbody tr');
+            const wasChecked = this.checked;
+
             rows.forEach(row => {
                 row.classList.toggle('selected', this.checked);
             });
-            
+
+            // 如果取消全选，解除影院模式锁定
+            if (!wasChecked) {
+                const cinemaBg = getCinemaBackground();
+                if (cinemaBg && cinemaBg.lockedTaskId) {
+                    cinemaBg.unlock();
+                }
+            }
+
             // 更新批量删除按钮显示状态
             const batchDeleteBtn = document.getElementById('batchDeleteBtn');
             if (batchDeleteBtn) {
@@ -1511,9 +1521,24 @@ document.addEventListener('DOMContentLoaded', function() {
     taskTable.addEventListener('click', function(e) {
         const row = e.target.closest('tr');
         if (!row) return;
-        
+
+        // 检查是否点击的是操作按钮区域（不触发选择）
+        if (e.target.closest('.media-btn-circle') || e.target.closest('.media-actions')) {
+            return;
+        }
+
+        const wasSelected = row.classList.contains('selected');
         row.classList.toggle('selected');
-        
+
+        // 如果任务从选中变为未选中，检查是否需要解除影院模式锁定
+        if (wasSelected && !row.classList.contains('selected')) {
+            const taskId = row.getAttribute('data-task-id');
+            const cinemaBg = getCinemaBackground();
+            if (cinemaBg && cinemaBg.lockedTaskId == taskId) {
+                cinemaBg.unlock();
+            }
+        }
+
         // 更新全选框状态
         const allRows = document.querySelectorAll('#taskTable tbody tr');
         const selectedRows = document.querySelectorAll('#taskTable tbody tr.selected');
