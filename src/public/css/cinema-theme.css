@@ -797,3 +797,13 @@
         max-width: min(var(--topbar-search-width), calc(100vw - 220px));
     }
 }
+
+/* 移动端：影院模式搜索框跟随flex布局 */
+@media (max-width: 768px) {
+    [data-theme="cinema"] .topbar-search {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        width: auto !important;
+        max-width: none !important;
+    }
+}

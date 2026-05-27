@@ -1433,6 +1433,14 @@ tbody th:last-child {
     }
 }
 
+/* 移动端：移除body padding防止水平溢出 */
+@media (max-width: 768px) {
+    body {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+}
+
 @media (max-width: 768px) {
     .header {
         padding-top: 24px;

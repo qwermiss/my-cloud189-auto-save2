@@ -638,6 +638,17 @@ body::before, body::after {
     }
 }
 
+/* 移动端搜索框：flex弹性布局，不使用固定宽度 */
+@media (max-width: 768px) {
+    .topbar-search,
+    [data-theme="cinema"] .topbar-search {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        width: auto !important;
+        max-width: none !important;
+    }
+}
+
 .notification-btn .badge {
     position: absolute;
     top: -4px;

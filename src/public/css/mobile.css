@@ -5,19 +5,41 @@
    ============================================ */
 @media screen and (max-width: 768px) {
     /* ---------- 基础布局 ---------- */
-    .app-layout {
-        flex-direction: column;
+    html {
+        overflow-x: hidden;
     }
 
-    /* 禁止水平滚动 */
     body {
         overflow-x: hidden;
+        overflow-y: hidden;
+        width: 100%;
+        max-width: 100vw;
+    }
+
+    .app-layout {
+        flex-direction: column;
+        overflow-x: hidden;
+        overflow-y: hidden;
+        width: 100%;
+        max-width: 100vw;
+    }
+
+    .main-content {
+        overflow-x: hidden;
+        overflow-y: hidden;
+        width: 100%;
+        max-width: 100%;
+        flex: 1;
+        min-height: 0;
     }
 
     .page-container {
-        overflow-x: hidden;
-        overflow-y: auto;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     /* 侧边栏：移动端全屏覆盖 */
@@ -60,17 +82,23 @@
         opacity: 1;
     }
 
-    /* 顶栏：紧凑布局 */
+    /* 顶栏：紧凑布局，防止溢出截断 */
     .topbar {
         height: 56px;
         padding: 0 12px;
-        gap: 8px;
+        gap: 6px;
+        overflow: visible;
+        flex-wrap: nowrap;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .sidebar-toggle {
         padding: 6px 10px;
         font-size: 13px;
         gap: 4px;
+        flex-shrink: 0;
     }
 
     .sidebar-toggle span {
@@ -81,8 +109,10 @@
         font-size: 20px;
     }
 
+    /* 搜索框弹性收缩，保证按钮不被挤出 */
     .topbar-search {
-        flex: 1;
+        flex: 1 1 0;
+        min-width: 0;
         max-width: none;
         height: 36px;
         padding: 0 12px;
@@ -96,15 +126,25 @@
         display: none !important;
     }
 
+    /* 操作区不收缩，消除右侧padding */
     .topbar-actions {
         gap: 6px;
-        padding-right: 0;
+        padding-right: 0 !important;
+        flex-shrink: 0;
+    }
+
+    /* 主题开关在移动端不绝对定位 */
+    .topbar .theme-switch {
+        position: static !important;
+        transform: none !important;
+        right: auto !important;
     }
 
     .notification-btn,
     .theme-toggle-btn {
         width: 36px;
         height: 36px;
+        flex-shrink: 0;
     }
 
     .notification-btn i,
@@ -159,10 +199,10 @@
     }
 
     /* ---------- 任务卡片 ---------- */
-    /* 移动端媒体墙：单列布局 */
+    /* 移动端媒体墙（明亮模式）：单列布局 */
     [data-ui-style="media"] #taskTable tbody {
         display: grid !important;
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
         gap: 12px;
     }
 
@@ -191,6 +231,25 @@
         font-size: 12px;
     }
 
+    /* 影院模式卡片移动端：单列布局 + 合适高度 */
+    [data-theme="cinema"][data-ui-style="media"] #taskTable tbody {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+
+    [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card {
+        height: auto !important;
+        min-height: 260px !important;
+        max-height: 320px !important;
+    }
+
+    /* 影院模式添加任务占位卡片：跟随移动端高度 */
+    [data-theme="cinema"][data-ui-style="media"] .add-task-placeholder {
+        height: auto !important;
+        min-height: 200px !important;
+    }
+
     .task-card {
         padding: 12px;
     }
@@ -217,6 +276,15 @@
         right: 0;
         left: auto;
         min-width: 140px;
+    }
+
+    /* 移动端：点击卡片展开简介时的样式 */
+    [data-theme="cinema"] #taskTable tr.media-wall-card.overview-expanded .media-card-hover-overview {
+        opacity: 1 !important;
+    }
+
+    [data-theme="cinema"] #taskTable tr.media-wall-card:not(.overview-expanded) .media-card-hover-overview {
+        opacity: 0 !important;
     }
 
     /* ---------- 模态框 ---------- */
