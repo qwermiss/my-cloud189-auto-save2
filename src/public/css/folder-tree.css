@@ -57,6 +57,7 @@
     vertical-align: middle;
 }
 
+.folder-tree-node.expanded > .folder-tree-item .expand-icon,
 .expanded > .expand-icon {
     transform: rotate(90deg);
 }
@@ -97,6 +98,7 @@
     min-width: fit-content;  /* 确保子目录也不会被截断 */
 }
 
+.folder-tree-node.expanded > .folder-children,
 .expanded > .folder-children {
     display: block;
 }

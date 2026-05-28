@@ -105,11 +105,12 @@ class FolderSelector {
 
     getNodePath(element) {
         const path = [];
-        let current = element;
+        // 如果传入的是行元素，从其父级包裹器开始向上查找，以保持路径正确
+        let current = element.classList.contains('folder-tree-item') ? element.parentElement : element;
         
         while (current && !current.classList.contains('folder-tree')) {
-            if (current.classList.contains('folder-tree-item')) {
-                const nameElement = current.querySelector('.folder-name');
+            if (current.classList.contains('folder-tree-node')) {
+                const nameElement = current.querySelector(':scope > .folder-tree-item > .folder-name');
                 if (nameElement) {
                     // 如果是在常用目录视图中，需要处理完整路径显示
                     const displayName = nameElement.textContent;
@@ -259,10 +260,15 @@ class FolderSelector {
 
     async renderFolderNodes(nodes, parentElement = this.folderTree) {
         parentElement.innerHTML = '';
-        let favorites = this.favorites
+        let favorites = this.favorites;
         nodes.forEach(node => {
+            // 创建一个节点包裹元素，隔离行元素与子目录容器，防止事件冒泡导致的错误父目录选中
+            const nodeWrapper = document.createElement('div');
+            nodeWrapper.className = 'folder-tree-node';
+
             const item = document.createElement('div');
             item.className = 'folder-tree-item';
+            
             // 常用目录视图不显示展开图标和复选框 是否允许点击
             const expandIcon = (this.isShowingFavorites || node.isFile) ? '' : '<span class="expand-icon">▶</span>';
             const isFavorite = favorites.some(f => f.id === node.id);
@@ -279,15 +285,17 @@ class FolderSelector {
 
             item.innerHTML = `
                 ${favoriteIcon}
-                <span class="folder-icon">${node.isFile?'📃':'📁'}</span>
+                <span class="folder-icon">${node.isFile ? '📃' : '📁'}</span>
                 <span class="folder-name">${displayName}</span>
                 ${expandIcon}
             `;
 
+            nodeWrapper.appendChild(item);
+
             const children = document.createElement('div');
             if (!this.isShowingFavorites) {
                 children.className = 'folder-children';
-                item.appendChild(children);
+                nodeWrapper.appendChild(children);
             }
 
             if (this.enableFavorites) {
@@ -297,7 +305,7 @@ class FolderSelector {
                     const { id, name } = e.currentTarget.dataset;
                     const isFavorite = favorites.some(f => f.id === id);
                     if (!isFavorite) {
-                        // 传入当前项的DOM元素
+                        // 传入当前行的DOM元素
                         this.addToFavorites(id, name, item);
                         e.currentTarget.classList.add('active');
                     } else {
@@ -306,18 +314,20 @@ class FolderSelector {
                     }
                 });
             }
+
             item.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 this.selectFolder(node, item);
                 if (this.isShowingFavorites || node.isFile) {
                     return;
                 }
-                if (!item.classList.contains('expanded')) {
+                if (!nodeWrapper.classList.contains('expanded')) {
                     await this.loadFolderNodes(node.id, children);
                 }
-                item.classList.toggle('expanded');
+                nodeWrapper.classList.toggle('expanded');
             });
-            parentElement.appendChild(item);
+
+            parentElement.appendChild(nodeWrapper);
         });
     }
 
@@ -337,12 +347,13 @@ class FolderSelector {
 
     updatePath(element) {
         this.currentPath = [];
-        let current = element;
+        // 如果传入的是行元素，从其父级包裹器开始向上查找，以保持路径正确
+        let current = element.classList.contains('folder-tree-item') ? element.parentElement : element;
         
         // 向上遍历DOM树获取完整路径
         while (current && !current.classList.contains('folder-tree')) {
-            if (current.classList.contains('folder-tree-item')) {
-                const nameElement = current.querySelector(':scope > .folder-name');
+            if (current.classList.contains('folder-tree-node')) {
+                const nameElement = current.querySelector(':scope > .folder-tree-item > .folder-name');
                 if (nameElement) {
                     this.currentPath.unshift(nameElement.textContent);
                 }
