@@ -350,7 +350,7 @@
 }
 
 /* 任务卡片 - 表格视图 */
-[data-theme="cinema"] #taskTable tr,
+[data-theme="cinema"][data-ui-style="classic"] #taskTable tr,
 [data-theme="cinema"] #accountTable tr {
     background-color: rgba(15, 23, 42, 0.35) !important;
     backdrop-filter: blur(20px);

@@ -38,7 +38,6 @@
     background: rgba(30, 41, 59, 0.7);
     border: 1px solid rgba(99, 102, 241, 0.12);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3), 0 0 16px rgba(99, 102, 241, 0.06);
-    backdrop-filter: blur(8px);
 }
 
 #taskTable tr:hover,
