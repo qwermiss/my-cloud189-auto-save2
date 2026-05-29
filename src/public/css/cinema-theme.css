@@ -327,8 +327,6 @@
 [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card,
 [data-theme="cinema"] .media-wall-card {
     background-color: rgba(15, 23, 42, 0.35) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(99, 102, 241, 0.25);
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.3),
@@ -696,10 +694,6 @@
 
     [data-theme="cinema"] .topbar-search {
         background: transparent;
-    }
-
-    [data-theme="cinema"] .media-wall-card {
-        background: rgba(30, 41, 59, 0.95);
     }
 
     [data-theme="cinema"] .modal-content {
