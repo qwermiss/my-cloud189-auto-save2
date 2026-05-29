@@ -1102,6 +1102,12 @@ tbody th:last-child {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    /* 防止圆角抗锯齿次像素漏光和溢出 */
+    background-clip: padding-box;
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+    transform: translateZ(0);
+    will-change: transform, box-shadow;
 }
 
 [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card:hover {
@@ -1117,6 +1123,9 @@ tbody th:last-child {
     inset: 0;
     background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.85) 100%) !important;
     z-index: 1;
+    /* 继承父级圆角，防止遮罩层直角溢出漏光 */
+    border-radius: inherit;
+    background-clip: padding-box;
 }
 
 [data-theme="cinema"][data-ui-style="media"] #taskTable tr.media-wall-card td {
@@ -1166,18 +1175,27 @@ tbody th:last-child {
     font-size: 13px;
     line-height: 1.6;
     opacity: 0;
-    transition: opacity 0.3s ease;
-    backdrop-filter: blur(4px);
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     z-index: 10;
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 6;
     -webkit-box-orient: vertical;
     text-overflow: ellipsis;
+    
+    /* 继承父级圆角，防止圆角漏光 */
+    border-radius: inherit;
+    background-clip: padding-box;
 }
 
 [data-theme="cinema"] #taskTable tr.media-wall-card:hover .media-card-hover-overview {
     opacity: 1;
+    visibility: visible;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
 /* 影院模式卡片底部信息区 */
