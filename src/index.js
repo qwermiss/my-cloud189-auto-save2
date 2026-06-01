@@ -201,11 +201,13 @@ AppDataSource.initialize().then(async () => {
                 authClient.setProxy(proxyUrl);
             }
             const qrData = await authClient.getQRCode();
+            // 拼接正确的二维码图片获取地址，使用 verified /api/logbox/oauth2/image.do 接口，且必须对 uuid 进行 URL 编码并带上会话的 REQID
+            const qrImageUrl = `https://open.e.189.cn/api/logbox/oauth2/image.do?uuid=${encodeURIComponent(qrData.uuid)}&REQID=${qrData.reqId}`;
             res.json({
                 success: true,
                 data: {
                     ...qrData,
-                    qrUrl: `https://open.e.189.cn/api/logbox/oauth2/safeQRCode.do?uuid=${qrData.uuid}`
+                    qrUrl: qrImageUrl
                 }
             });
         } catch (error) {
