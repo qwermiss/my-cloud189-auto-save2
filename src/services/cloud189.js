@@ -409,6 +409,8 @@ class Cloud189Service {
                             deletedExisting = true;
                             logTaskEvent(`[家庭中转] 检测到 403，尝试删除家庭空间已存在的同名文件...`);
                             await this._deleteFamilyFileByName(familyId, familyFolderId, fileName);
+                            logTaskEvent(`[家庭中转] 检测到 403，尝试彻底清空家庭回收站以解决残留冲突...`);
+                            await this.emptyFamilyRecycleBin(familyId);
                         }
                         // 403 继续重试
                     } else {
@@ -713,7 +715,7 @@ class Cloud189Service {
             logTaskEvent(`[家庭中转] 创建家庭目录: ${folderName}, 父目录ID: ${parentFolderId || '根目录'}`);
 
             // 家庭接口需要手动签名（SDK 不支持家庭接口签名）
-            const accessToken = this.client.accessToken;
+            const accessToken = await this.client.getAccessToken();
             const timestamp = Date.now();
 
             // 构建签名参数
@@ -863,6 +865,29 @@ class Cloud189Service {
             return { success: true };
         } catch (error) {
             logTaskEvent(`[家庭中转] 删除家庭目录失败: ${error.message}`);
+            return { success: false, message: error.message };
+        }
+    }
+
+    // 快速清空家庭回收站（直接发送一键清空任务）
+    async emptyFamilyRecycleBin(familyId) {
+        try {
+            logTaskEvent(`[家庭中转] 快速清空家庭回收站...`);
+            const result = await this.request('/api/open/batch/createBatchTask.action', {
+                method: 'POST',
+                form: {
+                    type: 'EMPTY_RECYCLE',
+                    taskInfos: '[]',
+                    familyId: String(familyId)
+                }
+            });
+            if (result?.res_code !== undefined && result.res_code !== 0) {
+                logTaskEvent(`[家庭中转] 快速清空家庭回收站失败: ${result.res_message}`);
+                return { success: false, message: result.res_message || '快速清空回收站失败' };
+            }
+            return { success: true };
+        } catch (error) {
+            logTaskEvent(`[家庭中转] 快速清空家庭回收站异常: ${error.message}`);
             return { success: false, message: error.message };
         }
     }

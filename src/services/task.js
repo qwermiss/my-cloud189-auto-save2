@@ -1766,7 +1766,7 @@ class TaskService {
                                 // 清空家庭回收站
                                 logTaskEvent(`[家庭中转] 清空家庭回收站...`);
                                 try {
-                                    await familyCloud189.clearFamilyRecycleBin(familyId);
+                                    await familyCloud189.emptyFamilyRecycleBin(familyId);
                                 } catch (e) {
                                     logTaskEvent(`[家庭中转] 清空回收站失败: ${e.message}`);
                                 }
@@ -1819,6 +1819,15 @@ class TaskService {
 
                                 if (enableCasFamilyTransfer && this._casFamilyInfo) {
                                     logTaskEvent(`[CAS] 处理: ${realFileName} - 家庭中转秒传`);
+                                    
+                                    // 每次秒传开始，主动清理中转目录和回收站，预防冲突
+                                    try {
+                                        logTaskEvent(`[家庭中转] 秒传开始，清空回收站...`);
+                                        await familyCloud189.emptyFamilyRecycleBin(this._casFamilyInfo.familyId);
+                                    } catch (e) {
+                                        logTaskEvent(`[家庭中转] 秒传开始清理回收站失败: ${e.message}`);
+                                    }
+
                                     const familyResult = await familyCloud189.familyRapidUpload(
                                         realFileName, parseInt(parsed.size),
                                         parsed.md5.toUpperCase(), parsed.slice_md5.toUpperCase(),
@@ -1835,12 +1844,19 @@ class TaskService {
                                             try {
                                                 await familyCloud189.deleteFamilyFile(this._casFamilyInfo.familyId, familyResult.familyFileId);
                                                 logTaskEvent(`[家庭中转] 已清理临时文件，释放配额`);
+                                                // 每次秒传结束，清空回收站以释放配额
+                                                await familyCloud189.emptyFamilyRecycleBin(this._casFamilyInfo.familyId);
                                             } catch (e) {
-                                                logTaskEvent(`[家庭中转] 清理临时文件失败: ${e.message}`);
+                                                logTaskEvent(`[家庭中转] 清理临时文件或清空回收站失败: ${e.message}`);
                                             }
                                         } else {
                                             uploadResult = { success: false, message: saveResult.message };
                                             logTaskEvent(`[家庭中转] ${realFileName} 转存失败: ${saveResult.message}`);
+                                            // 转存失败也尝试清理已传的临时文件和清空回收站
+                                            try {
+                                                await familyCloud189.deleteFamilyFile(this._casFamilyInfo.familyId, familyResult.familyFileId);
+                                                await familyCloud189.emptyFamilyRecycleBin(this._casFamilyInfo.familyId);
+                                            } catch (e) {}
                                         }
                                     } else {
                                         uploadResult = { success: false, message: familyResult.message };
@@ -1874,6 +1890,17 @@ class TaskService {
                             const batchFileIds = batchFiles.map(f => f.id);
 
                             logTaskEvent(`[CAS] ===== 第${batchNumber}批次，处理${batchFiles.length}个文件（剩余${remainingFiles.length}个） =====`);
+
+                            // 批次开始，主动清理中转目录和回收站，预防冲突
+                            if (enableCasFamilyTransfer && this._casFamilyInfo && casFamilyFolderIdActual) {
+                                try {
+                                    logTaskEvent(`[家庭中转] 第${batchNumber}批次开始，清理中转目录并清空回收站...`);
+                                    await familyCloud189.clearFamilyFolder(this._casFamilyInfo.familyId, casFamilyFolderIdActual);
+                                    await familyCloud189.emptyFamilyRecycleBin(this._casFamilyInfo.familyId);
+                                } catch (err) {
+                                    logTaskEvent(`[家庭中转] 批次开始清理失败: ${err.message}`);
+                                }
+                            }
 
                             // 1. 转存这批CAS文件
                             let transferSuccess = false;
