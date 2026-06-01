@@ -137,15 +137,23 @@ function openAddAccountModal() {
     chooseAccount = null
     const modal = document.getElementById('addAccountModal');
     modal.style.display = 'block';
+    
+    // 显示切换标签，并默认选中密码登录
+    document.getElementById('loginTypeTabs').style.display = 'flex';
+    switchLoginTab('pass');
 }
 
 function closeAddAccountModal() {
+    // 停止二维码流程
+    stopQRCodeFlow();
+    
     const modal = document.getElementById('addAccountModal');
     modal.style.display = 'none';
     const modalTitle = modal.querySelector('h3');
     modalTitle.textContent = '添加账号';
     const submitBtn = modal.querySelector('button[type="submit"]');
     submitBtn.textContent = '添加';
+    submitBtn.style.display = 'inline-block';
     document.getElementById('username').removeAttribute('readonly')
     // 清空表单
     document.getElementById('accountForm').reset();
@@ -172,6 +180,10 @@ async function editAccount(id) {
     // 修改标题
     const modalTitle = modal.querySelector('h3');
     modalTitle.textContent = '修改账号';
+
+    // 编辑模式隐藏切换标签并确保只显示密码表单
+    document.getElementById('loginTypeTabs').style.display = 'none';
+    switchLoginTab('pass');
 
     // 填充表单数据
     document.getElementById('username').value = chooseAccount.username;
@@ -855,4 +867,145 @@ async function showFamilyFolderSelectorAfterAddAccount(accountId, familyId) {
     window.selectedFamilyFolderId = '';
     window.selectedFamilyFolderName = '默认 cas_temp';
     await loadFamilyFolderTree(accountId, '', '');
+}
+
+// ================= 扫码登录前端控制逻辑 =================
+let qrPollInterval = null;
+let currentQRData = null;
+
+function switchLoginTab(mode) {
+    const passTab = document.getElementById('tab-pass-login');
+    const qrTab = document.getElementById('tab-qr-login');
+    const passFields = document.getElementById('password-login-fields');
+    const qrContainer = document.getElementById('qr-login-container');
+    const submitBtn = document.querySelector('#accountForm button[type="submit"]');
+    const usernameInput = document.getElementById('username');
+
+    if (mode === 'pass') {
+        passTab.classList.add('active');
+        qrTab.classList.remove('active');
+        passFields.style.display = 'block';
+        qrContainer.style.display = 'none';
+        submitBtn.style.display = 'inline-block';
+        usernameInput.setAttribute('required', 'true');
+        stopQRCodeFlow();
+    } else {
+        qrTab.classList.add('active');
+        passTab.classList.remove('active');
+        passFields.style.display = 'none';
+        qrContainer.style.display = 'block';
+        submitBtn.style.display = 'none';
+        usernameInput.removeAttribute('required');
+        startQRCodeFlow();
+    }
+}
+
+async function startQRCodeFlow() {
+    stopQRCodeFlow();
+    
+    const qrImg = document.getElementById('qr-code-img');
+    const statusMsg = document.getElementById('qr-status-message');
+    const statusMask = document.getElementById('qr-status-mask');
+    const refreshBtn = document.getElementById('qr-refresh-btn');
+
+    qrImg.src = '';
+    qrImg.style.filter = 'blur(5px)';
+    statusMsg.textContent = '正在获取二维码...';
+    statusMask.style.display = 'none';
+    refreshBtn.style.display = 'none';
+
+    try {
+        const response = await fetch('/api/accounts/qr-code');
+        const result = await response.json();
+        
+        if (result.success) {
+            currentQRData = result.data;
+            qrImg.src = result.data.qrUrl;
+            qrImg.onload = () => {
+                qrImg.style.filter = 'none';
+            };
+            statusMsg.textContent = '请使用天翼云盘 App 扫码登录';
+            
+            // 开始轮询状态
+            qrPollInterval = setInterval(pollQRCodeStatus, 3000);
+        } else {
+            statusMsg.textContent = '获取二维码失败: ' + (result.error || '未知错误');
+            qrImg.style.filter = 'none';
+        }
+    } catch (e) {
+        statusMsg.textContent = '网络错误，获取二维码失败';
+        qrImg.style.filter = 'none';
+    }
+}
+
+function stopQRCodeFlow() {
+    if (qrPollInterval) {
+        clearInterval(qrPollInterval);
+        qrPollInterval = null;
+    }
+    currentQRData = null;
+}
+
+async function pollQRCodeStatus() {
+    if (!currentQRData) return;
+
+    try {
+        const response = await fetch('/api/accounts/qr-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentQRData)
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            const status = result.status;
+            const statusMask = document.getElementById('qr-status-mask');
+            const maskText = document.getElementById('qr-mask-text');
+            const maskIcon = document.getElementById('qr-mask-icon');
+            const refreshBtn = document.getElementById('qr-refresh-btn');
+            const statusMsg = document.getElementById('qr-status-message');
+
+            if (status === 0) {
+                // 登录成功
+                stopQRCodeFlow();
+                message.success('扫码登录成功！');
+                closeAddAccountModal();
+                fetchAccounts();
+
+                // 如果新账号包含家庭空间，弹出家庭中转目录选择器
+                if (result.data?.familyId && result.data?.accountId) {
+                    await showFamilyFolderSelectorAfterAddAccount(result.data.accountId, result.data.familyId);
+                }
+            } else if (status === -11002) {
+                // 已扫码，等待确认
+                statusMask.style.display = 'flex';
+                maskIcon.textContent = '🔔';
+                maskText.textContent = '已扫码，请在手机端确认';
+                refreshBtn.style.display = 'none';
+                statusMsg.textContent = '已扫码，等待确认中...';
+            } else if (status === -11001) {
+                // 二维码过期
+                stopQRCodeFlow();
+                statusMask.style.display = 'flex';
+                maskIcon.textContent = '❌';
+                maskText.textContent = '二维码已过期';
+                refreshBtn.style.display = 'inline-block';
+                statusMsg.textContent = '二维码已过期，请点击重新获取';
+            } else {
+                // 等待扫码中
+                statusMask.style.display = 'none';
+                statusMsg.textContent = '请使用天翼云盘 App 扫码登录';
+            }
+        }
+    } catch (e) {
+        console.error('轮询二维码状态失败:', e);
+    }
+}
+
+function refreshQRCode(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    startQRCodeFlow();
 }
