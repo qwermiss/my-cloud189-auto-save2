@@ -2437,6 +2437,7 @@ class TaskService {
                     const daysDiff = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24);
                     if (daysDiff >= ConfigService.getConfigValue('task.taskExpireDays')) {
                         task.status = 'completed';
+                        await this._sendCompletionNotification(task, 'expired');
                     }
                     task.currentEpisodes = existingMediaCount;
                     logTaskEvent(`${task.resourceName} 没有增量剧集，当前剧集数: ${existingMediaCount}`);
@@ -2455,12 +2456,12 @@ class TaskService {
                 task.totalEpisodes = 1;
                 task.currentEpisodes = 1;
                 task.status = 'completed';
-                logTaskEvent(`电影 ${task.resourceName} 已完结，不再占用定时资源`);
+                await this._sendCompletionNotification(task, 'movie');
             }
-            // 检查是否达到总数
-            if (task.totalEpisodes && task.currentEpisodes >= task.totalEpisodes) {
+            // 检查是否达到总数（TV剧集完结）
+            if (task.totalEpisodes && task.currentEpisodes >= task.totalEpisodes && task.status !== 'completed') {
                 task.status = 'completed';
-                logTaskEvent(`${task.resourceName} 已完结`)
+                await this._sendCompletionNotification(task, 'tv_complete');
             }
 
             // 正常执行完成后，恢复为 pending（允许下次执行）
@@ -2486,6 +2487,42 @@ class TaskService {
             return saveResults.join('\n');
         } catch (error) {
             return await this._handleTaskFailure(task, error);
+        }
+    }
+
+    /**
+     * 发送任务完结通知
+     * @param {Object} task - 任务对象
+     * @param {string} reason - 完结原因 ('tv_complete' | 'movie' | 'expired')
+     */
+    async _sendCompletionNotification(task, reason = 'tv_complete') {
+        try {
+            const taskName = task.shareFolderName
+                ? `${task.resourceName}/${task.shareFolderName}`
+                : task.resourceName;
+
+            let message = '';
+            const progress = task.totalEpisodes
+                ? ` (${task.currentEpisodes}/${task.totalEpisodes})`
+                : '';
+
+            switch (reason) {
+                case 'movie':
+                    message = `🎬【电影完结】\n${taskName}\n已自动标记为完结`;
+                    break;
+                case 'expired':
+                    message = `⏰【剧集过期】\n${taskName}\n超过 ${ConfigService.getConfigValue('task.taskExpireDays')} 天无更新，已自动完结`;
+                    break;
+                case 'tv_complete':
+                default:
+                    message = `📺【剧集完结】\n${taskName}${progress}\n所有集数已转存完成，任务已完结`;
+                    break;
+            }
+
+            await this.messageUtil.sendMessage(message);
+            logTaskEvent(`[完结通知] ${taskName} 通知已发送`);
+        } catch (e) {
+            logTaskEvent(`[完结通知] 发送失败: ${e.message}`);
         }
     }
 

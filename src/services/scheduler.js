@@ -45,7 +45,9 @@ class SchedulerService {
         this.saveDefaultTaskJob('TV剧集总集数刷新', '0 2 * * *', async () => {
             const tasks = await taskRepo.find({ where: { videoType: 'tv' } });
             const { TMDBService } = require('./tmdb');
+            const { MessageUtil } = require('./message');
             const tmdbService = new TMDBService();
+            const messageUtil = new MessageUtil();
             for (const task of tasks) {
                 if (task.status === 'completed' || !task.tmdbId) continue;
                 try {
@@ -66,6 +68,11 @@ class SchedulerService {
                         task.status = 'completed';
                         await taskRepo.save(task);
                         logTaskEvent(`[TV完结] ${task.resourceName} 已完结（${task.currentEpisodes}/${task.totalEpisodes}）`);
+                        // 发送完结通知
+                        const taskName = task.shareFolderName
+                            ? `${task.resourceName}/${task.shareFolderName}`
+                            : task.resourceName;
+                        await messageUtil.sendMessage(`📺【剧集完结】\n${taskName} (${task.currentEpisodes}/${task.totalEpisodes})\n所有集数已转存完成，任务已完结`);
                     }
                     // 请求间隔，避免触发 TMDB API 限流
                     await new Promise(r => setTimeout(r, 500));
