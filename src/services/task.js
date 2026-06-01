@@ -1928,14 +1928,6 @@ class TaskService {
 
                                 if (enableCasFamilyTransfer && this._casFamilyInfo) {
                                     logTaskEvent(`[CAS] 处理: ${realFileName} - 家庭中转秒传`);
-                                    
-                                    // 每次秒传开始，主动清理中转目录和回收站，预防冲突
-                                    try {
-                                        logTaskEvent(`[家庭中转] 秒传开始，清空回收站...`);
-                                        await familyCloud189.emptyFamilyRecycleBin(this._casFamilyInfo.familyId);
-                                    } catch (e) {
-                                        logTaskEvent(`[家庭中转] 秒传开始清理回收站失败: ${e.message}`);
-                                    }
 
                                     const familyResult = await familyCloud189.familyRapidUpload(
                                         realFileName, parseInt(parsed.size),

@@ -341,13 +341,23 @@ class Cloud189Service {
         }
     }
 
+    // 辅助识别容量不足的响应
+    _isCapacityError(respBody) {
+        if (!respBody) return false;
+        const lowerBody = respBody.toLowerCase();
+        return lowerBody.includes('capacity') || 
+               lowerBody.includes('空间不足') ||
+               lowerBody.includes('no space') ||
+               lowerBody.includes('quota');
+    }
+
     // 家庭接口秒传（三步：init + check + commit）
     // 关键改动：改用个人RSA签名方式处理家庭接口（参考油猴脚本）
     // 每次请求生成新的随机密钥，不会有密钥使用次数限制问题
     // 2026-04-23: 经过测试发现限制是会话级别，间隔时间不是问题
-    // 2026-06-01: 403错误时先删除家庭空间已存在的同名文件再重试
+    // 2026-06-01: 403错误时根据不同原因进行自愈清理或黑名单跳过，最多重试3次
     async familyRapidUpload(fileName, fileSize, fileMd5, sliceMd5, familyId, familyFolderId) {
-        const maxRetries = 2;  // 最大重试次数
+        const maxRetries = 3;  // 最大尝试次数：3 次
         const stepDelay = 500;  // 步骤间延迟 500ms
         const retryDelay = 500;  // 403重试延迟 500ms
 
@@ -381,7 +391,9 @@ class Cloud189Service {
 
             let initResult;
             let lastError = null;
-            let deletedExisting = false;  // 标记是否已删除过已存在文件
+            let deletedExisting = false;  // 标记是否已处理过同名冲突删除
+            let clearedCapacity = false;   // 标记是否已处理过容量超限自愈清理
+
             for (let retry = 0; retry < maxRetries; retry++) {
                 // 每次重试刷新 RSA 密钥
                 if (retry > 0) {
@@ -403,16 +415,41 @@ class Cloud189Service {
                     }
                 } catch (e) {
                     if (e?.response?.statusCode === 403) {
+                        const respBody = e?.response?.body || '';
+
+                        // 1. 敏感/版权安全黑名单拦截 - 直接终止，无需清理和重试
+                        if (respBody.includes('black list') || respBody.includes('InfoSecurityErrorCode')) {
+                            const err = new Error('文件因天翼云盘版权或内容安全拦截，已跳过秒传');
+                            err.isBlacklisted = true;
+                            throw err;
+                        }
+
                         lastError = new Error(`Response code 403 (Forbidden)`);
-                        // 403 可能是文件已存在，尝试删除后重试（只删除一次）
+
+                        // 2. 容量不足引起的 403 - 执行一次全清理自愈
+                        if (this._isCapacityError(respBody)) {
+                            if (!clearedCapacity) {
+                                clearedCapacity = true;
+                                logTaskEvent(`[家庭中转] 🚨 空间不足(403)，启动自愈清理释放空间...`);
+                                if (familyFolderId) {
+                                    await this.clearFamilyFolder(familyId, familyFolderId);
+                                }
+                                await this.emptyFamilyRecycleBin(familyId);
+                                logTaskEvent(`[家庭中转] ⏳ 等待 1.5 秒让云端同步空间统计...`);
+                                await new Promise(resolve => setTimeout(resolve, 1500));
+                            } else {
+                                logTaskEvent(`[家庭中转] ⚠️ 清理后空间依然不足，可能存在非临时大文件占用`);
+                            }
+                            continue; // 重试
+                        }
+
+                        // 3. 普通 403 (文件同名冲突残留) - 删除已存在同名文件并清空回收站
                         if (!deletedExisting) {
                             deletedExisting = true;
-                            logTaskEvent(`[家庭中转] 检测到 403，尝试删除家庭空间已存在的同名文件...`);
+                            logTaskEvent(`[家庭中转] 检测到 403 (冲突)，尝试删除已存在的同名文件并清空回收站...`);
                             await this._deleteFamilyFileByName(familyId, familyFolderId, fileName);
-                            logTaskEvent(`[家庭中转] 检测到 403，尝试彻底清空家庭回收站以解决残留冲突...`);
                             await this.emptyFamilyRecycleBin(familyId);
                         }
-                        // 403 继续重试
                     } else {
                         throw new Error(`家庭initMultiUpload失败: ${e.message}`);
                     }
@@ -830,7 +867,7 @@ class Cloud189Service {
         }
     }
 
-    // 快速清空家庭回收站（直接发送一键清空任务）
+    // 快速清空家庭回收站（直接发送一键清空任务，等待完成）
     async emptyFamilyRecycleBin(familyId) {
         try {
             logTaskEvent(`[家庭中转] 快速清空家庭回收站...`);
@@ -846,6 +883,41 @@ class Cloud189Service {
                 logTaskEvent(`[家庭中转] 快速清空家庭回收站失败: ${result.res_message}`);
                 return { success: false, message: result.res_message || '快速清空回收站失败' };
             }
+
+            // 获取任务ID并等待完成
+            const taskId = result?.taskId;
+            if (taskId) {
+                logTaskEvent(`[家庭中转] 清空回收站任务已创建，taskId: ${taskId}，等待完成...`);
+                const maxWaitTime = 30000; // 最多等待30秒
+                const startTime = Date.now();
+                let taskStatus = 0;
+
+                while (Date.now() - startTime < maxWaitTime) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    const statusResult = await this.request('/api/open/batch/checkBatchTask.action', {
+                        method: 'POST',
+                        form: {
+                            taskId: String(taskId),
+                            type: 'EMPTY_RECYCLE'
+                        }
+                    });
+
+                    taskStatus = statusResult?.taskStatus || 0;
+                    const statusText = {1: '等待中', 2: '有冲突', 3: '处理中', 4: '已完成'};
+                    logTaskEvent(`[家庭中转] 清空回收站任务状态: ${statusText[taskStatus] || taskStatus}`);
+
+                    if (taskStatus === 4) {
+                        logTaskEvent(`[家庭中转] ✅ 清空家庭回收站完成`);
+                        return { success: true };
+                    }
+                }
+
+                logTaskEvent(`[家庭中转] ⚠️ 清空回收站任务超时，状态: ${taskStatus}`);
+                return { success: false, message: `任务超时，当前状态: ${taskStatus}` };
+            }
+
+            logTaskEvent(`[家庭中转] ✅ 清空家庭回收站任务已提交`);
             return { success: true };
         } catch (error) {
             logTaskEvent(`[家庭中转] 快速清空家庭回收站异常: ${error.message}`);
