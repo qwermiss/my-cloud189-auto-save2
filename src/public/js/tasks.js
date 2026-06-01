@@ -1332,7 +1332,7 @@ function openManualTmdbModal() {
         const yearMatch = taskName.match(/(.+?)\s*\(?(\d{4})\)?\s*$/);
         document.getElementById('tmdbSearchQuery').value = yearMatch ? yearMatch[1] : taskName;
     }
-    document.getElementById('tmdbSearchResults').innerHTML = '';
+    document.getElementById('tmdbSearchResultsManual').innerHTML = '';
     const modal = document.getElementById('manualTmdbModal');
     modal.style.zIndex = '2000'; // 确保置顶于文件列表弹窗之上
     modal.style.display = 'block';
@@ -1341,20 +1341,20 @@ function openManualTmdbModal() {
 function closeManualTmdbModal() {
     document.getElementById('manualTmdbModal').style.display = 'none';
     document.getElementById('tmdbSearchQuery').value = '';
-    document.getElementById('tmdbSearchResults').innerHTML = '';
+    document.getElementById('tmdbSearchResultsManual').innerHTML = '';
     document.getElementById('tmdbManualSeason').value = '';
 }
 
 // 2. 搜索 TMDB (手动指定弹窗)
 async function searchTmdbManual() {
     const query = document.getElementById('tmdbSearchQuery').value.trim();
-    const type = document.getElementById('tmdbSearchType').value;
+    const type = document.getElementById('tmdbSearchTypeManual').value;
     if (!query) {
         message.warning('请输入搜索关键字');
         return;
     }
     
-    const resultsContainer = document.getElementById('tmdbSearchResults');
+    const resultsContainer = document.getElementById('tmdbSearchResultsManual');
     resultsContainer.innerHTML = '<div style="text-align:center; padding: 20px;">正在搜索，请稍候...</div>';
     
     try {
