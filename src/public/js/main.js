@@ -122,12 +122,10 @@ async function loadStorageSummary() {
 
         storageCard.style.display = 'block';
 
+        // 统一使用 TB 单位显示
         const formatSize = (kbValue) => {
-            const gb = kbValue / (1024 * 1024);
-            if (gb >= 1024) {
-                return (gb / 1024).toFixed(2) + ' TB';
-            }
-            return gb.toFixed(2) + ' GB';
+            const tb = kbValue / (1024 * 1024 * 1024); // KB -> TB
+            return tb.toFixed(2) + ' TB';
         };
 
         const percent = ((cloudUsed / cloudTotal) * 100).toFixed(2);
