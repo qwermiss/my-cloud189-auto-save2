@@ -124,6 +124,27 @@
                             <p>实时监控任务运行状态和系统资源</p>
                         </div>
                     </div>
+
+                    <!-- 多账号容量聚合看板 -->
+                    <div id="storageSummaryCard" class="storage-summary-card" style="display: none;">
+                        <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                            <span>📊</span> 多账号容量聚合看板
+                        </h3>
+                        <div class="storage-summary-content" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div class="storage-progress-container" style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 600;">
+                                    <span>总使用空间 / 总容量</span>
+                                    <span id="storageTotalText">0 GB / 0 GB (0.00%)</span>
+                                </div>
+                                <div class="storage-progress-bar-bg">
+                                    <div id="storageProgressBar" class="storage-progress-bar-fill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div id="storageAccountsList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 8px;">
+                                <!-- 账号明细卡片将通过 JS 动态渲染 -->
+                            </div>
+                        </div>
+                    </div>
                     <div class="hero-stats" style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
                         <div class="hero-stat-card">
                             <div class="hero-stat-label">总任务数</div>
@@ -611,6 +632,24 @@
                                 <div class="settings-item-content">
                                     <label><input type="checkbox" id="enableAutoCreateFolder">云盘文件夹不存在时自动创建</label>
                                     <small class="form-text">仅会创建最后一级文件夹</small>
+                                </div>
+                            </div>
+                            <div class="settings-item">
+                                <div class="settings-item-label">天翼云盘特色功能</div>
+                                <div class="settings-item-content">
+                                    <div class="settings-checkbox-group" style="margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 16px;">
+                                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                            <input type="checkbox" id="enableAutoCheckin">每日自动签到与扩容
+                                        </label>
+                                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                            <input type="checkbox" id="enableStorageAggregation">多账号容量聚合看板
+                                        </label>
+                                    </div>
+                                    <div id="checkinCronContainer" style="display: flex; flex-direction: column; gap: 6px; border-left: 2px solid var(--accent); padding-left: 12px; margin-top: 8px;">
+                                        <label style="font-size: 13px; font-weight: 600;">自动签到定时 (Cron 表达式)</label>
+                                        <input type="text" id="checkinCron" placeholder="Cron表达式，默认：0 15 1 * * *">
+                                        <small class="form-text">默认每天凌晨 01:15:00 执行签到。格式：秒 分 时 日 月 周</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -23,6 +23,21 @@ async function loadSettings() {
             document.getElementById('enableCasFamilyTransfer').checked = settings.task?.enableCasFamilyTransfer ?? true;
             // casFamilyFolderId 已移除，改为账号级配置（Account.familyFolderId）
             document.getElementById('enableDeleteFamilyTempFile').checked = settings.task?.enableDeleteFamilyTempFile ?? true;
+            
+            // 天翼云盘特色功能
+            document.getElementById('enableAutoCheckin').checked = settings.task?.enableAutoCheckin ?? true;
+            document.getElementById('checkinCron').value = settings.task?.checkinCron || '0 15 1 * * *';
+            document.getElementById('enableStorageAggregation').checked = settings.task?.enableStorageAggregation ?? true;
+
+            const toggleCheckinCron = () => {
+                const container = document.getElementById('checkinCronContainer');
+                if (container) {
+                    container.style.display = document.getElementById('enableAutoCheckin').checked ? 'flex' : 'none';
+                }
+            };
+            document.getElementById('enableAutoCheckin').removeEventListener('change', toggleCheckinCron);
+            document.getElementById('enableAutoCheckin').addEventListener('change', toggleCheckinCron);
+            toggleCheckinCron();
 
             // 企业微信设置
             document.getElementById('enableWecom').checked = settings.wecom?.enable || false;
@@ -135,7 +150,10 @@ async function saveSettings() {
             enableDeleteCasFile: document.getElementById('enableDeleteCasFile').checked,
             enableCasFamilyTransfer: document.getElementById('enableCasFamilyTransfer').checked,
             // casFamilyFolderId 已移除，改为账号级配置
-            enableDeleteFamilyTempFile: document.getElementById('enableDeleteFamilyTempFile').checked
+            enableDeleteFamilyTempFile: document.getElementById('enableDeleteFamilyTempFile').checked,
+            enableAutoCheckin: document.getElementById('enableAutoCheckin').checked,
+            checkinCron: document.getElementById('checkinCron').value || '0 15 1 * * *',
+            enableStorageAggregation: document.getElementById('enableStorageAggregation').checked
         },
         wecom: {
             enable: document.getElementById('enableWecom').checked,

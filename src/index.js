@@ -171,18 +171,22 @@ AppDataSource.initialize().then(async () => {
         const accounts = await accountRepo.find();
         // 获取容量
         for (const account of accounts) {
-            
             account.capacity = {
                 cloudCapacityInfo: {usedSize:0,totalSize:0},
                 familyCapacityInfo: {usedSize:0,totalSize:0}
             }
             // 如果账号名是s打头 则不获取容量
             if (!account.username.startsWith('n_')) {
-                const cloud189 = Cloud189Service.getInstance(account);
-                const capacity = await cloud189.getUserSizeInfo()
-                if (capacity && capacity.res_code == 0) {
-                    account.capacity.cloudCapacityInfo = capacity.cloudCapacityInfo;
-                    account.capacity.familyCapacityInfo = capacity.familyCapacityInfo;
+                const cached = Cloud189Service.getCachedCapacity(account.username);
+                if (cached) {
+                    account.capacity = cached;
+                } else {
+                    const cloud189 = Cloud189Service.getInstance(account);
+                    const capacity = await cloud189.getUserSizeInfo();
+                    if (capacity && capacity.res_code == 0) {
+                        account.capacity.cloudCapacityInfo = capacity.cloudCapacityInfo;
+                        account.capacity.familyCapacityInfo = capacity.familyCapacityInfo;
+                    }
                 }
             }
             account.original_username = account.username;
@@ -427,6 +431,62 @@ AppDataSource.initialize().then(async () => {
             const folders = await cloud189.listFamilyFolderNodes(String(familyInfo.familyId), folderId);
             res.json({ success: true, data: { familyId: String(familyInfo.familyId), folders } });
         } catch (error) {
+            res.json({ success: false, error: error.message });
+        }
+    });
+
+    // 获取多账号容量聚合数据
+    app.get('/api/accounts/storage-summary', async (req, res) => {
+        try {
+            const accounts = await accountRepo.find();
+            let totalCloudSize = 0; // KB
+            let usedCloudSize = 0;  // KB
+            let totalFamilySize = 0; // KB
+            let usedFamilySize = 0;  // KB
+            let accountDetails = [];
+
+            for (const account of accounts) {
+                if (account.username.startsWith('n_')) continue;
+                
+                let capacity = Cloud189Service.getCachedCapacity(account.username);
+                if (!capacity) {
+                    const cloud189 = Cloud189Service.getInstance(account);
+                    const cloudCapacity = await cloud189.getUserSizeInfo();
+                    if (cloudCapacity && cloudCapacity.res_code == 0) {
+                        capacity = {
+                            cloudCapacityInfo: cloudCapacity.cloudCapacityInfo,
+                            familyCapacityInfo: cloudCapacity.familyCapacityInfo
+                        };
+                    }
+                }
+
+                if (capacity) {
+                    totalCloudSize += Number(capacity.cloudCapacityInfo.totalSize || 0);
+                    usedCloudSize += Number(capacity.cloudCapacityInfo.usedSize || 0);
+                    totalFamilySize += Number(capacity.familyCapacityInfo.totalSize || 0);
+                    usedFamilySize += Number(capacity.familyCapacityInfo.usedSize || 0);
+
+                    accountDetails.push({
+                        username: account.username.replace(/(.{3}).*(.{4})/, '$1****$2'),
+                        alias: account.alias || '',
+                        cloudUsed: capacity.cloudCapacityInfo.usedSize || 0,
+                        cloudTotal: capacity.cloudCapacityInfo.totalSize || 0,
+                        familyUsed: capacity.familyCapacityInfo.usedSize || 0,
+                        familyTotal: capacity.familyCapacityInfo.totalSize || 0
+                    });
+                }
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    cloud: { total: totalCloudSize, used: usedCloudSize },
+                    family: { total: totalFamilySize, used: usedFamilySize },
+                    accounts: accountDetails
+                }
+            });
+        } catch (error) {
+            console.error('[容量聚合] 获取容量聚合失败:', error);
             res.json({ success: false, error: error.message });
         }
     });

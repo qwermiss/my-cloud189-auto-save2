@@ -74,6 +74,17 @@ class SchedulerService {
                 }
             }
         });
+
+        // 5. 每日自动签到
+        if (ConfigService.getConfigValue('task.enableAutoCheckin')) {
+            this.saveDefaultTaskJob('每日云盘自动签到', ConfigService.getConfigValue('task.checkinCron'), async () => {
+                await taskService.runDailyCheckin();
+            });
+        }
+        // 6. 账号Session心跳保活
+        this.saveDefaultTaskJob('账号Session心跳保活', '0 */4 * * *', async () => {
+            await taskService.runAccountsKeepAlive();
+        });
     }
 
     static saveTaskJob(task, taskService) {
@@ -186,6 +197,16 @@ class SchedulerService {
             settings.task.cleanRecycleCron,
             '自动清空回收站',
             async () => taskService.clearRecycleBin(enableAutoClearRecycle, enableAutoClearFamilyRecycle)
+        );
+
+        // 处理每日自动签到任务
+        handleScheduleTask(
+            ConfigService.getConfigValue('task.enableAutoCheckin'),
+            settings.task.enableAutoCheckin,
+            ConfigService.getConfigValue('task.checkinCron'),
+            settings.task.checkinCron,
+            '每日云盘自动签到',
+            async () => taskService.runDailyCheckin()
         );
         return true;
     }

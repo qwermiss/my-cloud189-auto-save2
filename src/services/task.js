@@ -3633,6 +3633,112 @@ class TaskService {
         const cloud189 = Cloud189Service.getInstance(task.account);
         return await this.getAllFolderFiles(cloud189, task)
     }
+
+    // 每日自动签到
+    async runDailyCheckin() {
+        logTaskEvent('================================');
+        logTaskEvent('[自动签到] 开始执行每日自动签到任务...');
+        const accounts = await this.accountRepo.find();
+        let totalBonus = 0;
+        let totalFamilyBonus = 0;
+        let messageLines = [];
+
+        for (const account of accounts) {
+            if (account.username.startsWith('n_')) continue;
+            const usernameDisplay = account.username.replace(/(.{3}).*(.{4})/, '$1****$2');
+            logTaskEvent(`[自动签到] 正在签到账号: ${usernameDisplay}`);
+            try {
+                const cloud189 = Cloud189Service.getInstance(account);
+                
+                // 1. 个人签到
+                const personalResult = await cloud189.client.userSign();
+                let personalMsg = '失败';
+                if (personalResult) {
+                    if (personalResult.isSign) {
+                        personalMsg = `已签到过 (今日获得 0MB)`;
+                    } else {
+                        const bonus = personalResult.netdiskBonus || 0;
+                        totalBonus += bonus;
+                        personalMsg = `成功 (+${bonus}MB)`;
+                    }
+                }
+                
+                // 2. 家庭签到
+                let familyMsg = '无家庭组';
+                if (account.familyId) {
+                    const familyResult = await cloud189.client.familyUserSign(account.familyId);
+                    if (familyResult) {
+                        if (familyResult.signStatus === 4) {
+                            familyMsg = `已签到过 (今日获得 0MB)`;
+                        } else {
+                            const fBonus = familyResult.bonusSpace || 0;
+                            totalFamilyBonus += fBonus;
+                            familyMsg = `成功 (+${fBonus}MB)`;
+                        }
+                    } else {
+                        familyMsg = '失败';
+                    }
+                }
+                
+                logTaskEvent(`[自动签到] 账号 ${usernameDisplay} | 个人: ${personalMsg} | 家庭: ${familyMsg}`);
+                messageLines.push(`- 账号 ${usernameDisplay} : 个人 ${personalMsg} | 家庭 ${familyMsg}`);
+            } catch (e) {
+                logTaskEvent(`[自动签到] 账号 ${usernameDisplay} 签到异常: ${e.message}`);
+                messageLines.push(`- 账号 ${usernameDisplay} : 异常 (${e.message})`);
+            }
+            // 避免请求过快
+            await new Promise(r => setTimeout(r, 2000));
+        }
+
+        logTaskEvent(`[自动签到] 每日自动签到任务执行完毕，个人新增 ${totalBonus}MB，家庭新增 ${totalFamilyBonus}MB`);
+        logTaskEvent('================================');
+        
+        // 发送消息通知
+        if (messageLines.length > 0) {
+            const reportMessage = `【天翼云盘每日签到报告】\n` +
+                `- 个人空间扩容总计: ${totalBonus} MB\n` +
+                `- 家庭空间扩容总计: ${totalFamilyBonus} MB\n` +
+                `详细信息:\n` + messageLines.join('\n');
+            this.messageUtil.sendMessage(reportMessage);
+        }
+    }
+
+    // 账号心跳探测与保活
+    async runAccountsKeepAlive() {
+        logTaskEvent('================================');
+        logTaskEvent('[账号保活] 开始执行账号Session心跳探测...');
+        const accounts = await this.accountRepo.find();
+        
+        for (const account of accounts) {
+            if (account.username.startsWith('n_')) continue;
+            const usernameDisplay = account.username.replace(/(.{3}).*(.{4})/, '$1****$2');
+            try {
+                const cloud189 = Cloud189Service.getInstance(account);
+                // 1. 发送探测心跳
+                const info = await cloud189.getUserSizeInfo();
+                if (info && info.res_code === 0) {
+                    logTaskEvent(`[账号保活] 账号 ${usernameDisplay} 心跳正常`);
+                } else {
+                    logTaskEvent(`[账号保活] 账号 ${usernameDisplay} 心跳返回异常，尝试重新加载 Session/Token`);
+                    // 2. 强制获取并刷新 Session (内部有 Token 过期静默刷新)
+                    const session = await cloud189.client.getSession();
+                    if (session) {
+                        logTaskEvent(`[账号保活] 账号 ${usernameDisplay} Session 刷新成功`);
+                    } else {
+                        throw new Error('Session 刷新返回为空');
+                    }
+                }
+            } catch (e) {
+                logTaskEvent(`[账号保活] 账号 ${usernameDisplay} 保活检测失败: ${e.message}`);
+                // 如果保活失败且是因安全阻断等，可以发警告消息
+                this.messageUtil.sendMessage(`【账号失效警告】您的天翼云盘账号 [${usernameDisplay}] 无法通过心跳保活，凭证可能已彻底失效，请尽快前往 Web 面板重新扫码登录！\n原因: ${e.message}`);
+            }
+            // 间歇
+            await new Promise(r => setTimeout(r, 2000));
+        }
+        logTaskEvent('[账号保活] 账号Session心跳探测结束');
+        logTaskEvent('================================');
+    }
 }
 
 module.exports = { TaskService };

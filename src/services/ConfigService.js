@@ -20,7 +20,10 @@ class ConfigService {
         enableCasRapidUpload: true,
         enableDeleteCasFile: true,
         enableCasFamilyTransfer: true,
-        enableDeleteFamilyTempFile: true
+        enableDeleteFamilyTempFile: true,
+        enableAutoCheckin: true,
+        checkinCron: '0 15 1 * * *',
+        enableStorageAggregation: true
       },
       wecom: {
         enable: false,

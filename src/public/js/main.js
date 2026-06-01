@@ -89,6 +89,86 @@ async function loadDashboardStats() {
     }
 }
 
+async function loadStorageSummary() {
+    try {
+        const settingsRes = await fetch('/api/settings');
+        const settingsData = await settingsRes.json();
+        if (!settingsData.success) return;
+
+        const enableStorageAggregation = settingsData.data.task?.enableStorageAggregation ?? true;
+        const storageCard = document.getElementById('storageSummaryCard');
+        if (!storageCard) return;
+
+        if (!enableStorageAggregation) {
+            storageCard.style.display = 'none';
+            return;
+        }
+
+        const summaryRes = await fetch('/api/accounts/storage-summary');
+        const summaryData = await summaryRes.json();
+        if (!summaryData.success || !summaryData.data) {
+            storageCard.style.display = 'none';
+            return;
+        }
+
+        const data = summaryData.data;
+        const cloudTotal = data.cloud.total || 0; // KB
+        const cloudUsed = data.cloud.used || 0;   // KB
+        
+        if (cloudTotal === 0) {
+            storageCard.style.display = 'none';
+            return;
+        }
+
+        storageCard.style.display = 'block';
+
+        const formatSize = (kbValue) => {
+            const gb = kbValue / (1024 * 1024);
+            if (gb >= 1024) {
+                return (gb / 1024).toFixed(2) + ' TB';
+            }
+            return gb.toFixed(2) + ' GB';
+        };
+
+        const percent = ((cloudUsed / cloudTotal) * 100).toFixed(2);
+        
+        document.getElementById('storageTotalText').textContent = `${formatSize(cloudUsed)} / ${formatSize(cloudTotal)} (${percent}%)`;
+        document.getElementById('storageProgressBar').style.width = `${percent}%`;
+
+        const accountsListEl = document.getElementById('storageAccountsList');
+        if (accountsListEl) {
+            if (data.accounts && data.accounts.length > 0) {
+                accountsListEl.innerHTML = data.accounts.map(acc => {
+                    const accTotal = acc.cloudTotal || 0;
+                    const accUsed = acc.cloudUsed || 0;
+                    const accPercent = accTotal > 0 ? ((accUsed / accTotal) * 100).toFixed(1) : '0.0';
+                    const displayName = acc.alias ? `${acc.alias} (${acc.username})` : acc.username;
+
+                    return `
+                        <div class="storage-account-item">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;" title="${displayName}">${displayName}</span>
+                                <span style="font-size: 12px; font-weight: 600; color: var(--accent-strong);">${accPercent}%</span>
+                            </div>
+                            <div class="storage-progress-bar-bg" style="height: 6px; margin: 4px 0;">
+                                <div class="storage-progress-bar-fill" style="width: ${accPercent}%; height: 100%;"></div>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between;">
+                                <span>已用: ${formatSize(accUsed)}</span>
+                                <span>总量: ${formatSize(accTotal)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                accountsListEl.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">暂无云盘账号容量信息</div>';
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load storage summary:', error);
+    }
+}
+
 function debounce(func, wait) {
     let timeout;
     return function (...args) {
@@ -396,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 加载版本号和仪表盘
     loadVersion();
     loadDashboardStats();
+    loadStorageSummary();
     // 初始化所有功能
     initTabs();
     initAccountForm();
@@ -449,6 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchAccounts(true);
     fetchTasks();
     loadDashboardStats();
+    loadStorageSummary();
 
     // 定时刷新数据
     // setInterval(() => {

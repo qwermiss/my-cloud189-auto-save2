@@ -7,6 +7,16 @@ const UploadCryptoUtils = require('../utils/UploadCryptoUtils');
 const CasUtils = require('../utils/CasUtils');
 class Cloud189Service {
     static instances = new Map();
+    static capacityCache = new Map();
+
+    static getCachedCapacity(username) {
+        const cached = this.capacityCache.get(username);
+        const CACHE_EXPIRE = 30 * 60 * 1000; // 30分钟缓存
+        if (cached && (Date.now() - cached.updateTime < CACHE_EXPIRE)) {
+            return cached.capacity;
+        }
+        return null;
+    }
 
     static getInstance(account) {
         const key = account.username;
@@ -82,8 +92,18 @@ class Cloud189Service {
     
     async getUserSizeInfo() {
         try {
-            return await this.client.getUserSizeInfo()    
-        }catch(error) {
+            const res = await this.client.getUserSizeInfo();
+            if (res && res.res_code == 0) {
+                Cloud189Service.capacityCache.set(this.client.username, {
+                    capacity: {
+                        cloudCapacityInfo: res.cloudCapacityInfo,
+                        familyCapacityInfo: res.familyCapacityInfo
+                    },
+                    updateTime: Date.now()
+                });
+            }
+            return res;
+        } catch(error) {
             if (error instanceof got.HTTPError) {
                 const responseBody = error.response.body;
                 logTaskEvent('请求天翼云盘接口失败:'+ responseBody);
@@ -96,9 +116,8 @@ class Cloud189Service {
                 logTaskEvent('获取用户空间信息失败:' +  error.message);
             }
             console.log(error)
-            return null
+            return null;
         }
-    
     }
     // 解析分享链接获取文件信息
     async getShareInfo(shareCode) {
