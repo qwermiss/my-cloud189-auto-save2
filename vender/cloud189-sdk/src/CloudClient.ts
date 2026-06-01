@@ -122,7 +122,7 @@ export class CloudClient {
             if (options.url.href.includes(API_URL)) {
               const accessToken = await this.getAccessToken()
               signatureAccesstoken(options, accessToken)
-            } else if (options.url.href.includes(WEB_URL)) {
+            } else if (options.url.href.includes(WEB_URL) || options.url.host === 'm.cloud.189.cn') {
               if (options.url.href.includes('/open')) {
                 const appkey = '600100422'
                 signatureAppKey(options, appkey)
@@ -347,17 +347,60 @@ export class CloudClient {
   }
 
   /**
-   * 个人签到任务
+   * 个人签到任务（2025/2026最新接口，包含每日空间签到和相册签到）
    * @returns 签到结果
    */
-  userSign(): Promise<UserSignResponse> {
-    return this.request
-      .get(
-        `${WEB_URL}/mkt/userSign.action?rand=${new Date().getTime()}&clientType=TELEANDROID&version=${
-          config.version
-        }&model=${config.model}`
-      )
-      .json()
+  async userSign(): Promise<any> {
+    try {
+      // 1. 每日个人空间签到与抽奖
+      const res1 = await this.request
+        .get(`https://m.cloud.189.cn/v2/drawPrizeMarketDetails.action?taskId=TASK_SIGNIN`)
+        .json<any>()
+      
+      // 2. 每日相册备份签到与抽奖
+      const res2 = await this.request
+        .get(`https://m.cloud.189.cn/v2/drawPrizeMarketDetails.action?taskId=TASK_SIGNIN_PHOTOS`)
+        .json<any>()
+      
+      // 提取抽奖获得的空间大小（例如从“50M空间”中提取 50）
+      const getSpace = (res: any) => {
+        if (res && res.prizeName) {
+          const match = res.prizeName.match(/(\d+)\s*(M|G)B?/i)
+          if (match) {
+            const num = parseInt(match[1])
+            const unit = match[2].toUpperCase()
+            return unit === 'G' ? num * 1024 : num
+          }
+        }
+        if (res && res.description) {
+          const match = res.description.match(/(\d+)\s*(M|G)B?/i)
+          if (match) {
+            const num = parseInt(match[1])
+            const unit = match[2].toUpperCase()
+            return unit === 'G' ? num * 1024 : num
+          }
+        }
+        return 0
+      }
+
+      // 判断今日是否已经签到过（如果两个接口均返回已抽过奖，或者不含活动ID，则视作已签到）
+      const isSign = (res1?.errorCode === 'UserSignDrawRepeat' || !res1?.activityId) && 
+                     (res2?.errorCode === 'UserSignDrawRepeat' || !res2?.activityId)
+
+      // 累计本次签到获得的奖励大小
+      const bonus1 = getSpace(res1)
+      const bonus2 = getSpace(res2)
+      
+      return {
+        isSign,
+        netdiskBonus: bonus1 + bonus2,
+        res1,
+        res2
+      }
+    } catch (e: any) {
+      logger.error(`userSign error: ${e.message}`)
+      throw e
+    }
   }
 
   /**

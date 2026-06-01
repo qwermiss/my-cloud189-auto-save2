@@ -3663,20 +3663,26 @@ class TaskService {
                     }
                 }
                 
-                // 2. 家庭签到
+                // 2. 家庭签到（使用 try-catch 包裹，防止家庭签到接口失效影响主流程）
                 let familyMsg = '无家庭组';
                 if (account.familyId) {
-                    const familyResult = await cloud189.client.familyUserSign(account.familyId);
-                    if (familyResult) {
-                        if (familyResult.signStatus === 4) {
-                            familyMsg = `已签到过 (今日获得 0MB)`;
+                    try {
+                        const familyResult = await cloud189.client.familyUserSign(account.familyId);
+                        if (familyResult) {
+                            if (familyResult.signStatus === 4) {
+                                familyMsg = `已签到过 (今日获得 0MB)`;
+                            } else {
+                                const fBonus = familyResult.bonusSpace || 0;
+                                totalFamilyBonus += fBonus;
+                                familyMsg = `成功 (+${fBonus}MB)`;
+                            }
                         } else {
-                            const fBonus = familyResult.bonusSpace || 0;
-                            totalFamilyBonus += fBonus;
-                            familyMsg = `成功 (+${fBonus}MB)`;
+                            familyMsg = '失败';
                         }
-                    } else {
-                        familyMsg = '失败';
+                    } catch (fe) {
+                        // 记录家庭签到异常（例如 404 等，通常代表官方该接口已关闭或风控拦截），但不抛出中断流程
+                        logTaskEvent(`[自动签到] 账号 ${usernameDisplay} 家庭签到异常: ${fe.message}`);
+                        familyMsg = `异常 (${fe.message})`;
                     }
                 }
                 
