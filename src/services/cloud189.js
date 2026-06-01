@@ -713,20 +713,29 @@ class Cloud189Service {
     async createFamilyFolder(familyId, folderName, parentFolderId = '') {
         try {
             logTaskEvent(`[家庭中转] 创建家庭目录: ${folderName}, 父目录ID: ${parentFolderId || '根目录'}`);
-
-            // 直接使用 SDK 客户端的 createFolder 方法，它内置了对家庭空间创建目录及签名的支持
-            const result = await this.client.createFolder({
-                familyId: String(familyId),
-                parentFolderId: String(parentFolderId || ''),
-                folderName: folderName
+            const result = await this.request('/api/open/family/file/createFolder.action', {
+                method: 'POST',
+                form: {
+                    familyId: String(familyId),
+                    parentId: String(parentFolderId || ''),
+                    folderName: folderName
+                }
             });
-
-            if (!result || !result.id) {
+            if (!result) {
+                logTaskEvent(`[家庭中转] 创建家庭目录失败: 请求返回 null`);
+                return { success: false, message: '请求失败' };
+            }
+            if (result?.res_code !== undefined && result.res_code !== 0) {
+                logTaskEvent(`[家庭中转] 创建家庭目录失败: ${result.res_message || JSON.stringify(result)}`);
+                return { success: false, message: result.res_message || '创建目录失败' };
+            }
+            const folderId = result?.id || result?.folderId || result?.data?.folderId;
+            if (!folderId) {
                 logTaskEvent(`[家庭中转] 创建家庭目录失败: 未获取到目录ID`);
                 return { success: false, message: '未获取到目录ID' };
             }
-            logTaskEvent(`[家庭中转] 家庭目录创建成功: ${folderName}, ID: ${result.id}`);
-            return { success: true, folderId: String(result.id) };
+            logTaskEvent(`[家庭中转] 家庭目录创建成功: ${folderName}, ID: ${folderId}`);
+            return { success: true, folderId: String(folderId) };
         } catch (error) {
             logTaskEvent(`[家庭中转] 创建家庭目录失败: ${error.message}`);
             return { success: false, message: error.message };
@@ -1369,30 +1378,47 @@ class Cloud189Service {
 
     // 下载文件内容（用于下载 CAS 文件文本）
     async downloadFileContent(fileId) {
-        try {
-            // 获取文件下载链接
-            const response = await this.request('/api/open/file/getFileDownloadUrl.action', {
-                method: 'GET',
-                searchParams: {
-                    fileId,
-                    type: 1
+        let lastError = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                // 获取文件下载链接
+                const response = await this.request('/api/open/file/getFileDownloadUrl.action', {
+                    method: 'GET',
+                    searchParams: {
+                        fileId,
+                        type: 1
+                    }
+                });
+                if (!response || !response.fileDownloadUrl) {
+                    throw new Error(response?.res_msg || '获取下载链接失败');
                 }
-            });
-            if (!response || !response.fileDownloadUrl) {
-                throw new Error(response?.res_msg || '获取下载链接失败');
+                const downloadUrl = response.fileDownloadUrl.replace(/&amp;/g, '&');
+                
+                // 下载文件内容
+                const gotOpts = {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    },
+                    timeout: 10000 // 10秒超时
+                };
+                
+                const proxyUrl = ProxyUtil.getProxy('cloud189');
+                if (proxyUrl) {
+                    const { HttpsProxyAgent } = require('https-proxy-agent');
+                    gotOpts.agent = { https: new HttpsProxyAgent(proxyUrl) };
+                }
+                
+                const content = await got(downloadUrl, gotOpts).text();
+                return content;
+            } catch (error) {
+                lastError = error;
+                logTaskEvent(`下载文件内容尝试 ${attempt}/3 失败(fileId=${fileId}): ${error.message}`);
+                if (attempt < 3) {
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // 等待2秒重试
+                }
             }
-            const downloadUrl = response.fileDownloadUrl.replace(/&amp;/g, '&');
-            // 下载文件内容
-            const content = await got(downloadUrl, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
-            }).text();
-            return content;
-        } catch (error) {
-            logTaskEvent(`下载文件内容失败(fileId=${fileId}): ${error.message}`);
-            throw error;
         }
+        throw lastError;
     }
 
     // 获取目录下的所有文件（支持翻页）
