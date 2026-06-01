@@ -345,6 +345,7 @@ class Cloud189Service {
     // 关键改动：改用个人RSA签名方式处理家庭接口（参考油猴脚本）
     // 每次请求生成新的随机密钥，不会有密钥使用次数限制问题
     // 2026-04-23: 经过测试发现限制是会话级别，间隔时间不是问题
+    // 2026-06-01: 403错误时先删除家庭空间已存在的同名文件再重试
     async familyRapidUpload(fileName, fileSize, fileMd5, sliceMd5, familyId, familyFolderId) {
         const maxRetries = 2;  // 最大重试次数
         const stepDelay = 500;  // 步骤间延迟 500ms
@@ -380,6 +381,7 @@ class Cloud189Service {
 
             let initResult;
             let lastError = null;
+            let deletedExisting = false;  // 标记是否已删除过已存在文件
             for (let retry = 0; retry < maxRetries; retry++) {
                 // 每次重试刷新 RSA 密钥
                 if (retry > 0) {
@@ -402,6 +404,12 @@ class Cloud189Service {
                 } catch (e) {
                     if (e?.response?.statusCode === 403) {
                         lastError = new Error(`Response code 403 (Forbidden)`);
+                        // 403 可能是文件已存在，尝试删除后重试（只删除一次）
+                        if (!deletedExisting) {
+                            deletedExisting = true;
+                            logTaskEvent(`[家庭中转] 检测到 403，尝试删除家庭空间已存在的同名文件...`);
+                            await this._deleteFamilyFileByName(familyId, familyFolderId, fileName);
+                        }
                         // 403 继续重试
                     } else {
                         throw new Error(`家庭initMultiUpload失败: ${e.message}`);
@@ -666,6 +674,36 @@ class Cloud189Service {
             return result;
         } catch (error) {
             logTaskEvent(`[家庭中转] 删除家庭临时文件异常(${fileId}): ${error.message}`);
+        }
+    }
+
+    // 根据文件名删除家庭空间中的文件（用于处理403冲突）
+    async _deleteFamilyFileByName(familyId, folderId, fileName) {
+        try {
+            // 获取目录文件列表
+            const result = await this.request('/api/open/family/file/listFiles.action', {
+                method: 'GET',
+                searchParams: {
+                    familyId: String(familyId),
+                    folderId: String(folderId || ''),
+                    pageNum: 1,
+                    pageSize: 100,
+                    mediaType: 0,
+                    orderBy: 3,
+                    descending: true
+                }
+            });
+            if (!result || !result.fileListAO) return;
+
+            // 查找同名文件
+            const fileList = result.fileListAO.fileList || [];
+            const existingFile = fileList.find(f => f.name === fileName);
+            if (existingFile) {
+                logTaskEvent(`[家庭中转] 发现已存在文件: ${fileName}, 尝试删除...`);
+                await this.deleteFamilyFile(familyId, existingFile.id, fileName);
+            }
+        } catch (error) {
+            logTaskEvent(`[家庭中转] 删除同名文件失败: ${error.message}`);
         }
     }
 
