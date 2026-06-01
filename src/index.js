@@ -1384,7 +1384,7 @@ AppDataSource.initialize().then(async () => {
             folderCache.set(cacheKey, folders);
             res.json({ success: true, data: folders });
         } catch (error) {
-            res.status(500).json({ success: false, error: err.message });
+            res.status(500).json({ success: false, error: error.message });
         }
     });
 
