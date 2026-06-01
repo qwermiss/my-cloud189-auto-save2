@@ -274,3 +274,10 @@ button {
 [data-theme='cinema'] .folder-tree-item:hover {
     background-color: var(--hover-bg);
 }
+
+/* 账号列表表头栏毛玻璃效果 */
+#accountTable thead th {
+    background: rgba(255, 255, 255, 0.45) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}

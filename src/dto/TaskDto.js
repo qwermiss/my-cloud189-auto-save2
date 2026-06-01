@@ -36,9 +36,18 @@ class CreateTaskDto {
         if (this.matchOperator && !['lt', 'eq', 'gt', 'contains', 'notContains'].includes(this.matchOperator)) {
             throw new Error('无效的匹配操作符');
         }
-        // if (!this.tgbot && (!this.selectedFolders || this.selectedFolders.length === 0)) {
-        //     throw new Error('分享目录最少选择一个');
-        // }
+        if (this.enableCron) {
+            if (!this.cronExpression) {
+                throw new Error('启用定时任务时，Cron表达式不能为空');
+            }
+            if (this.cronExpression.trim().split(/\s+/).length !== 5) {
+                throw new Error('Cron表达式必须为5位表达式模式（分 时 日 月 周）');
+            }
+            const cron = require('node-cron');
+            if (!cron.validate(this.cronExpression)) {
+                throw new Error('无效的Cron表达式');
+            }
+        }
     }
 }
 

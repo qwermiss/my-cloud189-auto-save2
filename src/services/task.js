@@ -2524,6 +2524,18 @@ class TaskService {
             await taskCacheManager.clearCache(task.id);
             logTaskEvent(`任务[${task.resourceName}]资源链接或源目录已变更，已重置追更进度并清空任务缓存`);
         }
+        if (task.enableCron) {
+            if (!task.cronExpression) {
+                throw new Error('启用定时任务时，Cron表达式不能为空');
+            }
+            if (task.cronExpression.trim().split(/\s+/).length !== 5) {
+                throw new Error('Cron表达式必须为5位表达式模式（分 时 日 月 周）');
+            }
+            const cron = require('node-cron');
+            if (!cron.validate(task.cronExpression)) {
+                throw new Error('无效的Cron表达式');
+            }
+        }
         const newTask = await this.taskRepo.save(task)
         SchedulerService.removeTaskJob(task.id)
         if (task.enableCron && task.cronExpression) {

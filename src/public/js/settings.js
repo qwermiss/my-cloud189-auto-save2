@@ -26,7 +26,7 @@ async function loadSettings() {
             
             // 天翼云盘特色功能
             document.getElementById('enableAutoCheckin').checked = settings.task?.enableAutoCheckin ?? true;
-            document.getElementById('checkinCron').value = settings.task?.checkinCron || '0 15 1 * * *';
+            document.getElementById('checkinCron').value = settings.task?.checkinCron || '15 1 * * *';
             document.getElementById('enableStorageAggregation').checked = settings.task?.enableStorageAggregation ?? true;
 
             const toggleCheckinCron = () => {
@@ -152,7 +152,7 @@ async function saveSettings() {
             // casFamilyFolderId 已移除，改为账号级配置
             enableDeleteFamilyTempFile: document.getElementById('enableDeleteFamilyTempFile').checked,
             enableAutoCheckin: document.getElementById('enableAutoCheckin').checked,
-            checkinCron: document.getElementById('checkinCron').value || '0 15 1 * * *',
+            checkinCron: document.getElementById('checkinCron').value || '15 1 * * *',
             enableStorageAggregation: document.getElementById('enableStorageAggregation').checked
         },
         wecom: {

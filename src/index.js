@@ -1515,6 +1515,26 @@ AppDataSource.initialize().then(async () => {
     app.post('/api/settings', async (req, res) => {
         const settings = req.body;
 
+        const cron = require('node-cron');
+        const validateCron5 = (expr, name) => {
+            if (expr) {
+                if (expr.trim().split(/\s+/).length !== 5) {
+                    throw new Error(`${name}必须是5位格式的Cron表达式（分 时 日 月 周）`);
+                }
+                if (!cron.validate(expr)) {
+                    throw new Error(`${name}无效`);
+                }
+            }
+        };
+
+        try {
+            validateCron5(settings.task?.taskCheckCron, '任务定时检查Cron');
+            validateCron5(settings.task?.cleanRecycleCron, '自动清空回收站Cron');
+            validateCron5(settings.task?.checkinCron, '每日云盘自动签到Cron');
+        } catch (err) {
+            return res.json({ success: false, error: err.message });
+        }
+
         // 如果cloudSaver的配置变更 就清空cstoken.json
         if (settings.cloudSaver?.baseUrl != ConfigService.getConfigValue('cloudSaver.baseUrl')
         || settings.cloudSaver?.username != ConfigService.getConfigValue('cloudSaver.username')

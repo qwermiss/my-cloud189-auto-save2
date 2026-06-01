@@ -136,13 +136,21 @@
 
 /* 单个设置项 */
 .settings-item {
-    padding: 12px 0;
-    border-bottom: 1px dashed var(--border-color);
+    padding: 16px 20px;
+    background: rgba(99, 102, 241, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
 }
 
 .settings-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+.settings-item:hover {
+    background: rgba(99, 102, 241, 0.06);
+    border-color: color-mix(in srgb, #6366f1 40%, var(--border-color));
 }
 
 .settings-item-label {
@@ -161,16 +169,16 @@
 
 .settings-item-content {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px 20px;
     align-items: start;
 }
 
 /* settings-item-content的子div继承grid */
 .settings-item-content > div:not(.settings-row):not(.settings-inline-inputs):not(.settings-checkbox-group) {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px 12px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px 16px;
     align-items: start;
 }
 
@@ -216,8 +224,8 @@
 .settings-item-content > .settings-row {
     grid-column: 1 / -1;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px 16px;
 }
 
 /* settings-row内部的div */
@@ -227,36 +235,13 @@
     gap: 4px;
 }
 
-/* 响应式：大屏3列 */
-@media (max-width: 1400px) {
-    .settings-item-content {
-        grid-template-columns: repeat(3, 1fr);
+/* 响应式：超小屏幕1列 */
+@media (max-width: 480px) {
+    .settings-inline-inputs {
+        flex-wrap: wrap;
     }
-    .settings-item-content > .settings-row,
-    .settings-item-content > div:not(.settings-row):not(.settings-inline-inputs):not(.settings-checkbox-group) {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* 响应式：中等屏幕2列 */
-@media (max-width: 1200px) {
-    .settings-item-content {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .settings-item-content > .settings-row,
-    .settings-item-content > div:not(.settings-row):not(.settings-inline-inputs):not(.settings-checkbox-group) {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* 响应式：小屏幕1列 */
-@media (max-width: 768px) {
-    .settings-item-content {
-        grid-template-columns: 1fr;
-    }
-    .settings-item-content > .settings-row,
-    .settings-item-content > div:not(.settings-row):not(.settings-inline-inputs):not(.settings-checkbox-group) {
-        grid-template-columns: 1fr;
+    .settings-inline-inputs button {
+        width: 100%;
     }
 }
 

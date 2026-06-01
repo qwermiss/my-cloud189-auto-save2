@@ -22,7 +22,7 @@ class ConfigService {
         enableCasFamilyTransfer: true,
         enableDeleteFamilyTempFile: true,
         enableAutoCheckin: true,
-        checkinCron: '0 15 1 * * *',
+        checkinCron: '15 1 * * *',
         enableStorageAggregation: true
       },
       wecom: {
