@@ -1793,9 +1793,50 @@ class TaskService {
                     // 对可推断的文件进行预检查
                     const casFilesToTransfer = [];
                     const preSkippedCasFiles = [];
+                    const tmdbTitle = task.tmdbTitle || (this._extractCleanTitle ? this._extractCleanTitle(task.resourceName, false).name : task.resourceName) || task.resourceName;
+                    
+                    const normalizeName = (name) => {
+                        if (!name) return '';
+                        return name.toLowerCase()
+                            .replace(/（/g, '(')
+                            .replace(/）/g, ')')
+                            .replace(/【/g, '[')
+                            .replace(/】/g, ']')
+                            .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '')
+                            .trim();
+                    };
+
+                    const normExistingBaseNames = Array.from(existingBaseNames).map(n => normalizeName(n));
+
                     for (const { casFile, inferredName } of casFilesToPreCheck) {
                         const inferredBaseName = getBaseNameWithoutExt(inferredName);
+                        let isMatch = false;
+                        
+                        // 1. 原始文件名直接比对
                         if (existingBaseNames.has(inferredBaseName) || existingVideoNames.has(inferredName)) {
+                            isMatch = true;
+                        } else {
+                            // 2. 原文件名归一化比对 (防止字母大小写或格式微调差异)
+                            const normInferredBaseName = normalizeName(inferredBaseName);
+                            if (normExistingBaseNames.includes(normInferredBaseName)) {
+                                isMatch = true;
+                            } else if (tmdbTitle) {
+                                // 3. TMDB标题和年份比对 (电影类型标准匹配)
+                                const year = this._extractYear(casFile.name);
+                                const normTmdbTitle = normalizeName(tmdbTitle);
+                                const potentialNames = [
+                                    normTmdbTitle,
+                                    year ? normalizeName(`${tmdbTitle}(${year})`) : null,
+                                    year ? normalizeName(`${tmdbTitle} (${year})`) : null
+                                ].filter(Boolean);
+                                
+                                if (normExistingBaseNames.some(existing => potentialNames.includes(existing))) {
+                                    isMatch = true;
+                                }
+                            }
+                        }
+
+                        if (isMatch) {
                             preSkippedCasFiles.push(casFile);
                         } else {
                             casFilesToTransfer.push(casFile);

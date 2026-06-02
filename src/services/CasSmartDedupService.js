@@ -147,6 +147,19 @@ class CasSmartDedupService {
 
         logTaskEvent('[CAS智能去重v2] 目标目录已有 ' + existingEpisodeMap.size + ' 个不同集数的视频');
 
+        const normalizeName = (name) => {
+            if (!name) return '';
+            return name.toLowerCase()
+                .replace(/（/g, '(')
+                .replace(/）/g, ')')
+                .replace(/【/g, '[')
+                .replace(/】/g, ']')
+                .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '')
+                .trim();
+        };
+
+        const normExistingBaseNames = Array.from(existingBaseNames).map(n => normalizeName(n));
+
         // 比对每个CAS文件
         for (const casFile of casFiles) {
             // 从CAS文件名提取集数
@@ -166,7 +179,9 @@ class CasSmartDedupService {
                 const generatedName = this.taskService._generateCasTargetName(casFile.name, tmdbTitle, season, episode);
                 const generatedVideoName = generatedName.replace(/\.cas$/i, '');
                 const generatedBaseName = getBaseNameWithoutExt(generatedVideoName);
-                if (existingBaseNames.has(generatedBaseName)) {
+                
+                const normGeneratedBaseName = normalizeName(generatedBaseName);
+                if (existingBaseNames.has(generatedBaseName) || normExistingBaseNames.includes(normGeneratedBaseName)) {
                     toSkip.push(casFile);
                     continue;
                 }
@@ -178,7 +193,32 @@ class CasSmartDedupService {
                 // 去掉.cas后缀，得到推断的视频名
                 const videoName = casFile.name.replace(/\.cas$/i, '');
                 const baseName = getBaseNameWithoutExt(videoName);
-                if (existingBaseNames.has(baseName)) {
+                
+                let isMatch = false;
+                
+                // 1. 原文件名比对 (不区分大小写和特殊字符)
+                const normBaseName = normalizeName(baseName);
+                if (normExistingBaseNames.includes(normBaseName)) {
+                    isMatch = true;
+                }
+                
+                // 2. TMDB标题比对 (电影类型适用)
+                if (!isMatch && tmdbTitle) {
+                    const year = this.taskService._extractYear(casFile.name);
+                    const normTmdbTitle = normalizeName(tmdbTitle);
+                    
+                    const potentialNames = [
+                        normTmdbTitle,
+                        year ? normalizeName(`${tmdbTitle}(${year})`) : null,
+                        year ? normalizeName(`${tmdbTitle} (${year})`) : null
+                    ].filter(Boolean);
+                    
+                    if (normExistingBaseNames.some(existing => potentialNames.includes(existing))) {
+                        isMatch = true;
+                    }
+                }
+                
+                if (isMatch) {
                     toSkip.push(casFile);
                 } else {
                     // 无法匹配，纳入处理流程
