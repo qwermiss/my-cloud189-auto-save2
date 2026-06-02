@@ -715,7 +715,7 @@ tbody tr:hover {
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   animation: backdropFadeIn 0.2s ease-out;
-  z-index: 1000;
+  z-index: 5000;
 }
 
 @keyframes backdropFadeIn {
@@ -1149,7 +1149,7 @@ input:checked + .toggle-slider:before {
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 1050;
+  z-index: 10050;
   max-width: 350px;
 }
 

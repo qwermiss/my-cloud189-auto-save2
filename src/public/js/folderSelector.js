@@ -199,7 +199,7 @@ class FolderSelector {
 
         this.modal.style.display = 'block';
         // 设置z-index
-        this.modal.style.zIndex = 1001;
+        this.modal.style.zIndex = 5001;
         this.selectedNode = null;
         this.isShowingFavorites = false;
         this.favorites =  await this.getFavorites()
@@ -372,7 +372,7 @@ class FolderSelector {
             return;
         }
         this.modal.style.display = 'block';
-        this.modal.style.zIndex = 1001;
+        this.modal.style.zIndex = 5001;
         this.selectedNode = null;
         this.isShowingFavorites = true;
         this.modal.querySelector('.modal-title').textContent = '常用目录';
