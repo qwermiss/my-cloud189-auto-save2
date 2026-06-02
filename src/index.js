@@ -934,7 +934,6 @@ AppDataSource.initialize().then(async () => {
                                         }
                                     }
                                     messageUtil.sendMessage(msg);
-                                    messageUtil.sendWebhookMessage(msg);
 
                                     // 重命名后触发 Emby 扫库
                                     const { EmbyService } = require('./services/emby');
@@ -982,8 +981,6 @@ AppDataSource.initialize().then(async () => {
                             }
                         }
                         messageUtil.sendMessage(message);
-                        // TMDB绑定重命名后触发 webhook 通知下游
-                        messageUtil.sendWebhookMessage(message);
 
                         // 重命名后触发 Emby 扫库
                         const { EmbyService } = require('./services/emby');
