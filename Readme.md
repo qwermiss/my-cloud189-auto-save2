@@ -1,6 +1,6 @@
 <div align="center">
     <img src="img/cloud189.png" alt="Logo" width="200">
-    <h1>cloud189-auto-save</h1>
+    <h1>cloud189-auto-save for armv7玩客云</h1>
     <p>天翼云盘自动转存系统二开版：自动追更转存、CAS 家庭中转秒传、AI 重命名、TMDB 级联级联绑定、SmartStrm Webhook、Telegram/企业微信交互与影院模式界面。</p>
     <p>
         <a href="https://github.com/ymting/my-cloud189-auto-save/packages">
