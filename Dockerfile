@@ -1,4 +1,4 @@
-# 使用支持 ARMv7 的 Node 18 LTS（更稳定）
+# 使用支持 ARMv7 的 Node 18（Node 16 已停止支持 ARMv7）
 FROM node:18.20-slim AS builder
 
 WORKDIR /home
