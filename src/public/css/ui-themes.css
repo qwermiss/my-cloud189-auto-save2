@@ -1327,12 +1327,14 @@ tbody th:last-child {
     transform: scale(1.05);
 }
 
-[data-theme="cinema"] .media-btn-circle.primary {
+[data-theme="cinema"] .media-btn-circle.primary,
+[data-theme="cinema"] .more-actions-btn {
     background: var(--primary-color, #6366f1);
     border-color: var(--primary-color, #6366f1);
 }
 
-[data-theme="cinema"] .media-btn-circle.primary:hover {
+[data-theme="cinema"] .media-btn-circle.primary:hover,
+[data-theme="cinema"] .more-actions-btn:hover {
     background: var(--primary-hover, #4f46e5);
 }
 
