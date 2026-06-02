@@ -58,6 +58,25 @@ const sendHistoryLogs = async (res) => {
     try {
         await fs.appendFile(LOG_FILE, logMessage + '\n');
         
+        // 自动控制磁盘日志文件体积，防止无限增长撑爆空间
+        const stat = await fs.stat(LOG_FILE);
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 磁盘最大日志文件大小限制：5MB
+        if (stat.size > MAX_FILE_SIZE) {
+            const keepSize = 500 * 1024; // 超限时仅保留末尾 500KB 的日志
+            const start = stat.size - keepSize;
+            const fileHandle = await fs.open(LOG_FILE, 'r');
+            const buffer = Buffer.alloc(keepSize);
+            await fileHandle.read(buffer, 0, keepSize, start);
+            await fileHandle.close();
+            
+            // 剥离第一行可能被截断的不完整日志，保证日志文件格式整洁
+            const rawLogs = buffer.toString('utf8');
+            const firstNewlineIndex = rawLogs.indexOf('\n');
+            const truncatedContent = firstNewlineIndex !== -1 ? rawLogs.substring(firstNewlineIndex + 1) : rawLogs;
+            
+            await fs.writeFile(LOG_FILE, truncatedContent);
+        }
+
         // 向所有连接的客户端发送日志
         clients.forEach(client => {
             client.write(`data: ${JSON.stringify({type: 'log', message: logMessage})}\n\n`);
