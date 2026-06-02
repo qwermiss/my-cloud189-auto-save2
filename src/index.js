@@ -648,6 +648,10 @@ AppDataSource.initialize().then(async () => {
             const taskIds = req.body.taskIds;
             const deleteCloud = req.body.deleteCloud;
             await taskService.deleteTasks(taskIds, deleteCloud);
+            // 清除批量删除任务的目录缓存
+            for (const taskId of taskIds) {
+                folderCache.clearPrefix(`share_folders_${taskId}_`);
+            }
             res.json({ success: true });
         } catch (error) {
             res.json({ success: false, error: error.message });
@@ -670,8 +674,11 @@ AppDataSource.initialize().then(async () => {
 
     app.delete('/api/tasks/:id', async (req, res) => {
         try {
+            const taskId = parseInt(req.params.id);
             const deleteCloud = req.body.deleteCloud;
-            await taskService.deleteTask(parseInt(req.params.id), deleteCloud);
+            await taskService.deleteTask(taskId, deleteCloud);
+            // 清除该任务的目录缓存，防止内存泄漏
+            folderCache.clearPrefix(`share_folders_${taskId}_`);
             res.json({ success: true });
         } catch (error) {
             res.json({ success: false, error: error.message });
