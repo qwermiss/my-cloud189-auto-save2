@@ -1,16 +1,25 @@
-# 使用支持 ARMv7 的 Node 18（Node 16 已停止支持 ARMv7）
+# 使用支持 ARMv7 的 Node 18
 FROM node:18.20-slim AS builder
 
 WORKDIR /home
 COPY . .
 
+# 安装编译依赖（关键：python3、make、gcc 等）
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-distutils \
+    make \
+    g++ \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
 # 安装 cloud189-sdk 依赖
 RUN cd vender/cloud189-sdk && \
-    yarn install --frozen-lockfile && \
+    yarn install && \
     yarn build
 
 # 安装项目依赖并构建
-RUN yarn install --frozen-lockfile && \
+RUN yarn install && \
     yarn build
 
 # 生产镜像
@@ -21,8 +30,8 @@ WORKDIR /home
 COPY --from=builder /home/package*.json ./
 COPY --from=builder /home/yarn.lock ./
 
-# 安装生产依赖
-RUN yarn install --production --frozen-lockfile
+# 安装生产依赖（不需要重新编译 sqlite3，因为 builder 阶段已编译好）
+RUN yarn install --production
 
 # 复制构建产物
 COPY --from=builder /home/dist ./dist
