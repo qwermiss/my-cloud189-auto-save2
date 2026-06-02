@@ -507,21 +507,28 @@ ${taskName ? `任务名称：${taskName}\n注意：任务名称可能包含中�
                 isStream: true
             });
 
-            // 处理流式响应
+            // 处理流式响应 (利用缓冲区 buffer 拼接分块，防止 JSON 截断导致的解析失败)
+            let buffer = '';
             for await (const chunk of response) {
-                try {
-                    const lines = chunk.toString().split('\n').filter(line => line.trim() !== '');
-                    for (const line of lines) {
-                        if (line.includes('[DONE]')) continue;
-                        if (line.startsWith('data: ')) {
-                            const data = JSON.parse(line.slice(5));
-                            if (data.choices[0].delta?.content) {
+                buffer += chunk.toString();
+                let lineEndIndex;
+                while ((lineEndIndex = buffer.indexOf('\n')) !== -1) {
+                    const line = buffer.slice(0, lineEndIndex).trim();
+                    buffer = buffer.slice(lineEndIndex + 1);
+                    if (line === '') continue;
+                    if (line.includes('[DONE]')) continue;
+                    if (line.startsWith('data:')) {
+                        const dataStr = line.slice(5).trim();
+                        if (dataStr === '[DONE]') continue;
+                        try {
+                            const data = JSON.parse(dataStr);
+                            if (data.choices && data.choices[0] && data.choices[0].delta?.content) {
                                 onChunk(data.choices[0].delta.content);
                             }
+                        } catch (error) {
+                            console.error('处理响应块时出错 (JSON 解析失败):', error.message, '原始数据:', dataStr);
                         }
                     }
-                } catch (error) {
-                    console.error('处理响应块时出错:', error);
                 }
             }
             // 所有块处理完成后，发送结束标识
@@ -682,38 +689,48 @@ ${taskName ? `任务名称：${taskName}\n注意：任务名称可能包含中�
             });
 
             let functionCallData = null;
+            let buffer = '';
 
+            // 处理流式响应 (利用缓冲区 buffer 拼接分块，防止 JSON 截断导致的解析失败)
             for await (const chunk of response) {
-                try {
-                    const lines = chunk.toString().split('\n').filter(line => line.trim() !== '');
-                    for (const line of lines) {
-                        if (line.includes('[DONE]')) continue;
-                        if (line.startsWith('data: ')) {
-                            const data = JSON.parse(line.slice(5));
-                            const delta = data.choices[0].delta;
-                            
-                            if (delta?.content) {
-                                onChunk(delta.content);
-                            }
-                            
-                            if (delta?.tool_calls) {
-                                const toolCall = delta.tool_calls[0];
-                                if (toolCall?.function) {
-                                    if (!functionCallData) {
-                                        functionCallData = {
-                                            name: toolCall.function.name,
-                                            arguments: ''
-                                        };
-                                    }
-                                    if (toolCall.function.arguments) {
-                                        functionCallData.arguments += toolCall.function.arguments;
+                buffer += chunk.toString();
+                let lineEndIndex;
+                while ((lineEndIndex = buffer.indexOf('\n')) !== -1) {
+                    const line = buffer.slice(0, lineEndIndex).trim();
+                    buffer = buffer.slice(lineEndIndex + 1);
+                    if (line === '') continue;
+                    if (line.includes('[DONE]')) continue;
+                    if (line.startsWith('data:')) {
+                        const dataStr = line.slice(5).trim();
+                        if (dataStr === '[DONE]') continue;
+                        try {
+                            const data = JSON.parse(dataStr);
+                            if (data.choices && data.choices[0]) {
+                                const delta = data.choices[0].delta;
+                                
+                                if (delta?.content) {
+                                    onChunk(delta.content);
+                                }
+                                
+                                if (delta?.tool_calls) {
+                                    const toolCall = delta.tool_calls[0];
+                                    if (toolCall?.function) {
+                                        if (!functionCallData) {
+                                            functionCallData = {
+                                                name: toolCall.function.name,
+                                                arguments: ''
+                                            };
+                                        }
+                                        if (toolCall.function.arguments) {
+                                            functionCallData.arguments += toolCall.function.arguments;
+                                        }
                                     }
                                 }
                             }
+                        } catch (error) {
+                            console.error('处理响应块时出错 (JSON 解析失败):', error.message, '原始数据:', dataStr);
                         }
                     }
-                } catch (error) {
-                    console.error('处理响应块时出错:', error);
                 }
             }
 

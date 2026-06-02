@@ -124,7 +124,7 @@
 .cinema-locked-indicator {
     position: fixed;
     bottom: 24px;
-    right: 24px;
+    right: 140px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -145,13 +145,16 @@
     opacity: 0;
     transform: translateY(20px) scale(0.9);
     transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    pointer-events: auto; /* 允许点击关闭 */
+    pointer-events: none; /* 默认隐藏时不响应鼠标事件 */
+    visibility: hidden; /* 默认隐藏，防止点击遮挡 */
     cursor: pointer;
 }
 
 .cinema-locked-indicator.show {
     opacity: 1;
     transform: translateY(0) scale(1);
+    pointer-events: auto; /* 显示时允许点击关闭 */
+    visibility: visible;
 }
 
 .cinema-locked-indicator i {
