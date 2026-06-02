@@ -33,9 +33,9 @@ COPY --from=builder /home/yarn.lock ./
 # 复制已编译好的 node_modules
 COPY --from=builder /home/node_modules ./node_modules
 
-# 复制源码和构建产物（src/index.js 需要 src 目录）
-COPY --from=builder /home/src ./src
+# 复制构建产物（dist 目录包含编译后的代码）
 COPY --from=builder /home/dist ./dist
+COPY --from=builder /home/src/public ./dist/public
 COPY --from=builder /home/vender ./vender
 
 # 安装运行时依赖
@@ -54,5 +54,5 @@ RUN mkdir -p /home/data /home/strm
 VOLUME ["/home/data", "/home/strm"]
 EXPOSE 3000
 
-# 使用正确的入口文件
-CMD ["node", "src/index.js"]
+# 使用编译后的入口文件
+CMD ["node", "dist/index.js"]
